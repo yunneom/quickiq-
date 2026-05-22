@@ -53,7 +53,11 @@ export async function createCheckoutUrl(input: CreateCheckoutInput): Promise<str
           },
           product_options: {
             redirect_url: input.successUrl,
-            receipt_thank_you_note: 'PDF 리포트가 곧 이메일로 발송됩니다.',
+            // LS API rejects non-ASCII in receipt_thank_you_note with
+            // "Malformed UTF-8 characters". Keep this field ASCII-only and
+            // localize the user-facing message via our own thank-you page.
+            receipt_thank_you_note:
+              'Your detailed PDF report will arrive by email shortly.',
           },
         },
         relationships: {
@@ -64,6 +68,11 @@ export async function createCheckoutUrl(input: CreateCheckoutInput): Promise<str
     }),
   });
   if (!res.ok) {
+    // Surface the body in logs to ease future debugging — the response
+    // often has a useful jsonapi `errors[].detail`. Re-throw a short error
+    // so callers can still capture it cleanly.
+    const text = await res.text().catch(() => '');
+    console.error('[lemon-squeezy] checkout error', res.status, text.slice(0, 500));
     throw new Error(`lemon_squeezy_${res.status}`);
   }
   const json = (await res.json()) as { data?: { attributes?: { url?: string } } };
