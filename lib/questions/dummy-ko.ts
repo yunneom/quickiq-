@@ -72,15 +72,16 @@ export const dummyKoQuestions: Question[] = [
     category: 'verbal',
     difficulty: 3,
     locale: 'ko',
-    question_text: '"고양이 : 동물 = 장미 : ?" 빈칸에 알맞은 단어는?',
+    question_text: '"의사 : 병원 = 선생님 : ?" 빈칸에 알맞은 단어는?',
     options: [
-      { id: 'A', text: '식물' },
-      { id: 'B', text: '꽃' },
-      { id: 'C', text: '색깔' },
-      { id: 'D', text: '향기' },
+      { id: 'A', text: '학생' },
+      { id: 'B', text: '학교' },
+      { id: 'C', text: '교과서' },
+      { id: 'D', text: '수업' },
     ],
-    correct_id: 'A',
-    explanation: '고양이는 동물의 하위 분류이고, 장미는 식물의 하위 분류입니다.',
+    correct_id: 'B',
+    explanation:
+      '직업과 일하는 장소의 관계입니다. 의사가 병원에서 일하듯, 선생님은 학교에서 일합니다. 학생·수업·교과서는 모두 학교 안의 요소들이지만 "일하는 장소"라는 관계에는 해당하지 않습니다.',
   },
   {
     id: 'ko-006',

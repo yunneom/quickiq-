@@ -72,15 +72,16 @@ export const dummyEnQuestions: Question[] = [
     category: 'verbal',
     difficulty: 3,
     locale: 'en',
-    question_text: 'Cat : Animal = Rose : ?',
+    question_text: 'Doctor : Hospital = Teacher : ?',
     options: [
-      { id: 'A', text: 'Plant' },
-      { id: 'B', text: 'Flower' },
-      { id: 'C', text: 'Color' },
-      { id: 'D', text: 'Scent' },
+      { id: 'A', text: 'Student' },
+      { id: 'B', text: 'School' },
+      { id: 'C', text: 'Textbook' },
+      { id: 'D', text: 'Lesson' },
     ],
-    correct_id: 'A',
-    explanation: 'A cat is a kind of animal; a rose is a kind of plant.',
+    correct_id: 'B',
+    explanation:
+      'The pattern is profession-to-workplace. A doctor works at a hospital; a teacher works at a school. Students, lessons, and textbooks are all elements within a school but do not match the "workplace" relation.',
   },
   {
     id: 'en-006',
