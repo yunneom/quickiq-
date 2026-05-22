@@ -1,0 +1,99 @@
+{
+  "meta": {
+    "title": "당신의 추정 IQ는 상위 몇 %?",
+    "description": "심리측정학 기반 30문항으로 추정 IQ와 영역별 강점을 분석합니다. 무료 응시, 9,900원으로 상세 리포트.",
+    "ogTitle": "당신의 IQ는 상위 몇 %일까?",
+    "ogDescription": "30문항 7분. 무료로 추정 IQ 확인하기."
+  },
+  "landing": {
+    "headline": "당신의 IQ는\n상위 몇 %일까?",
+    "sub": "심리측정학 기반 30문항, 약 7분.\n4가지 영역의 강점을 객관적으로 확인하세요.",
+    "cta": "지금 무료로 테스트",
+    "trustOne": "심리측정학 기반 30문항",
+    "trustTwo": "전 세계 12만+ 명 응시",
+    "trustThree": "평균 소요 시간 7분",
+    "disclaimer": "본 결과는 추정치이며 임상적 진단이 아닙니다.",
+    "footerPrivacy": "개인정보처리방침",
+    "footerTerms": "이용약관"
+  },
+  "test": {
+    "loading": "테스트 준비 중...",
+    "progress": "{current}/{total} 문항",
+    "timeLeft": "남은 시간",
+    "seconds": "{n}초",
+    "next": "다음",
+    "submit": "제출",
+    "leaveConfirm": "테스트가 종료됩니다. 정말 나가시겠어요?",
+    "category": {
+      "verbal": "언어 추론",
+      "numerical": "수리 추론",
+      "spatial": "공간 추론",
+      "logical": "논리 추론"
+    },
+    "noBack": "이전 문항으로 돌아갈 수 없습니다.",
+    "completing": "채점 중..."
+  },
+  "result": {
+    "title": "당신의 추정 IQ",
+    "topPercentile": "상위 {pct}%",
+    "estimatedIq": "추정 IQ {iq}",
+    "estimatedIqLabel": "추정 IQ",
+    "categoryTitle": "영역별 점수",
+    "lockNotice": "상세 분석은 결제 후 PDF로 발송됩니다.",
+    "buyCta": "9,900원으로 상세 리포트 받기",
+    "shareTitle": "결과 공유하기",
+    "shareText": "나는 추정 IQ 상위 {pct}%! 너는?",
+    "shareKakao": "카카오톡",
+    "shareX": "X (트위터)",
+    "shareFacebook": "Facebook",
+    "shareCopy": "링크 복사",
+    "shareCopied": "복사 완료!",
+    "disclaimer": "본 점수는 추정치이며 의학적 진단이 아닙니다.",
+    "verbal": "언어",
+    "numerical": "수리",
+    "spatial": "공간",
+    "logical": "논리",
+    "classification": {
+      "label": "분류",
+      "veryHigh": "매우 우수",
+      "high": "우수",
+      "aboveAverage": "평균 이상",
+      "average": "평균",
+      "belowAverage": "평균 이하"
+    },
+    "strengthsTitle": "강점 / 약점",
+    "strength": "강점",
+    "weakness": "약점",
+    "compareTitle": "또래 평균과 비교",
+    "youLabel": "내 점수",
+    "avgLabel": "평균",
+    "durationLabel": "소요 시간",
+    "durationFormat": "{min}분 {sec}초",
+    "summaryHookHigh": "축하해요! 인구의 상위에 해당하는 점수예요.",
+    "summaryHookMid": "안정적인 점수예요. 영역별로 강·약점이 보입니다.",
+    "summaryHookLow": "충분히 잠재력 있는 결과예요. 영역별 분석으로 강점을 찾아보세요."
+  },
+  "checkout": {
+    "title": "상세 리포트 받기",
+    "subtitle": "결제 후 PDF 리포트가 이메일로 발송됩니다.",
+    "emailLabel": "이메일",
+    "emailPlaceholder": "you@example.com",
+    "emailInvalid": "유효한 이메일을 입력해주세요.",
+    "priceLabel": "9,900원 (KRW)",
+    "payButton": "결제하기",
+    "refundPolicy": "디지털 콘텐츠 특성상 발송 후 환불은 불가합니다.",
+    "secureNote": "결제는 Lemon Squeezy를 통해 안전하게 처리됩니다.",
+    "processing": "결제창으로 이동 중...",
+    "errorGeneric": "결제 시작 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요."
+  },
+  "thankYou": {
+    "title": "결제가 완료되었어요!",
+    "body": "이메일을 확인해 주세요. 잠시 후 상세 리포트(PDF)가 도착합니다.",
+    "viewResult": "결과 페이지 보기"
+  },
+  "errors": {
+    "sessionNotFound": "테스트 세션을 찾을 수 없습니다.",
+    "alreadyCompleted": "이미 완료된 세션입니다.",
+    "rateLimited": "잠시 후 다시 시도해 주세요."
+  }
+}

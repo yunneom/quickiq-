@@ -1,0 +1,77 @@
+import Link from 'next/link';
+import { getTranslations, unstable_setRequestLocale } from 'next-intl/server';
+import { Button } from '@/components/ui/button';
+import { MetaPixel } from '@/components/analytics/meta-pixel';
+
+export default async function LandingPage({
+  params: { locale },
+}: {
+  params: { locale: string };
+}) {
+  unstable_setRequestLocale(locale);
+  const t = await getTranslations('landing');
+
+  return (
+    <>
+      <MetaPixel />
+      <div className="mx-auto flex min-h-screen max-w-md flex-col px-5 pb-10 pt-12">
+        <header className="text-sm font-semibold tracking-wide text-brand-600">
+          IQ TEST
+        </header>
+
+        <div className="mt-10 flex-1">
+          <h1 className="whitespace-pre-line text-4xl font-extrabold leading-tight text-gray-900">
+            {t('headline')}
+          </h1>
+          <p className="mt-5 whitespace-pre-line text-base leading-relaxed text-gray-600">
+            {t('sub')}
+          </p>
+
+          <ul className="mt-8 space-y-3 text-sm text-gray-700">
+            <Trust>{t('trustOne')}</Trust>
+            <Trust>{t('trustTwo')}</Trust>
+            <Trust>{t('trustThree')}</Trust>
+          </ul>
+        </div>
+
+        <div className="sticky bottom-0 mt-10 bg-gradient-to-t from-[#fafafa] via-[#fafafa] to-transparent pb-2 pt-6">
+          <Link href={`/${locale}/test`} prefetch>
+            <Button size="lg" className="w-full" data-testid="cta-start">
+              {t('cta')}
+            </Button>
+          </Link>
+          <p className="mt-3 text-center text-xs text-gray-500">
+            {t('disclaimer')}
+          </p>
+          <div className="mt-2 flex justify-center gap-4 text-xs text-gray-400">
+            <Link href={`/${locale}/privacy`} className="underline-offset-2 hover:underline">
+              {t('footerPrivacy')}
+            </Link>
+            <Link href={`/${locale}/terms`} className="underline-offset-2 hover:underline">
+              {t('footerTerms')}
+            </Link>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+function Trust({ children }: { children: React.ReactNode }) {
+  return (
+    <li className="flex items-center gap-3">
+      <span className="grid h-6 w-6 place-items-center rounded-full bg-brand-100 text-brand-600">
+        <svg width="14" height="14" viewBox="0 0 20 20" fill="none">
+          <path
+            d="M4 10.5l4 4 8-9"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      </span>
+      {children}
+    </li>
+  );
+}

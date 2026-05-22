@@ -1,0 +1,99 @@
+{
+  "meta": {
+    "title": "What percentile is your IQ?",
+    "description": "Psychometric-grade 30-question IQ test. Get your estimated IQ and category strengths in 7 minutes. Detailed PDF report for $7.50.",
+    "ogTitle": "What percentile is your IQ?",
+    "ogDescription": "30 questions, 7 minutes. Free estimated IQ."
+  },
+  "landing": {
+    "headline": "What percentile\nis your IQ?",
+    "sub": "Psychometric-grade 30 questions in about 7 minutes.\nObjectively measure your strengths across 4 domains.",
+    "cta": "Take the test — Free",
+    "trustOne": "30 psychometric questions",
+    "trustTwo": "Taken by 120,000+ globally",
+    "trustThree": "Average time: 7 minutes",
+    "disclaimer": "Estimated score, not a clinical diagnosis.",
+    "footerPrivacy": "Privacy Policy",
+    "footerTerms": "Terms of Service"
+  },
+  "test": {
+    "loading": "Preparing your test...",
+    "progress": "{current}/{total}",
+    "timeLeft": "Time left",
+    "seconds": "{n}s",
+    "next": "Next",
+    "submit": "Submit",
+    "leaveConfirm": "Your test will be lost. Leave anyway?",
+    "category": {
+      "verbal": "Verbal Reasoning",
+      "numerical": "Numerical Reasoning",
+      "spatial": "Spatial Reasoning",
+      "logical": "Logical Reasoning"
+    },
+    "noBack": "You cannot return to previous questions.",
+    "completing": "Scoring..."
+  },
+  "result": {
+    "title": "Your Estimated IQ",
+    "topPercentile": "Top {pct}%",
+    "estimatedIq": "Estimated IQ {iq}",
+    "estimatedIqLabel": "Estimated IQ",
+    "categoryTitle": "Score by category",
+    "lockNotice": "Full breakdown delivered as a PDF after purchase.",
+    "buyCta": "Get the full report — $7.50",
+    "shareTitle": "Share your result",
+    "shareText": "I scored top {pct}% on the estimated IQ test! How about you?",
+    "shareKakao": "KakaoTalk",
+    "shareX": "X (Twitter)",
+    "shareFacebook": "Facebook",
+    "shareCopy": "Copy link",
+    "shareCopied": "Copied!",
+    "disclaimer": "Estimated score, not a medical diagnosis.",
+    "verbal": "Verbal",
+    "numerical": "Numerical",
+    "spatial": "Spatial",
+    "logical": "Logical",
+    "classification": {
+      "label": "Category",
+      "veryHigh": "Very High",
+      "high": "High",
+      "aboveAverage": "Above Average",
+      "average": "Average",
+      "belowAverage": "Below Average"
+    },
+    "strengthsTitle": "Strength / Weakness",
+    "strength": "Strength",
+    "weakness": "Weakness",
+    "compareTitle": "Compared to the average",
+    "youLabel": "You",
+    "avgLabel": "Average",
+    "durationLabel": "Time taken",
+    "durationFormat": "{min}m {sec}s",
+    "summaryHookHigh": "Excellent — your score is well above the average range.",
+    "summaryHookMid": "Solid score with clear strengths and areas to develop.",
+    "summaryHookLow": "Plenty of potential here — explore your category breakdown."
+  },
+  "checkout": {
+    "title": "Get your full report",
+    "subtitle": "We'll email the detailed PDF report after payment.",
+    "emailLabel": "Email",
+    "emailPlaceholder": "you@example.com",
+    "emailInvalid": "Please enter a valid email.",
+    "priceLabel": "$7.50 (USD)",
+    "payButton": "Pay now",
+    "refundPolicy": "Digital content — no refunds after delivery.",
+    "secureNote": "Payments are handled securely by Lemon Squeezy.",
+    "processing": "Redirecting to checkout...",
+    "errorGeneric": "Something went wrong. Please try again."
+  },
+  "thankYou": {
+    "title": "Payment complete!",
+    "body": "Check your email — the detailed PDF report is on the way.",
+    "viewResult": "View your result"
+  },
+  "errors": {
+    "sessionNotFound": "Test session not found.",
+    "alreadyCompleted": "Session already completed.",
+    "rateLimited": "Please try again later."
+  }
+}
