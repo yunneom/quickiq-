@@ -75,9 +75,24 @@ export function checkRateLimit(
   };
 }
 
-/** Convenience preset for the test-start endpoint. */
+/**
+ * Convenience preset for the test-start endpoint.
+ *
+ * Originally 10/hour (per PRD §3.3) but raised after launch — real users
+ * frequently re-enter the test (back/refresh, share-link previews, NAT'd
+ * mobile carriers funneling many users behind one IP). 60/hour still
+ * blocks scrapers comfortably while staying out of the way of legit use.
+ *
+ * Override via RATE_LIMIT_TEST_START_LIMIT env or disable entirely by
+ * setting RATE_LIMIT_DISABLED=1 at the route level.
+ */
+const ENV_LIMIT = Number(process.env.RATE_LIMIT_TEST_START_LIMIT);
 export const RATE_LIMIT_TEST_START: CheckOptions = {
   key: 'test-start',
-  limit: 10,
+  limit: Number.isFinite(ENV_LIMIT) && ENV_LIMIT > 0 ? ENV_LIMIT : 60,
   windowMs: 60 * 60 * 1000, // 1 hour
 };
+
+export function isRateLimitDisabled(): boolean {
+  return process.env.RATE_LIMIT_DISABLED === '1';
+}
