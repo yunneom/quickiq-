@@ -8,6 +8,26 @@ updates:
       time: '09:00'
       timezone: Asia/Seoul
     open-pull-requests-limit: 5
+    # Suppress incompatible major-version bumps. Each ecosystem upgrade
+    # here requires hand-converting the codebase, so leave them out of
+    # Dependabot's weekly noise — we'll bump deliberately when ready.
+    ignore:
+      - dependency-name: 'react'
+        update-types: ['version-update:semver-major']
+      - dependency-name: 'react-dom'
+        update-types: ['version-update:semver-major']
+      - dependency-name: '@types/react'
+        update-types: ['version-update:semver-major']
+      - dependency-name: '@types/react-dom'
+        update-types: ['version-update:semver-major']
+      - dependency-name: 'next'
+        update-types: ['version-update:semver-major']
+      - dependency-name: 'eslint-config-next'
+        update-types: ['version-update:semver-major']
+      - dependency-name: 'tailwindcss'
+        update-types: ['version-update:semver-major']
+      - dependency-name: 'eslint'
+        update-types: ['version-update:semver-major']
     groups:
       next:
         patterns:
