@@ -15,7 +15,8 @@ import { scoreSession, type AnswerInput } from '@/lib/scoring';
 export const runtime = 'nodejs';
 
 export async function GET(req: Request) {
-  const token = req.headers.get('x-debug-token');
+  const url0 = new URL(req.url);
+  const token = req.headers.get('x-debug-token') ?? url0.searchParams.get('token');
   const expected = process.env.LEMON_SQUEEZY_WEBHOOK_SECRET;
   if (!expected || token !== expected) {
     return new NextResponse('Not Found', { status: 404 });
