@@ -422,4 +422,94 @@ export const extraEnQuestions: Question[] = [
     explanation:
       'Answer: A (A and B). From rule 3, exactly one of B/C. If C passed, rule 2 → D too, giving 3 passers (contradicts "exactly two"). So C did NOT pass, B did. Rule 1 contrapositive: B passed → A passed. So A and B.',
   },
+
+  // ───── Final pool round (+5) ─────
+  {
+    id: 'en-124',
+    order_index: 124,
+    category: 'verbal',
+    difficulty: 4,
+    locale: 'en',
+    question_text: 'Comfort : Sadness = Encouragement : ?',
+    options: [
+      { id: 'A', text: 'courage' },
+      { id: 'B', text: 'fear' },
+      { id: 'C', text: 'failure' },
+      { id: 'D', text: 'attempt' },
+    ],
+    correct_id: 'B',
+    explanation:
+      'Answer: B (fear). Comfort addresses sadness; encouragement addresses fear. Both are "action that counters this specific emotion" relations.',
+  },
+  {
+    id: 'en-125',
+    order_index: 125,
+    category: 'numerical',
+    difficulty: 4,
+    locale: 'en',
+    question_text:
+      'A rectangle has a 3:2 width-to-height ratio and a perimeter of 50 cm. What is its width?',
+    options: [
+      { id: 'A', text: '12 cm' },
+      { id: 'B', text: '15 cm' },
+      { id: 'C', text: '18 cm' },
+      { id: 'D', text: '20 cm' },
+    ],
+    correct_id: 'B',
+    explanation:
+      'Answer: B (15 cm). Let width = 3x, height = 2x. Perimeter = 2(3x + 2x) = 10x = 50, so x = 5 and width = 15 cm.',
+  },
+  {
+    id: 'en-126',
+    order_index: 126,
+    category: 'spatial',
+    difficulty: 4,
+    locale: 'en',
+    figure_id: 'arrow-up',
+    question_text: 'If you rotate the arrow below by 270° clockwise, which direction does it point?',
+    options: [
+      { id: 'A', figure_id: 'arrow-right' },
+      { id: 'B', figure_id: 'arrow-left' },
+      { id: 'C', figure_id: 'arrow-down' },
+      { id: 'D', figure_id: 'arrow-up' },
+    ],
+    correct_id: 'B',
+    explanation:
+      'Answer: B (left). 270° clockwise equals 90° counter-clockwise. Up → left. Tests rotational equivalence.',
+  },
+  {
+    id: 'en-127',
+    order_index: 127,
+    category: 'logical',
+    difficulty: 4,
+    locale: 'en',
+    question_text:
+      'If "All apples are red" is FALSE, which is necessarily true?',
+    options: [
+      { id: 'A', text: 'No apples are red.' },
+      { id: 'B', text: 'All apples are not red.' },
+      { id: 'C', text: 'At least one apple is not red.' },
+      { id: 'D', text: 'Nothing red is an apple.' },
+    ],
+    correct_id: 'C',
+    explanation:
+      'Answer: C. Negating a universal ∀ gives an existential ∃-not. "At least one apple is not red" is the precise negation; A/B claim more, D is unrelated.',
+  },
+  {
+    id: 'en-128',
+    order_index: 128,
+    category: 'verbal',
+    difficulty: 5,
+    locale: 'en',
+    question_text: 'Which word best fills the blank?  "His argument was so ___ that it was hard to agree with."',
+    options: [
+      { id: 'A', text: 'clear' },
+      { id: 'B', text: 'biased' },
+      { id: 'C', text: 'simple' },
+      { id: 'D', text: 'concrete' },
+    ],
+    correct_id: 'B',
+    explanation:
+      'Answer: B (biased). The "hard to agree with" framing wants a negative descriptor. "Biased" fits; the others are neutral or positive and would clash with the sentence frame.',
+  },
 ];

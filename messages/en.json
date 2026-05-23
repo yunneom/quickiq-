@@ -134,7 +134,9 @@
   "thankYou": {
     "title": "Payment complete!",
     "body": "Check your email — the detailed PDF report is on the way.",
-    "viewResult": "View your result"
+    "viewResult": "View your result",
+    "kakaoChannelTitle": "Add KakaoTalk channel",
+    "kakaoChannelDesc": "Get new IQ content and follow-up tests on KakaoTalk."
   },
   "cookies": {
     "message": "We use cookies for anonymous analytics. Tap 'Accept' to agree to our privacy policy.",

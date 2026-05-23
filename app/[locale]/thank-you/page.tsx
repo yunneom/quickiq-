@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { getTranslations, unstable_setRequestLocale } from 'next-intl/server';
 import { Button } from '@/components/ui/button';
+import { KakaoChannelButton } from '@/components/test/kakao-channel-button';
 import { locales, type Locale } from '@/i18n';
 
 export default async function ThankYouPage({
@@ -33,6 +34,9 @@ export default async function ThankYouPage({
           </Button>
         </Link>
       )}
+      <div className="mt-2 w-full max-w-xs">
+        <KakaoChannelButton />
+      </div>
     </div>
   );
 }

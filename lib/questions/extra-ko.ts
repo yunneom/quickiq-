@@ -425,4 +425,94 @@ export const extraKoQuestions: Question[] = [
     explanation:
       '정답은 A(A, B). 진술 3에서 B와 C 중 하나만 통과. C가 통과하면 진술 2에 의해 D도 통과 → 3명 통과로 모순. 따라서 B 통과, C 불통과. 진술 1의 대우로 B 통과 → A 통과. D는 자동으로 불통과.',
   },
+
+  // ───── 마지막 풀 라운드 (+5 across all domains) ─────
+  {
+    id: 'ko-124',
+    order_index: 124,
+    category: 'verbal',
+    difficulty: 4,
+    locale: 'ko',
+    question_text: '"위로 : 슬픔 = 격려 : ?" 빈칸에 알맞은 단어는?',
+    options: [
+      { id: 'A', text: '용기' },
+      { id: 'B', text: '두려움' },
+      { id: 'C', text: '실패' },
+      { id: 'D', text: '시도' },
+    ],
+    correct_id: 'B',
+    explanation:
+      '정답은 B(두려움). 위로가 슬픔을 다스리듯, 격려는 두려움을 다스립니다. 둘 다 "감정을 다스리는 행위 : 그 대상 감정" 관계.',
+  },
+  {
+    id: 'ko-125',
+    order_index: 125,
+    category: 'numerical',
+    difficulty: 4,
+    locale: 'ko',
+    question_text:
+      '한 직사각형의 가로:세로 비율이 3:2이고, 둘레가 50cm입니다. 가로 길이는?',
+    options: [
+      { id: 'A', text: '12cm' },
+      { id: 'B', text: '15cm' },
+      { id: 'C', text: '18cm' },
+      { id: 'D', text: '20cm' },
+    ],
+    correct_id: 'B',
+    explanation:
+      '정답은 B(15cm). 비율 3:2를 3x:2x로 두면 둘레 = 2(3x+2x) = 10x = 50, x=5. 가로 = 3x = 15cm.',
+  },
+  {
+    id: 'ko-126',
+    order_index: 126,
+    category: 'spatial',
+    difficulty: 4,
+    locale: 'ko',
+    figure_id: 'arrow-up',
+    question_text: '아래 화살표를 시계방향으로 270도 회전시키면 어느 방향?',
+    options: [
+      { id: 'A', figure_id: 'arrow-right' },
+      { id: 'B', figure_id: 'arrow-left' },
+      { id: 'C', figure_id: 'arrow-down' },
+      { id: 'D', figure_id: 'arrow-up' },
+    ],
+    correct_id: 'B',
+    explanation:
+      '정답은 B(왼쪽). 시계방향 270도 = 반시계방향 90도. 위 → 왼쪽. 회전 등가 관계 이해.',
+  },
+  {
+    id: 'ko-127',
+    order_index: 127,
+    category: 'logical',
+    difficulty: 4,
+    locale: 'ko',
+    question_text:
+      '"모든 사과는 빨갛다"가 거짓일 때 반드시 참인 것은?',
+    options: [
+      { id: 'A', text: '어떤 사과도 빨갛지 않다' },
+      { id: 'B', text: '모든 사과는 빨갛지 않다' },
+      { id: 'C', text: '적어도 하나의 사과는 빨갛지 않다' },
+      { id: 'D', text: '모든 빨간 것은 사과가 아니다' },
+    ],
+    correct_id: 'C',
+    explanation:
+      '정답은 C. 전칭명제 "모든 사과는 빨갛다"의 부정은 존재명제 "적어도 하나의 사과는 빨갛지 않다". A·B는 더 강한 주장이라 참 보장 안 됨, D는 무관.',
+  },
+  {
+    id: 'ko-128',
+    order_index: 128,
+    category: 'verbal',
+    difficulty: 5,
+    locale: 'ko',
+    question_text: '다음 문장의 빈칸에 가장 어울리는 단어는?  "그의 주장은 ___ 한 면이 있어 쉽게 동의하기 어려웠다."',
+    options: [
+      { id: 'A', text: '명료' },
+      { id: 'B', text: '편향' },
+      { id: 'C', text: '평이' },
+      { id: 'D', text: '구체' },
+    ],
+    correct_id: 'B',
+    explanation:
+      '정답은 B(편향). "쉽게 동의하기 어려웠다"는 부정적 평가와 자연스럽게 결합하는 단어는 "편향(한쪽으로 치우침)". 나머지는 긍정적/중립이라 결합 어색.',
+  },
 ];

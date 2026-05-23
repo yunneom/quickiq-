@@ -100,6 +100,25 @@ export function TestRunner({ locale }: Props) {
 
   const current = questions[index];
 
+  // ─── Keyboard shortcuts (A/B/C/D) for desktop users ───
+  useEffect(() => {
+    if (phase !== 'running' || !current) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      const target = e.target as HTMLElement | null;
+      // Ignore when typing into form fields.
+      if (target && /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName)) return;
+      const key = e.key.toUpperCase();
+      if (key === 'A' || key === 'B' || key === 'C' || key === 'D') {
+        e.preventDefault();
+        pickOption(key as OptionId);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase, current?.id, transitioning]);
+
   // ─── Per-question countdown ───
   useEffect(() => {
     if (phase !== 'running' || !current) return;

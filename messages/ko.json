@@ -134,7 +134,9 @@
   "thankYou": {
     "title": "결제가 완료되었어요!",
     "body": "이메일을 확인해 주세요. 잠시 후 상세 리포트(PDF)가 도착합니다.",
-    "viewResult": "결과 페이지 보기"
+    "viewResult": "결과 페이지 보기",
+    "kakaoChannelTitle": "카카오톡 채널 추가",
+    "kakaoChannelDesc": "새 IQ 콘텐츠 / 추가 검사 소식을 카카오톡으로 받아보세요."
   },
   "cookies": {
     "message": "익명 분석을 위해 쿠키를 사용합니다. 개인정보처리방침에 동의하시면 '동의'를 눌러주세요.",

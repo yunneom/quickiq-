@@ -19,12 +19,17 @@ interface KakaoLinkArgs {
   linkUrl: string;
 }
 
+interface KakaoChannel {
+  addChannel?: (args: { channelPublicId: string }) => void;
+}
+
 interface KakaoGlobal {
   isInitialized: () => boolean;
   init: (appKey: string) => void;
   Share?: {
     sendDefault: (payload: unknown) => void;
   };
+  Channel?: KakaoChannel;
 }
 
 declare global {
@@ -65,6 +70,34 @@ async function loadKakaoSdk(): Promise<void> {
     document.head.appendChild(script);
   });
   return loadPromise;
+}
+
+/**
+ * Adds the operator's Kakao channel to the user's KakaoTalk via the
+ * Channel SDK. Requires NEXT_PUBLIC_KAKAO_CHANNEL_ID to be set to the
+ * channel's public id (the slug after `https://pf.kakao.com/`).
+ *
+ * Returns true if the SDK call dispatched, false if not configured /
+ * SDK couldn't load (callers should hide the button in that case).
+ */
+export async function addKakaoChannel(): Promise<boolean> {
+  if (!isKakaoConfigured()) return false;
+  const channelId = process.env.NEXT_PUBLIC_KAKAO_CHANNEL_ID;
+  if (!channelId) return false;
+  try {
+    await loadKakaoSdk();
+    const Channel = window.Kakao?.Channel;
+    if (!Channel || typeof Channel.addChannel !== 'function') return false;
+    Channel.addChannel({ channelPublicId: channelId });
+    return true;
+  } catch (err) {
+    console.warn('[kakao] channel add failed:', err);
+    return false;
+  }
+}
+
+export function isKakaoChannelConfigured(): boolean {
+  return isKakaoConfigured() && Boolean(process.env.NEXT_PUBLIC_KAKAO_CHANNEL_ID);
 }
 
 export async function shareToKakao(args: KakaoLinkArgs): Promise<boolean> {
