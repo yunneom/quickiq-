@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { isKakaoConfigured, shareToKakao } from '@/lib/share/kakao';
+import { shareToKakao } from '@/lib/share/kakao';
 
 interface Props {
   pct: number;
@@ -36,15 +36,28 @@ export function ShareButtons({ pct, locale, url }: Props) {
     absoluteUrl,
   )}`;
 
-  const kakaoEnabled = isKakaoConfigured();
+  // Always show the Kakao button for KO users. If the SDK can't open
+  // the share sheet (no app key, domain mismatch, blocked init), we
+  // gracefully fall back to copying the share text + URL to the clipboard
+  // and showing a toast — the user can then paste it into KakaoTalk
+  // manually, which still completes the referral loop.
   const handleKakao = async () => {
-    await shareToKakao({
+    const ok = await shareToKakao({
       title: text,
       description:
         locale === 'ko' ? 'IQ 테스트 결과를 확인해보세요.' : 'Check out my IQ test result.',
       imageUrl: `${absoluteUrl}/opengraph-image`,
       linkUrl: absoluteUrl,
     });
+    if (!ok) {
+      try {
+        await navigator.clipboard.writeText(`${text}\n${absoluteUrl}`);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2500);
+      } catch {
+        // last-resort: ignore — the per-button Copy still works
+      }
+    }
   };
 
   return (
@@ -53,10 +66,10 @@ export function ShareButtons({ pct, locale, url }: Props) {
       <div
         className={
           'mt-3 grid gap-2 ' +
-          (locale === 'ko' && kakaoEnabled ? 'grid-cols-4' : 'grid-cols-3')
+          (locale === 'ko' ? 'grid-cols-4' : 'grid-cols-3')
         }
       >
-        {locale === 'ko' && kakaoEnabled && (
+        {locale === 'ko' && (
           <button
             type="button"
             onClick={handleKakao}
@@ -89,9 +102,9 @@ export function ShareButtons({ pct, locale, url }: Props) {
           {copied ? t('shareCopied') : t('shareCopy')}
         </button>
       </div>
-      {locale === 'ko' && !kakaoEnabled && (
-        <p className="mt-2 text-[10px] text-gray-400">
-          카카오톡 공유는 운영 시 NEXT_PUBLIC_KAKAO_APP_KEY 등록 후 활성화됩니다.
+      {copied && (
+        <p className="mt-2 text-[10px] text-emerald-600">
+          {t('shareKakaoFallback')}
         </p>
       )}
     </div>

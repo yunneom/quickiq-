@@ -53,6 +53,7 @@
     "shareFacebook": "Facebook",
     "shareCopy": "Copy link",
     "shareCopied": "Copied!",
+    "shareKakaoFallback": "Text copied — paste it into KakaoTalk",
     "disclaimer": "Estimated score, not a medical diagnosis.",
     "verbal": "Verbal",
     "numerical": "Numerical",
@@ -74,6 +75,9 @@
     "avgLabel": "Average",
     "durationLabel": "Time taken",
     "durationFormat": "{min}m {sec}s",
+    "timingTitle": "Response speed by category",
+    "timingFast": "Fast",
+    "timingSlow": "Slow",
     "summaryHookHigh": "Top-tier score. Your PDF report shows exactly which domains lift you above the average.",
     "summaryHookMid": "Balanced score around the average. Leveraging strengths and shoring up weaknesses moves the needle most.",
     "summaryHookLow": "This score doesn't show your full potential. Find your hidden strengths in the category breakdown."
@@ -95,6 +99,12 @@
     "title": "Payment complete!",
     "body": "Check your email — the detailed PDF report is on the way.",
     "viewResult": "View your result"
+  },
+  "cookies": {
+    "message": "We use cookies for anonymous analytics. Tap 'Accept' to agree to our privacy policy.",
+    "accept": "Accept",
+    "decline": "Decline",
+    "privacy": "Privacy policy"
   },
   "errors": {
     "sessionNotFound": "Test session not found.",

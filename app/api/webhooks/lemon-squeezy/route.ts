@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import * as Sentry from '@sentry/nextjs';
 import { waitUntil } from '@vercel/functions';
 import { verifyWebhookSignature } from '@/lib/payments/lemon-squeezy';
-import { getSession, updateSession } from '@/lib/session-store';
+import { getSession, updateSession, markEventProcessed } from '@/lib/session-store';
 import { isSupabaseConfigured, createSupabaseAdmin } from '@/lib/supabase/server';
 import { sendReport } from '@/lib/email/send-report';
 import { sendPurchaseEventCAPI } from '@/lib/analytics/capi';
@@ -98,6 +98,12 @@ export async function POST(req: Request) {
       Sentry.captureException(err, { tags: { area: 'webhook', step: 'supabase' }, extra: { sessionId } });
     }
   } else {
+    // In-memory fallback: dedupe by event id so an LS retry after a slow
+    // first attempt doesn't trigger a second email.
+    const seen = markEventProcessed(eventId);
+    if (seen.duplicate) {
+      return NextResponse.json({ ok: true, duplicate: true });
+    }
     updateSession(sessionId, { email, is_paid: true, paid_at: Date.now() });
   }
 

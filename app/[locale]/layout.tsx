@@ -5,6 +5,7 @@ import { locales, type Locale } from '@/i18n';
 import { notFound } from 'next/navigation';
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/next';
+import { CookieBanner } from '@/components/consent/cookie-banner';
 
 export function generateStaticParams() {
   return locales.map((locale) => ({ locale }));
@@ -64,6 +65,7 @@ export default async function LocaleLayout({
       <body className="font-sans">
         <NextIntlClientProvider messages={messages}>
           <main className="min-h-screen safe-top safe-bottom">{children}</main>
+          <CookieBanner />
         </NextIntlClientProvider>
         <Analytics />
         <SpeedInsights />

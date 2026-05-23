@@ -11,8 +11,11 @@ export default defineConfig({
   workers: 1,
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? [['github'], ['list']] : 'list',
-  timeout: 60_000,
-  expect: { timeout: 5_000 },
+  timeout: 90_000,
+  // Dev mode first-compile of a route can take ~10s; expect/visibility
+  // assertions need headroom past that. CI prod build would be much
+  // faster but we run e2e against `npm run dev`.
+  expect: { timeout: 15_000 },
 
   use: {
     baseURL: 'http://localhost:3000',

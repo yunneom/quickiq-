@@ -5,6 +5,7 @@ import { headers } from 'next/headers';
 import { Button } from '@/components/ui/button';
 import { CategoryBars } from '@/components/test/category-bars';
 import { IqDistribution } from '@/components/test/iq-distribution';
+import { TimingBars } from '@/components/test/timing-bars';
 import { ShareButtons } from '@/components/test/share-buttons';
 import { locales, type Locale } from '@/i18n';
 import type { ScoreResult } from '@/lib/scoring';
@@ -181,6 +182,13 @@ export default async function ResultPage({
           </div>
         )}
       </div>
+
+      {/* Timing per category — surface "fast intuitive" strength */}
+      {result.categoryTiming && (
+        <div className="mt-6">
+          <TimingBars timing={result.categoryTiming} />
+        </div>
+      )}
 
       {/* Share */}
       <div className="mt-8">

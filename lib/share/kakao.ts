@@ -72,7 +72,7 @@ export async function shareToKakao(args: KakaoLinkArgs): Promise<boolean> {
   try {
     await loadKakaoSdk();
     const Share = window.Kakao?.Share;
-    if (!Share) return false;
+    if (!Share || typeof Share.sendDefault !== 'function') return false;
     Share.sendDefault({
       objectType: 'feed',
       content: {
@@ -90,7 +90,9 @@ export async function shareToKakao(args: KakaoLinkArgs): Promise<boolean> {
     });
     return true;
   } catch (err) {
-    console.error('[kakao] share failed', err);
+    // Common cause in production: web platform domain not registered in
+    // the Kakao Developers console. Callers should fall back to clipboard.
+    console.warn('[kakao] share failed — falling back to clipboard:', err);
     return false;
   }
 }

@@ -53,6 +53,7 @@
     "shareFacebook": "Facebook",
     "shareCopy": "링크 복사",
     "shareCopied": "복사 완료!",
+    "shareKakaoFallback": "카카오톡 앱에 붙여넣기 — 텍스트가 복사되었어요",
     "disclaimer": "본 점수는 추정치이며 의학적 진단이 아닙니다.",
     "verbal": "언어",
     "numerical": "수리",
@@ -74,6 +75,9 @@
     "avgLabel": "평균",
     "durationLabel": "소요 시간",
     "durationFormat": "{min}분 {sec}초",
+    "timingTitle": "영역별 응답 속도",
+    "timingFast": "빠름",
+    "timingSlow": "느림",
     "summaryHookHigh": "상위권 점수입니다. 어떤 영역에서 두드러지는지 PDF에서 정확히 확인하세요.",
     "summaryHookMid": "평균에 가까운 균형 잡힌 점수예요. 강점 영역을 활용하고 약점을 보완하면 큰 차이를 만들 수 있어요.",
     "summaryHookLow": "지금 점수가 잠재력 전부를 보여주지는 않아요. 영역별 분석에서 숨겨진 강점을 찾아보세요."
@@ -95,6 +99,12 @@
     "title": "결제가 완료되었어요!",
     "body": "이메일을 확인해 주세요. 잠시 후 상세 리포트(PDF)가 도착합니다.",
     "viewResult": "결과 페이지 보기"
+  },
+  "cookies": {
+    "message": "익명 분석을 위해 쿠키를 사용합니다. 개인정보처리방침에 동의하시면 '동의'를 눌러주세요.",
+    "accept": "동의",
+    "decline": "거부",
+    "privacy": "방침 보기"
   },
   "errors": {
     "sessionNotFound": "테스트 세션을 찾을 수 없습니다.",

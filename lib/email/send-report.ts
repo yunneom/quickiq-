@@ -130,9 +130,9 @@ export async function sendReport(input: SendInput): Promise<void> {
     return;
   }
 
-  try {
+  const send = async () => {
     const resend = new Resend(RESEND_KEY);
-    const sent = await resend.emails.send({
+    return resend.emails.send({
       from: FROM,
       to: input.email,
       subject: subject(input.locale),
@@ -147,12 +147,37 @@ export async function sendReport(input: SendInput): Promise<void> {
           ]
         : undefined,
     });
-    await logEmail(input, 'sent', sent?.data?.id, null);
-  } catch (err) {
-    console.error('[email] resend failed:', err);
-    Sentry.captureException(err, { tags: { area: 'email', step: 'send' }, extra: { sessionId: input.sessionId } });
-    await logEmail(input, 'failed', null, String(err));
+  };
+
+  // Resend retry: up to 3 attempts with exponential backoff (1s, 4s).
+  // Common transient failures: Resend rate limit, momentary network hiccup
+  // in Vercel Function → KR network. We capture *only* the final error
+  // so Sentry doesn't get noisy from intermediate retries that succeeded.
+  const delays = [0, 1000, 4000];
+  let lastErr: unknown = null;
+  for (let attempt = 0; attempt < delays.length; attempt++) {
+    if (delays[attempt] > 0) {
+      await new Promise((r) => setTimeout(r, delays[attempt]));
+    }
+    try {
+      const sent = await send();
+      await logEmail(input, 'sent', sent?.data?.id, null);
+      if (attempt > 0) {
+        console.info(`[email] resend recovered on attempt ${attempt + 1}`);
+      }
+      return;
+    } catch (err) {
+      lastErr = err;
+      console.warn(`[email] resend attempt ${attempt + 1} failed:`, err);
+    }
   }
+
+  console.error('[email] resend failed after retries:', lastErr);
+  Sentry.captureException(lastErr, {
+    tags: { area: 'email', step: 'send', exhausted: 'true' },
+    extra: { sessionId: input.sessionId, attempts: delays.length },
+  });
+  await logEmail(input, 'failed', null, String(lastErr));
 }
 
 async function logEmail(
