@@ -181,6 +181,15 @@ cat .vercel/project.json
 - Vercel에 배포된 환경에서만 데이터 수집 (로컬 dev에선 비활성)
 - Cookie consent banner에서 "거부" 누르면 즉시 비활성화 (PIPA/GDPR)
 
+### Claude GitHub Action (`@claude` 멘션)
+`.github/workflows/claude.yml` — Issue / PR 코멘트에 `@claude ...` 멘션하면 자동으로 Claude가 응답합니다 (코드 변경 + PR 생성, 또는 리뷰 코멘트).
+
+활성화에 필요한 2단계:
+1. **Anthropic GitHub App 설치** — https://github.com/apps/claude → `Install` → `yunneom/quickiq-` 선택
+2. **API Key 등록** — https://console.anthropic.com/settings/keys 에서 키 발급 → Repo Settings → Secrets and variables → Actions → `New repository secret` → Name `ANTHROPIC_API_KEY`, Value 방금 받은 키
+
+설정 끝나면 GitHub에서 `@claude 이 코드 리뷰해줘` 같은 멘션이 트리거.
+
 ### Health endpoint
 **GET `/api/health`** — 외부 모니터링 도구(Pingdom, UptimeRobot 등)용 무인증 liveness 체크.
 
