@@ -15,4 +15,8 @@ test-results/
 tsconfig.tsbuildinfo
 *.tsbuildinfo
 
+# Diagnostic PDF outputs — never commit
+preview.pdf
+*.preview.pdf
+
 .vercel
