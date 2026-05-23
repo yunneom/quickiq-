@@ -5,14 +5,37 @@ import {
   Text,
   View,
   StyleSheet,
+  Font,
 } from '@react-pdf/renderer';
-import type { ScoreResult } from '@/lib/scoring';
+import type { ScoreResult, AnswerInput } from '@/lib/scoring';
+import type { Question, Category } from '@/lib/questions/types';
+
+// Register Noto Sans Korean from a CDN. @react-pdf/renderer fetches the
+// file once per process and caches it in memory. Without this, Helvetica
+// (the default) renders Korean characters as blanks/blocks in the PDF.
+// Noto fonts are public-domain licensed (SIL OFL) so safe to embed.
+Font.register({
+  family: 'NotoSansKR',
+  fonts: [
+    {
+      src: 'https://cdn.jsdelivr.net/npm/@fontsource/noto-sans-kr@5.0.18/files/noto-sans-kr-korean-400-normal.ttf',
+      fontWeight: 400,
+    },
+    {
+      src: 'https://cdn.jsdelivr.net/npm/@fontsource/noto-sans-kr@5.0.18/files/noto-sans-kr-korean-700-normal.ttf',
+      fontWeight: 700,
+    },
+  ],
+});
 
 interface Props {
   sessionId: string;
   locale: 'ko' | 'en';
   result: ScoreResult;
   generatedAt: Date;
+  /** Optional — present when the buyer should see a per-question breakdown. */
+  questions?: Question[];
+  answers?: AnswerInput[];
 }
 
 const T = {
@@ -37,6 +60,13 @@ const T = {
       logical:
         '논리 영역은 전제로부터 결론을 도출하는 연역적·귀납적 추론 능력입니다. 일상의 의사결정에서 자주 활용됩니다.',
     },
+    breakdownTitle: '문항별 분석',
+    breakdownSubtitle: '응시하신 30문항의 정답과 해설입니다.',
+    yourAnswer: '내 답',
+    correctAnswer: '정답',
+    correct: '정답',
+    incorrect: '오답',
+    skipped: '미응답',
     sessionLabel: '응시 ID',
     generatedAt: '발급일',
     disclaimer:
@@ -63,6 +93,13 @@ const T = {
       logical:
         'Logical reasoning evaluates deductive and inductive inference — drawing valid conclusions from premises in everyday decisions.',
     },
+    breakdownTitle: 'Question-by-question breakdown',
+    breakdownSubtitle: 'Your answers, the correct answers, and explanations for all 30 questions.',
+    yourAnswer: 'You',
+    correctAnswer: 'Correct',
+    correct: 'Correct',
+    incorrect: 'Wrong',
+    skipped: 'Skipped',
     sessionLabel: 'Session ID',
     generatedAt: 'Issued',
     disclaimer:
@@ -75,7 +112,14 @@ const styles = StyleSheet.create({
     padding: 48,
     fontSize: 11,
     color: '#111827',
-    fontFamily: 'Helvetica',
+    fontFamily: 'NotoSansKR',
+    backgroundColor: '#ffffff',
+  },
+  pageSecondary: {
+    padding: 36,
+    fontSize: 10,
+    color: '#111827',
+    fontFamily: 'NotoSansKR',
     backgroundColor: '#ffffff',
   },
   header: { fontSize: 22, fontWeight: 700, color: '#1d40b8', marginBottom: 4 },
@@ -110,6 +154,58 @@ const styles = StyleSheet.create({
 
   para: { fontSize: 10, color: '#374151', marginBottom: 8, lineHeight: 1.5 },
 
+  // ── per-question breakdown ──
+  bdGroupTitle: {
+    fontSize: 12,
+    fontWeight: 700,
+    color: '#1d40b8',
+    marginTop: 14,
+    marginBottom: 6,
+  },
+  bdItem: {
+    marginBottom: 8,
+    paddingLeft: 8,
+    borderLeftWidth: 2,
+    borderLeftColor: '#dde9ff',
+  },
+  bdItemWrong: { borderLeftColor: '#fca5a5' },
+  bdItemSkipped: { borderLeftColor: '#fcd34d' },
+
+  bdHeader: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    marginBottom: 2,
+  },
+  bdNum: {
+    fontSize: 9,
+    fontWeight: 700,
+    color: '#1d40b8',
+    width: 28,
+  },
+  bdResult: {
+    fontSize: 8,
+    fontWeight: 700,
+    color: '#16a34a',
+    width: 36,
+  },
+  bdResultBad: { color: '#dc2626' },
+  bdResultSkipped: { color: '#ca8a04' },
+  bdQuestion: {
+    fontSize: 9,
+    color: '#111827',
+    flex: 1,
+  },
+  bdAnswers: {
+    fontSize: 9,
+    color: '#374151',
+    marginBottom: 2,
+  },
+  bdExplanation: {
+    fontSize: 8.5,
+    color: '#4b5563',
+    lineHeight: 1.4,
+  },
+
   footerBox: {
     marginTop: 24,
     paddingTop: 12,
@@ -121,12 +217,23 @@ const styles = StyleSheet.create({
   footerRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 },
 });
 
-export function ReportPdf({ sessionId, locale, result, generatedAt }: Props) {
+const CATEGORY_ORDER: Category[] = ['verbal', 'numerical', 'spatial', 'logical'];
+
+export function ReportPdf({
+  sessionId,
+  locale,
+  result,
+  generatedAt,
+  questions,
+  answers,
+}: Props) {
   const t = T[locale];
   const cs = result.categoryScores;
+  const showBreakdown = Boolean(questions && questions.length && answers);
 
   return (
     <Document>
+      {/* ───── Page 1 — Summary ───── */}
       <Page size="A4" style={styles.page}>
         <Text style={styles.header}>{t.title}</Text>
         <Text style={styles.sub}>{t.subtitle}</Text>
@@ -177,6 +284,63 @@ export function ReportPdf({ sessionId, locale, result, generatedAt }: Props) {
           <Text style={{ marginTop: 8 }}>{t.disclaimer}</Text>
         </View>
       </Page>
+
+      {/* ───── Pages 2+ — Per-question breakdown (conditional) ───── */}
+      {showBreakdown && (
+        <Page size="A4" style={styles.pageSecondary} wrap>
+          <Text style={styles.header}>{t.breakdownTitle}</Text>
+          <Text style={styles.sub}>{t.breakdownSubtitle}</Text>
+
+          {CATEGORY_ORDER.map((cat) => {
+            const catQuestions = (questions ?? []).filter((q) => q.category === cat);
+            if (!catQuestions.length) return null;
+            return (
+              <View key={cat} wrap>
+                <Text style={styles.bdGroupTitle}>{t[cat]}</Text>
+                {catQuestions.map((q) => {
+                  const a = answers?.find((x) => x.question_id === q.id);
+                  const userAns = a?.selected_id ?? null;
+                  const isCorrect = userAns === q.correct_id;
+                  const skipped = userAns == null;
+                  return (
+                    <View
+                      key={q.id}
+                      style={[
+                        styles.bdItem,
+                        skipped ? styles.bdItemSkipped : !isCorrect ? styles.bdItemWrong : {},
+                      ]}
+                      wrap={false}
+                    >
+                      <View style={styles.bdHeader}>
+                        <Text style={styles.bdNum}>{q.order_index}.</Text>
+                        <Text
+                          style={[
+                            styles.bdResult,
+                            skipped
+                              ? styles.bdResultSkipped
+                              : !isCorrect
+                                ? styles.bdResultBad
+                                : {},
+                          ]}
+                        >
+                          {skipped ? t.skipped : isCorrect ? t.correct : t.incorrect}
+                        </Text>
+                        <Text style={styles.bdQuestion}>{q.question_text}</Text>
+                      </View>
+                      <Text style={styles.bdAnswers}>
+                        {t.yourAnswer}: {userAns ?? '—'}   ·   {t.correctAnswer}: {q.correct_id}
+                      </Text>
+                      {q.explanation && (
+                        <Text style={styles.bdExplanation}>{q.explanation}</Text>
+                      )}
+                    </View>
+                  );
+                })}
+              </View>
+            );
+          })}
+        </Page>
+      )}
     </Document>
   );
 }

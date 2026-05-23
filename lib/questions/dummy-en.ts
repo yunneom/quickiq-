@@ -16,7 +16,8 @@ export const dummyEnQuestions: Question[] = [
       { id: 'D', text: 'Grape' },
     ],
     correct_id: 'C',
-    explanation: 'Carrot is a vegetable; the others are fruits.',
+    explanation:
+      'Answer: C (Carrot). Apple, pear, and grape are fruits; carrot is a root vegetable. Tests the ability to group objects under a shared superordinate category.',
   },
   {
     id: 'en-002',
@@ -32,7 +33,8 @@ export const dummyEnQuestions: Question[] = [
       { id: 'D', text: 'surprised' },
     ],
     correct_id: 'B',
-    explanation: '"Delighted" is the closest synonym for "joyful".',
+    explanation:
+      'Answer: B (delighted). A is an antonym, C is a negative emotion, D is neutral. Only "delighted" shares the positive-emotion register of "joyful".',
   },
   {
     id: 'en-003',
@@ -48,7 +50,8 @@ export const dummyEnQuestions: Question[] = [
       { id: 'D', text: 'deep' },
     ],
     correct_id: 'A',
-    explanation: 'The antonym of "wide" is "narrow".',
+    explanation:
+      'Answer: A (narrow). B, C, and D each describe a different spatial dimension; only "narrow" is the direct opposite of "wide".',
   },
   {
     id: 'en-004',
@@ -64,7 +67,8 @@ export const dummyEnQuestions: Question[] = [
       { id: 'D', text: 'pencil' },
     ],
     correct_id: 'D',
-    explanation: 'A pencil is a writing tool; the others are furniture.',
+    explanation:
+      'Answer: D (pencil). Chair, desk, and bed are all furniture; a pencil is a writing tool. Tests functional categorization.',
   },
   {
     id: 'en-005',
@@ -81,7 +85,7 @@ export const dummyEnQuestions: Question[] = [
     ],
     correct_id: 'B',
     explanation:
-      'The pattern is profession-to-workplace. A doctor works at a hospital; a teacher works at a school. Students, lessons, and textbooks are all elements within a school but do not match the "workplace" relation.',
+      'Answer: B (School). The pattern is profession → workplace. A, C, and D are elements within a school, but they are not the workplace itself.',
   },
   {
     id: 'en-006',
@@ -97,7 +101,8 @@ export const dummyEnQuestions: Question[] = [
       { id: 'D', text: 'watch' },
     ],
     correct_id: 'B',
-    explanation: 'A sock covers the foot; a glove covers the hand.',
+    explanation:
+      'Answer: B (glove). The relation is body part → clothing that covers it. A covers the foot, C covers the head, D is an accessory — none match.',
   },
   {
     id: 'en-007',
@@ -113,7 +118,8 @@ export const dummyEnQuestions: Question[] = [
       { id: 'D', text: 'massive' },
     ],
     correct_id: 'C',
-    explanation: '"Tiny" means small; the others all mean "very large".',
+    explanation:
+      'Answer: C (tiny). A, B, and D all mean "very large"; only "tiny" carries the opposite meaning.',
   },
   {
     id: 'en-008',
@@ -129,7 +135,8 @@ export const dummyEnQuestions: Question[] = [
       { id: 'D', text: 'palette' },
     ],
     correct_id: 'C',
-    explanation: 'A pen is used for writing; a brush is used for painting.',
+    explanation:
+      'Answer: C (painting). The relation is tool → output. A, B, and D are materials/tools used with a brush, not the resulting creative output.',
   },
 
   // ───── Numerical (8) ─────
@@ -147,7 +154,8 @@ export const dummyEnQuestions: Question[] = [
       { id: 'D', text: '14' },
     ],
     correct_id: 'B',
-    explanation: 'Arithmetic progression of +2. 8 + 2 = 10.',
+    explanation:
+      'Answer: B (10). Arithmetic progression with common difference 2. 8 + 2 = 10. Tests the most basic sequence-pattern recognition.',
   },
   {
     id: 'en-010',
@@ -163,7 +171,8 @@ export const dummyEnQuestions: Question[] = [
       { id: 'D', text: '60' },
     ],
     correct_id: 'C',
-    explanation: 'Geometric progression of ×2. 24 × 2 = 48.',
+    explanation:
+      'Answer: C (48). Geometric progression with ratio 2 (each term doubles). 24 × 2 = 48. A (+12) is the trap of mistaking it for arithmetic.',
   },
   {
     id: 'en-011',
@@ -179,7 +188,8 @@ export const dummyEnQuestions: Question[] = [
       { id: 'D', text: '$3.00' },
     ],
     correct_id: 'B',
-    explanation: 'Each apple is $0.40. 5 × $0.40 = $2.00.',
+    explanation:
+      'Answer: B ($2.00). Unit price is $0.40 → 5 × $0.40 = $2.00. Tests proportional reasoning and unit conversion.',
   },
   {
     id: 'en-012',
@@ -195,7 +205,8 @@ export const dummyEnQuestions: Question[] = [
       { id: 'D', text: '21' },
     ],
     correct_id: 'B',
-    explanation: 'Fibonacci sequence: each term is the sum of the two before. 5 + 8 = 13.',
+    explanation:
+      'Answer: B (13). Fibonacci sequence — each term is the sum of the previous two. 5 + 8 = 13. Tests recognition of non-linear patterns.',
   },
   {
     id: 'en-013',
@@ -211,7 +222,8 @@ export const dummyEnQuestions: Question[] = [
       { id: 'D', text: '32' },
     ],
     correct_id: 'C',
-    explanation: 'Perfect squares: 1², 2², 3², 4², 5², 6². Missing: 5² = 25.',
+    explanation:
+      'Answer: C (25). Perfect squares: 1², 2², 3², 4², 5², 6². The fifth term is 5² = 25. Spotting "×self" rather than "+constant" is the key.',
   },
   {
     id: 'en-014',
@@ -227,7 +239,8 @@ export const dummyEnQuestions: Question[] = [
       { id: 'D', text: '47' },
     ],
     correct_id: 'D',
-    explanation: 'Each term equals the previous × 2 + 1. 23 × 2 + 1 = 47.',
+    explanation:
+      'Answer: D (47). Each term equals the previous one multiplied by 2 plus 1 (×2 +1). 23 × 2 + 1 = 47. Tests recognition of compound operations.',
   },
   {
     id: 'en-015',
@@ -243,7 +256,8 @@ export const dummyEnQuestions: Question[] = [
       { id: 'D', text: '8' },
     ],
     correct_id: 'B',
-    explanation: '(4 + 7 + 11) / 3 = 22 / 3 ≈ 7.3.',
+    explanation:
+      'Answer: B (7.3). Sum 22 ÷ 3 ≈ 7.333. The trap is A (7), the median — averages are pulled by every value, not just the middle.',
   },
   {
     id: 'en-016',
@@ -260,7 +274,8 @@ export const dummyEnQuestions: Question[] = [
       { id: 'D', text: '120°' },
     ],
     correct_id: 'C',
-    explanation: '360° / 12 = 30° per hour mark. 3 marks apart = 90°.',
+    explanation:
+      'Answer: C (90°). 360° / 12 hour marks = 30° per mark; 3 marks apart = 3 × 30° = 90°. Combines geometry with arithmetic.',
   },
 
   // ───── Spatial (7) ─────
@@ -280,7 +295,8 @@ export const dummyEnQuestions: Question[] = [
       { id: 'D', text: '6' },
     ],
     correct_id: 'B',
-    explanation: 'A cube has 6 faces arranged in 3 opposing pairs.',
+    explanation:
+      'Answer: B (3). A cube has 6 faces arranged in opposing pairs: 6 ÷ 2 = 3. Tests basic understanding of 3D solid properties.',
   },
   {
     id: 'en-018',
@@ -297,7 +313,8 @@ export const dummyEnQuestions: Question[] = [
       { id: 'D', figure_id: 'f-mirror' },
     ],
     correct_id: 'A',
-    explanation: 'Rotating "F" 90° clockwise puts the top of the F on the right.',
+    explanation:
+      'Answer: A. Rotating "F" 90° clockwise places its top on the right. B is 180°, C is 270°, D is a mirror image — different transformations.',
   },
   {
     id: 'en-019',
@@ -314,7 +331,8 @@ export const dummyEnQuestions: Question[] = [
       { id: 'D', text: '18' },
     ],
     correct_id: 'C',
-    explanation: 'The hidden faces are 6, 5, and 4. 6 + 5 + 4 = 15.',
+    explanation:
+      'Answer: C (15). Hidden faces are the opposites: 6 + 5 + 4 = 15. Shortcut: opposite faces always sum to 7, so 3 × 7 − (1+2+3) = 15.',
   },
   {
     id: 'en-020',
@@ -332,7 +350,7 @@ export const dummyEnQuestions: Question[] = [
     ],
     correct_id: 'A',
     explanation:
-      'A mirror image is a horizontal flip — distinct from a rotation (180° or 90°).',
+      'Answer: A. A mirror image flips left-right only. B is a 180° rotation (flips both ways), C and D are rotations — none match a true mirror reflection.',
   },
   {
     id: 'en-021',
@@ -349,7 +367,8 @@ export const dummyEnQuestions: Question[] = [
       { id: 'D', text: '4' },
     ],
     correct_id: 'B',
-    explanation: 'One horizontal crease and one vertical crease = 2 lines total.',
+    explanation:
+      'Answer: B (2). One horizontal crease + one vertical crease = 2 lines total. Tests the ability to mentally replay a sequence of folds.',
   },
   {
     id: 'en-022',
@@ -367,7 +386,8 @@ export const dummyEnQuestions: Question[] = [
       { id: 'D', text: '27' },
     ],
     correct_id: 'C',
-    explanation: 'Step 1 (1) + Step 2 (4) + Step 3 (9) = 14 cubes.',
+    explanation:
+      'Answer: C (14). Step 1 (1²=1) + Step 2 (2²=4) + Step 3 (3²=9) = 14. D (27) is the trap of confusing this with a solid 3×3×3 cube.',
   },
   {
     id: 'en-023',
@@ -385,7 +405,8 @@ export const dummyEnQuestions: Question[] = [
       { id: 'D', text: '12' },
     ],
     correct_id: 'C',
-    explanation: 'Only corner cubes have 3 painted faces; a cube has 8 corners.',
+    explanation:
+      'Answer: C (8). Only corner cubes are painted on three sides, and a cube has 8 corners. B (6) is the face count, D (12) is the edge count — both common traps.',
   },
 
   // ───── Logical (7) ─────
@@ -404,7 +425,8 @@ export const dummyEnQuestions: Question[] = [
       { id: 'D', text: 'Cannot be determined.' },
     ],
     correct_id: 'A',
-    explanation: 'Classic syllogism — if the premises are true, the conclusion follows.',
+    explanation:
+      'Answer: A. Classic syllogism (major + minor premise → conclusion). When both premises are true, the conclusion must follow — "cannot be determined" is wrong.',
   },
   {
     id: 'en-025',
@@ -420,7 +442,8 @@ export const dummyEnQuestions: Question[] = [
       { id: 'D', text: 'Cannot be determined.' },
     ],
     correct_id: 'B',
-    explanation: 'Modus tollens: denying the consequent denies the antecedent.',
+    explanation:
+      'Answer: B. Modus tollens: if "P → Q" is true, then "not Q → not P" is also true. Denying the consequent denies the antecedent.',
   },
   {
     id: 'en-026',
@@ -437,7 +460,8 @@ export const dummyEnQuestions: Question[] = [
       { id: 'D', text: 'D' },
     ],
     correct_id: 'D',
-    explanation: 'A > B > C > D, so D is the shortest.',
+    explanation:
+      'Answer: D. By transitivity (A > B > C > D), D is shorter than everyone. Tests ordering and inequality composition.',
   },
   {
     id: 'en-027',
@@ -454,7 +478,8 @@ export const dummyEnQuestions: Question[] = [
       { id: 'D', text: 'Sunday' },
     ],
     correct_id: 'B',
-    explanation: 'Yesterday Tue → today Wed → tomorrow Thu → day after = Friday.',
+    explanation:
+      'Answer: B (Friday). Yesterday Tue → today Wed → tomorrow Thu → day after = Fri. Requires careful placement on a time axis.',
   },
   {
     id: 'en-028',
@@ -470,7 +495,8 @@ export const dummyEnQuestions: Question[] = [
       { id: 'D', text: 'Rabbit' },
     ],
     correct_id: 'D',
-    explanation: 'Lion, tiger, and leopard are big cats; rabbit is not a feline.',
+    explanation:
+      'Answer: D (Rabbit). A, B, and C are all big cats (family Felidae); rabbit belongs to a different order (Lagomorpha). The classifier is family-level taxonomy, not just "animal".',
   },
   {
     id: 'en-029',
@@ -487,7 +513,8 @@ export const dummyEnQuestions: Question[] = [
       { id: 'D', text: 'E' },
     ],
     correct_id: 'C',
-    explanation: 'Order from front to back: D — C — A — B — E. D is at the front.',
+    explanation:
+      'Answer: C (D). Composing the constraints yields D → C → A → B → E. Multiple conditions converge to a single unique ordering.',
   },
   {
     id: 'en-030',
@@ -505,6 +532,6 @@ export const dummyEnQuestions: Question[] = [
     ],
     correct_id: 'C',
     explanation:
-      'A truth-teller answers "Yes" truthfully. A liar also answers "Yes" because they lie about being a liar. Both possible.',
+      'Answer: C. A truth-teller answers "Yes" honestly; a liar also answers "Yes" because they lie about being a liar. Both produce the same answer, so they are indistinguishable.',
   },
 ];

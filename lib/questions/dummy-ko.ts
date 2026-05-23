@@ -16,7 +16,8 @@ export const dummyKoQuestions: Question[] = [
       { id: 'D', text: '포도' },
     ],
     correct_id: 'C',
-    explanation: '당근은 채소이고, 나머지는 모두 과일입니다.',
+    explanation:
+      '정답은 C(당근). 사과·배·포도는 모두 과일이지만 당근은 채소(뿌리식물)입니다. 상위 카테고리로 분류하는 어휘 능력을 측정합니다.',
   },
   {
     id: 'ko-002',
@@ -32,7 +33,8 @@ export const dummyKoQuestions: Question[] = [
       { id: 'D', text: '놀라다' },
     ],
     correct_id: 'B',
-    explanation: '"기쁘다"와 가장 가까운 의미는 "즐겁다"입니다.',
+    explanation:
+      '정답은 B(즐겁다). "기쁘다"와 가장 가까운 감정 어휘입니다. A는 반의어, C는 부정 감정, D는 중립 감정이라 의미가 다릅니다.',
   },
   {
     id: 'ko-003',
@@ -48,7 +50,8 @@ export const dummyKoQuestions: Question[] = [
       { id: 'D', text: '깊다' },
     ],
     correct_id: 'A',
-    explanation: '"넓다"의 반의어는 "좁다"입니다.',
+    explanation:
+      '정답은 A(좁다). B/C/D는 모두 공간의 다른 차원(길이·높이·깊이)을 가리키지만, 면적의 반대 개념은 "좁다"뿐입니다.',
   },
   {
     id: 'ko-004',
@@ -64,7 +67,8 @@ export const dummyKoQuestions: Question[] = [
       { id: 'D', text: '연필' },
     ],
     correct_id: 'D',
-    explanation: '연필은 필기구입니다. 나머지는 가구입니다.',
+    explanation:
+      '정답은 D(연필). 의자·책상·침대는 모두 가구이지만 연필은 필기구입니다. 사물을 기능별로 분류하는 능력을 봅니다.',
   },
   {
     id: 'ko-005',
@@ -81,7 +85,7 @@ export const dummyKoQuestions: Question[] = [
     ],
     correct_id: 'B',
     explanation:
-      '직업과 일하는 장소의 관계입니다. 의사가 병원에서 일하듯, 선생님은 학교에서 일합니다. 학생·수업·교과서는 모두 학교 안의 요소들이지만 "일하는 장소"라는 관계에는 해당하지 않습니다.',
+      '정답은 B(학교). 직업과 일하는 장소의 관계입니다. A/C/D는 학교 안의 요소들이지만 "일하는 장소"라는 관계에는 해당하지 않습니다.',
   },
   {
     id: 'ko-006',
@@ -97,7 +101,8 @@ export const dummyKoQuestions: Question[] = [
       { id: 'D', text: '시계' },
     ],
     correct_id: 'B',
-    explanation: '발에 양말을 신듯, 손에는 장갑을 낍니다.',
+    explanation:
+      '정답은 B(장갑). 신체 부위와 그 부위를 감싸는 의복의 관계입니다. A는 발에, C는 머리에, D는 손목 액세서리라 관계가 다릅니다.',
   },
   {
     id: 'ko-007',
@@ -113,7 +118,8 @@ export const dummyKoQuestions: Question[] = [
       { id: 'D', text: '방대하다' },
     ],
     correct_id: 'C',
-    explanation: '협소하다는 좁다는 뜻이며, 나머지는 모두 "크다/넓다"를 의미합니다.',
+    explanation:
+      '정답은 C(협소하다 = 좁다). A·B·D는 모두 "크다/넓다"를 의미하는 유의어이므로 의미가 정반대인 C가 답입니다.',
   },
   {
     id: 'ko-008',
@@ -129,7 +135,8 @@ export const dummyKoQuestions: Question[] = [
       { id: 'D', text: '벼루' },
     ],
     correct_id: 'C',
-    explanation: '펜으로 글을 쓰듯, 붓으로 그림을 그립니다.',
+    explanation:
+      '정답은 C(그림). 도구와 그 도구로 만드는 결과물의 관계입니다. A·B·D는 붓과 함께 쓰이는 재료/도구지만 "결과물"은 아닙니다.',
   },
 
   // ───── 수리 추론 (8문항) ─────
@@ -147,7 +154,8 @@ export const dummyKoQuestions: Question[] = [
       { id: 'D', text: '14' },
     ],
     correct_id: 'B',
-    explanation: '공차 2의 등차수열입니다. 8 + 2 = 10.',
+    explanation:
+      '정답은 B(10). 공차 2의 등차수열입니다. 8 + 2 = 10. 가장 기본적인 수열 패턴 인식을 봅니다.',
   },
   {
     id: 'ko-010',
@@ -163,7 +171,8 @@ export const dummyKoQuestions: Question[] = [
       { id: 'D', text: '60' },
     ],
     correct_id: 'C',
-    explanation: '공비 2의 등비수열입니다. 24 × 2 = 48.',
+    explanation:
+      '정답은 C(48). 공비 2의 등비수열입니다(매번 2배). 24 × 2 = 48. A(+12)는 등차수열로 잘못 계산한 함정입니다.',
   },
   {
     id: 'ko-011',
@@ -179,7 +188,8 @@ export const dummyKoQuestions: Question[] = [
       { id: 'D', text: '3,000원' },
     ],
     correct_id: 'B',
-    explanation: '1개당 400원. 5 × 400 = 2,000원.',
+    explanation:
+      '정답은 B(2,000원). 1개당 단가 400원 → 5 × 400 = 2,000원. 비례 추론과 단위 환산 능력을 측정합니다.',
   },
   {
     id: 'ko-012',
@@ -195,7 +205,8 @@ export const dummyKoQuestions: Question[] = [
       { id: 'D', text: '21' },
     ],
     correct_id: 'B',
-    explanation: '피보나치 수열. 앞의 두 수의 합. 5 + 8 = 13.',
+    explanation:
+      '정답은 B(13). 피보나치 수열로, 앞 두 수의 합이 다음 수입니다. 5 + 8 = 13. 비선형 패턴 인식을 봅니다.',
   },
   {
     id: 'ko-013',
@@ -211,7 +222,8 @@ export const dummyKoQuestions: Question[] = [
       { id: 'D', text: '32' },
     ],
     correct_id: 'C',
-    explanation: '각 항은 1², 2², 3², 4², 5², 6². 따라서 5² = 25.',
+    explanation:
+      '정답은 C(25). 각 항이 1², 2², 3², 4², 5², 6²인 제곱수열입니다. 5의 제곱 = 25. 패턴이 "+a"가 아닌 "×자기 자신"임을 잡아내는 게 핵심.',
   },
   {
     id: 'ko-014',
@@ -227,7 +239,8 @@ export const dummyKoQuestions: Question[] = [
       { id: 'D', text: '47' },
     ],
     correct_id: 'D',
-    explanation: '각 항은 앞 항에 2를 곱하고 1을 더한 값. 23 × 2 + 1 = 47.',
+    explanation:
+      '정답은 D(47). 각 항은 직전 항에 2를 곱하고 1을 더한 값입니다 (×2 +1). 23 × 2 + 1 = 47. 복합 연산 패턴을 잡는 능력을 봅니다.',
   },
   {
     id: 'ko-015',
@@ -243,7 +256,8 @@ export const dummyKoQuestions: Question[] = [
       { id: 'D', text: '8' },
     ],
     correct_id: 'B',
-    explanation: '(4 + 7 + 11) / 3 = 22 / 3 ≈ 7.3.',
+    explanation:
+      '정답은 B(7.3). 합 22 ÷ 개수 3 ≈ 7.333. 중앙값 7(A)과 헷갈리기 쉬운 함정 — 평균은 모든 값의 영향을 받습니다.',
   },
   {
     id: 'ko-016',
@@ -259,7 +273,8 @@ export const dummyKoQuestions: Question[] = [
       { id: 'D', text: '120도' },
     ],
     correct_id: 'C',
-    explanation: '시계는 360도를 12로 나눠 한 칸당 30도. 3칸 차이이므로 90도.',
+    explanation:
+      '정답은 C(90도). 시계 한 바퀴 360°를 12로 나누면 한 시간 칸은 30°. 3시간 차이 = 3 × 30° = 90°. 기하와 산술이 결합된 응용 문제.',
   },
 
   // ───── 공간 추론 (7문항) ─────
@@ -279,7 +294,8 @@ export const dummyKoQuestions: Question[] = [
       { id: 'D', text: '6쌍' },
     ],
     correct_id: 'B',
-    explanation: '정육면체는 6면이고, 마주 보는 면은 항상 3쌍입니다.',
+    explanation:
+      '정답은 B(3쌍). 정육면체는 6면이고 항상 2면씩 마주 보므로 6 ÷ 2 = 3쌍. 입체의 기본 속성에 대한 이해를 봅니다.',
   },
   {
     id: 'ko-018',
@@ -296,7 +312,8 @@ export const dummyKoQuestions: Question[] = [
       { id: 'D', figure_id: 'f-mirror' },
     ],
     correct_id: 'A',
-    explanation: '"F"를 시계방향으로 90도 회전하면 위쪽이 오른쪽으로 향한 모양이 됩니다.',
+    explanation:
+      '정답은 A. "F"를 시계방향 90도 회전하면 윗부분이 오른쪽으로 향합니다. B는 180도, C는 270도, D는 거울상이라 다른 변환입니다.',
   },
   {
     id: 'ko-019',
@@ -313,7 +330,8 @@ export const dummyKoQuestions: Question[] = [
       { id: 'D', text: '18' },
     ],
     correct_id: 'C',
-    explanation: '6 + 5 + 4 = 15.',
+    explanation:
+      '정답은 C(15). 보이지 않는 면은 보이는 면의 반대편이므로 6+5+4 = 15. 마주 보는 면의 합이 항상 7임을 이용하면 3 × 7 - (1+2+3) = 15로도 풀립니다.',
   },
   {
     id: 'ko-020',
@@ -331,7 +349,7 @@ export const dummyKoQuestions: Question[] = [
     ],
     correct_id: 'A',
     explanation:
-      '거울상은 좌우 반전된 모습입니다. 회전된 모양(180도/90도)과는 구별되어야 합니다.',
+      '정답은 A. 거울상은 좌우만 반전된 모습입니다. B는 상하좌우가 모두 뒤집힌 180도 회전이고, C·D는 회전이므로 거울상과는 구분됩니다.',
   },
   {
     id: 'ko-021',
@@ -348,7 +366,8 @@ export const dummyKoQuestions: Question[] = [
       { id: 'D', text: '4줄' },
     ],
     correct_id: 'B',
-    explanation: '서로 다른 방향으로 한 번씩 접었으므로 2줄(가로 1, 세로 1)이 됩니다.',
+    explanation:
+      '정답은 B(2줄). 가로 1번, 세로 1번 접었으므로 가로 자국 1줄 + 세로 자국 1줄 = 2줄입니다. 접기 순서를 머릿속에서 되짚어 시각화하는 능력을 봅니다.',
   },
   {
     id: 'ko-022',
@@ -365,7 +384,8 @@ export const dummyKoQuestions: Question[] = [
       { id: 'D', text: '27개' },
     ],
     correct_id: 'C',
-    explanation: '1단(1) + 2단(4) + 3단(9) = 14개입니다.',
+    explanation:
+      '정답은 C(14개). 1단(1²=1) + 2단(2²=4) + 3단(3²=9) = 14. D(27)는 3×3×3 정육면체로 잘못 계산한 함정입니다.',
   },
   {
     id: 'ko-023',
@@ -383,7 +403,8 @@ export const dummyKoQuestions: Question[] = [
       { id: 'D', text: '12개' },
     ],
     correct_id: 'C',
-    explanation: '꼭짓점에 위치한 작은 정육면체만 세 면이 칠해지며, 꼭짓점은 8개입니다.',
+    explanation:
+      '정답은 C(8개). 세 면이 칠해지는 것은 꼭짓점에 위치한 큐브뿐이고, 정육면체의 꼭짓점은 8개입니다. B(6)는 면, D(12)는 모서리 개수로 헷갈리기 쉽습니다.',
   },
 
   // ───── 논리 추론 (7문항) ─────
@@ -401,7 +422,8 @@ export const dummyKoQuestions: Question[] = [
       { id: 'D', text: '알 수 없다' },
     ],
     correct_id: 'A',
-    explanation: '삼단논법: 대전제가 참이면 결론도 참입니다.',
+    explanation:
+      '정답은 A. 전형적인 삼단논법(대전제 + 소전제 → 결론). 두 전제가 참이면 결론도 반드시 참이므로 "알 수 없다"는 답이 될 수 없습니다.',
   },
   {
     id: 'ko-025',
@@ -417,7 +439,8 @@ export const dummyKoQuestions: Question[] = [
       { id: 'D', text: '알 수 없다' },
     ],
     correct_id: 'B',
-    explanation: '대우 명제: 후건 부정은 전건 부정으로 이어집니다.',
+    explanation:
+      '정답은 B. 대우 명제(modus tollens)의 적용입니다. "P이면 Q이다"가 참이면 "Q가 아니면 P가 아니다"도 참. 후건 부정 → 전건 부정.',
   },
   {
     id: 'ko-026',
@@ -434,7 +457,8 @@ export const dummyKoQuestions: Question[] = [
       { id: 'D', text: 'D' },
     ],
     correct_id: 'D',
-    explanation: 'A > B > C > D 이므로 D가 가장 작습니다.',
+    explanation:
+      '정답은 D. 추이적 관계(A > B > C > D)에 의해 D가 모든 사람보다 작습니다. 순서 추론과 부등호 합성 능력을 봅니다.',
   },
   {
     id: 'ko-027',
@@ -451,7 +475,8 @@ export const dummyKoQuestions: Question[] = [
       { id: 'D', text: '일요일' },
     ],
     correct_id: 'B',
-    explanation: '어제 화요일 → 오늘 수요일 → 내일 목요일 → 모레 금요일.',
+    explanation:
+      '정답은 B(금요일). 어제가 화요일이면 오늘은 수요일, 내일은 목요일, 모레는 금요일입니다. 시간 축에서의 정확한 위치 파악이 필요한 문항.',
   },
   {
     id: 'ko-028',
@@ -467,7 +492,8 @@ export const dummyKoQuestions: Question[] = [
       { id: 'D', text: '토끼' },
     ],
     correct_id: 'D',
-    explanation: '사자, 호랑이, 표범은 모두 고양잇과 맹수이지만 토끼는 토끼목입니다.',
+    explanation:
+      '정답은 D(토끼). A·B·C는 고양잇과 맹수이지만 토끼는 토끼목입니다. 분류 기준이 단순 동물이 아니라 "분류학적 과(family)" 단위라는 점이 핵심.',
   },
   {
     id: 'ko-029',
@@ -484,7 +510,8 @@ export const dummyKoQuestions: Question[] = [
       { id: 'D', text: '무' },
     ],
     correct_id: 'C',
-    explanation: '순서: 정 - 병 - 갑 - 을 - 무. 정이 맨 앞.',
+    explanation:
+      '정답은 C(정). 조건을 합치면 정 → 병 → 갑 → 을 → 무 순서. 여러 조건을 합성하여 유일한 정답을 도출하는 추리 문제.',
   },
   {
     id: 'ko-030',
@@ -502,6 +529,6 @@ export const dummyKoQuestions: Question[] = [
     ],
     correct_id: 'C',
     explanation:
-      '진실을 말하는 사람은 "네"라고 답하고, 거짓말하는 사람도 자신이 진실하다고 거짓말로 "네"라고 답합니다. 둘 다 가능.',
+      '정답은 C. 진실을 말하는 사람은 사실대로 "네"라 답하고, 거짓말쟁이도 자기가 진실하다고 거짓으로 "네"라 답합니다. 같은 답이 나오므로 구분 불가.',
   },
 ];

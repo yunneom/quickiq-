@@ -1,7 +1,9 @@
 import { Resend } from 'resend';
 import * as Sentry from '@sentry/nextjs';
 import { renderReportPdf } from '@/lib/pdf/render';
-import type { ScoreResult } from '@/lib/scoring';
+import { getQuestions } from '@/lib/questions';
+import { getSession } from '@/lib/session-store';
+import type { ScoreResult, AnswerInput } from '@/lib/scoring';
 import {
   isSupabaseConfigured,
   createSupabaseAdmin,
@@ -33,12 +35,21 @@ export async function sendReport(input: SendInput): Promise<void> {
     return;
   }
 
+  // Pull the original questions + the buyer's answers so we can embed a
+  // per-question breakdown in the PDF. Falls back to the summary-only PDF
+  // if the session is gone (e.g. memory cleared by a restart).
+  const session = getSession(input.sessionId);
+  const questions = getQuestions(input.locale);
+  const answers: AnswerInput[] | undefined = session?.answers;
+
   let pdfBuffer: Buffer | null = null;
   try {
     pdfBuffer = await renderReportPdf({
       sessionId: input.sessionId,
       locale: input.locale,
       result: input.result,
+      questions: answers ? questions : undefined,
+      answers,
     });
   } catch (err) {
     console.error('[email] PDF render failed:', err);
