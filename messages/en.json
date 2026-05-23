@@ -14,7 +14,12 @@
     "trustThree": "$7.50 PDF report — includes all 30 explanations",
     "disclaimer": "Estimated score, not a clinical diagnosis.",
     "footerPrivacy": "Privacy Policy",
-    "footerTerms": "Terms of Service"
+    "footerTerms": "Terms of Service",
+    "variantB": {
+      "headline": "Find your real IQ\nin 30 questions",
+      "sub": "Free psychometric test.\nVerbal · numerical · spatial · logical strengths — in 7 minutes.",
+      "cta": "Take the test · Free"
+    }
   },
   "test": {
     "loading": "Preparing your test...",
@@ -42,7 +47,7 @@
     "lockNotice": "Per-category scores, age-group comparison, and 30-question explanations — all in your PDF report.",
     "buyCta": "$7.50 · Get the full report (PDF · all 30 explained)",
     "shareTitle": "Share your result",
-    "shareText": "I scored top {pct}% on the estimated IQ test! How about you?",
+    "shareText": "I just scored top {pct}% — care to try? (7 min)",
     "shareKakao": "KakaoTalk",
     "shareX": "X (Twitter)",
     "shareFacebook": "Facebook",
@@ -98,6 +103,8 @@
     "pageError": "Something went wrong",
     "pageErrorBody": "Please try again. Contact us if the issue persists.",
     "retry": "Try again",
-    "goHome": "Go home"
+    "goHome": "Go home",
+    "notFoundTitle": "Page not found",
+    "notFoundBody": "The page may have moved or no longer exists."
   }
 }

@@ -14,6 +14,12 @@ export default async function LandingPage({
   const tMeta = await getTranslations('meta');
   const base = process.env.NEXT_PUBLIC_APP_URL ?? 'https://7iq.vercel.app';
   const loc = (locale === 'en' ? 'en' : 'ko') as 'ko' | 'en';
+  // A/B variant: set NEXT_PUBLIC_LANDING_VARIANT=b on Vercel to swap.
+  // Defaults to 'a' for stable copy under live traffic.
+  const variant = process.env.NEXT_PUBLIC_LANDING_VARIANT === 'b' ? 'b' : 'a';
+  const headline = variant === 'b' ? t('variantB.headline') : t('headline');
+  const sub = variant === 'b' ? t('variantB.sub') : t('sub');
+  const cta = variant === 'b' ? t('variantB.cta') : t('cta');
 
   return (
     <>
@@ -34,10 +40,10 @@ export default async function LandingPage({
 
         <div className="mt-10 flex-1">
           <h1 className="whitespace-pre-line text-4xl font-extrabold leading-tight text-gray-900">
-            {t('headline')}
+            {headline}
           </h1>
           <p className="mt-5 whitespace-pre-line text-base leading-relaxed text-gray-600">
-            {t('sub')}
+            {sub}
           </p>
 
           <ul className="mt-8 space-y-3 text-sm text-gray-700">
@@ -50,7 +56,7 @@ export default async function LandingPage({
         <div className="sticky bottom-0 mt-10 bg-gradient-to-t from-[#fafafa] via-[#fafafa] to-transparent pb-2 pt-6">
           <Link href={`/${locale}/test`} prefetch>
             <Button size="lg" className="w-full" data-testid="cta-start">
-              {t('cta')}
+              {cta}
             </Button>
           </Link>
           <p className="mt-3 text-center text-xs text-gray-500">

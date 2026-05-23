@@ -31,6 +31,14 @@ export interface CategoryScores {
   logical: number;
 }
 
+export interface CategoryTiming {
+  /** Average response time per question in this category, in milliseconds. */
+  verbal: number;
+  numerical: number;
+  spatial: number;
+  logical: number;
+}
+
 export interface ScoreResult {
   rawScore: number;
   total: number;
@@ -38,6 +46,8 @@ export interface ScoreResult {
   /** "Top N%" — what users see. Lower = smarter. */
   topPercentile: number;
   categoryScores: CategoryScores;
+  /** Optional — present when timing data is available. */
+  categoryTiming?: CategoryTiming;
 }
 
 function clamp(n: number, lo: number, hi: number) {
@@ -108,6 +118,33 @@ export function computeCategoryScores(
   };
 }
 
+function computeCategoryTiming(
+  questions: Question[],
+  answers: AnswerInput[],
+): CategoryTiming {
+  const acc: Record<Category, { total: number; count: number }> = {
+    verbal: { total: 0, count: 0 },
+    numerical: { total: 0, count: 0 },
+    spatial: { total: 0, count: 0 },
+    logical: { total: 0, count: 0 },
+  };
+  for (const q of questions) {
+    const a = answers.find((x) => x.question_id === q.id);
+    if (a && a.time_ms > 0) {
+      acc[q.category].total += a.time_ms;
+      acc[q.category].count += 1;
+    }
+  }
+  const avg = (b: { total: number; count: number }) =>
+    b.count === 0 ? 0 : Math.round(b.total / b.count);
+  return {
+    verbal: avg(acc.verbal),
+    numerical: avg(acc.numerical),
+    spatial: avg(acc.spatial),
+    logical: avg(acc.logical),
+  };
+}
+
 export function scoreSession(
   questions: Question[],
   answers: AnswerInput[],
@@ -124,5 +161,6 @@ export function scoreSession(
     estimatedIq,
     topPercentile: iqToTopPercentile(estimatedIq),
     categoryScores: computeCategoryScores(questions, answers),
+    categoryTiming: computeCategoryTiming(questions, answers),
   };
 }
