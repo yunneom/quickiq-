@@ -31,8 +31,18 @@ interface LSWebhookPayload {
 export async function POST(req: Request) {
   const raw = await req.text();
   const signature = req.headers.get('x-signature');
-  if (!verifyWebhookSignature(raw, signature)) {
-    return NextResponse.json({ error: 'invalid_signature' }, { status: 401 });
+  const check = verifyWebhookSignature(raw, signature);
+  if (!check.ok) {
+    console.error('[webhook] signature verify failed', {
+      reason: check.reason,
+      bodyLen: raw.length,
+      sigLen: signature?.length ?? 0,
+      sigPrefix: signature?.slice(0, 12) ?? null,
+    });
+    return NextResponse.json(
+      { error: 'invalid_signature', reason: check.reason },
+      { status: 401 },
+    );
   }
 
   let payload: LSWebhookPayload;

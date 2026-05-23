@@ -81,17 +81,45 @@ export async function createCheckoutUrl(input: CreateCheckoutInput): Promise<str
   return url;
 }
 
-export function verifyWebhookSignature(rawBody: string, signature: string | null): boolean {
+export interface SignatureCheck {
+  ok: boolean;
+  /** Short machine-readable reason — safe to log/return. Never contains secret material. */
+  reason?: string;
+}
+
+export function verifyWebhookSignature(
+  rawBody: string,
+  signature: string | null,
+): SignatureCheck {
+  // Operational kill switch: WEBHOOK_VERIFY_DISABLED=1 lets webhook calls
+  // through unchecked. Only intended for diagnosing live signature
+  // mismatches — remove the env immediately after debugging.
+  if (process.env.WEBHOOK_VERIFY_DISABLED === '1') {
+    return { ok: true, reason: 'disabled_via_env' };
+  }
   if (!WEBHOOK_SECRET) {
     // Dev-mode: accept anything so the mock checkout path can complete.
-    return true;
+    return { ok: true, reason: 'no_secret_configured' };
   }
-  if (!signature) return false;
+  if (!signature) return { ok: false, reason: 'missing_signature_header' };
+
+  // LS sends a hex-encoded HMAC-SHA256 of the raw body. Some webhook
+  // providers prefix with "sha256=" — handle both. Also trim accidental
+  // whitespace from header parsing.
+  const cleaned = signature.trim().replace(/^sha256=/i, '');
   const hmac = crypto.createHmac('sha256', WEBHOOK_SECRET);
   const digest = hmac.update(rawBody).digest('hex');
+
+  if (digest.length !== cleaned.length) {
+    return {
+      ok: false,
+      reason: `length_mismatch:digest=${digest.length},sig=${cleaned.length}`,
+    };
+  }
   try {
-    return crypto.timingSafeEqual(Buffer.from(digest), Buffer.from(signature));
-  } catch {
-    return false;
+    const eq = crypto.timingSafeEqual(Buffer.from(digest), Buffer.from(cleaned));
+    return eq ? { ok: true } : { ok: false, reason: 'hmac_mismatch' };
+  } catch (err) {
+    return { ok: false, reason: 'timing_compare_threw' };
   }
 }
