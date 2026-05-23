@@ -94,6 +94,10 @@
   "errors": {
     "sessionNotFound": "Test session not found.",
     "alreadyCompleted": "Session already completed.",
-    "rateLimited": "Please try again later."
+    "rateLimited": "Please try again later.",
+    "pageError": "Something went wrong",
+    "pageErrorBody": "Please try again. Contact us if the issue persists.",
+    "retry": "Try again",
+    "goHome": "Go home"
   }
 }

@@ -5,19 +5,21 @@ import { test, expect } from '@playwright/test';
  * These run without the bypass header so we actually exercise the gate.
  */
 
-test('rate limit kicks in after 10 test/start calls per IP', async ({ request }) => {
-  // Hit /api/test/start 11 times with the *same* IP (request fixture reuses
+test('rate limit kicks in once the per-IP cap is exceeded', async ({ request }) => {
+  // Limit was raised to 60/hour for production headroom (see lib/rate-limit.ts).
+  // Hit /api/test/start 61 times with the *same* IP (request fixture reuses
   // the connection); the bypass header is intentionally NOT set here.
+  const TOTAL_CALLS = 61;
   let ok = 0;
   let limited = 0;
-  for (let i = 0; i < 11; i++) {
+  for (let i = 0; i < TOTAL_CALLS; i++) {
     const res = await request.post('/api/test/start', {
       data: { locale: 'ko' },
     });
     if (res.status() === 200) ok += 1;
     else if (res.status() === 429) limited += 1;
   }
-  expect(ok).toBeGreaterThanOrEqual(10);
+  expect(ok).toBeGreaterThanOrEqual(60);
   expect(limited).toBeGreaterThanOrEqual(1);
 });
 

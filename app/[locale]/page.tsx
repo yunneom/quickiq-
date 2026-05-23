@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { getTranslations, unstable_setRequestLocale } from 'next-intl/server';
 import { Button } from '@/components/ui/button';
 import { MetaPixel } from '@/components/analytics/meta-pixel';
+import { OrganizationLD, ProductLD, WebsiteLD } from '@/components/seo/json-ld';
 
 export default async function LandingPage({
   params: { locale },
@@ -10,9 +11,21 @@ export default async function LandingPage({
 }) {
   unstable_setRequestLocale(locale);
   const t = await getTranslations('landing');
+  const tMeta = await getTranslations('meta');
+  const base = process.env.NEXT_PUBLIC_APP_URL ?? 'https://7iq.vercel.app';
+  const loc = (locale === 'en' ? 'en' : 'ko') as 'ko' | 'en';
 
   return (
     <>
+      <OrganizationLD name="IQ Test" url={base} locale={loc} />
+      <WebsiteLD name="IQ Test" url={base} locale={loc} />
+      <ProductLD
+        name={tMeta('title')}
+        description={tMeta('description')}
+        url={base}
+        priceKRW={Number(process.env.NEXT_PUBLIC_PRICE_KRW ?? 9900)}
+        locale={loc}
+      />
       <MetaPixel />
       <div className="mx-auto flex min-h-screen max-w-md flex-col px-5 pb-10 pt-12">
         <header className="text-sm font-semibold tracking-wide text-brand-600">

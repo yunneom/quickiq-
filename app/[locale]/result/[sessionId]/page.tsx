@@ -4,6 +4,7 @@ import { getTranslations, unstable_setRequestLocale } from 'next-intl/server';
 import { headers } from 'next/headers';
 import { Button } from '@/components/ui/button';
 import { CategoryBars } from '@/components/test/category-bars';
+import { IqDistribution } from '@/components/test/iq-distribution';
 import { ShareButtons } from '@/components/test/share-buttons';
 import { locales, type Locale } from '@/i18n';
 import type { ScoreResult } from '@/lib/scoring';
@@ -107,6 +108,16 @@ export default async function ResultPage({
       </div>
 
       <p className="mt-5 text-sm text-gray-600">{t(hookKey)}</p>
+
+      {/* IQ bell-curve distribution with user position */}
+      <section className="mt-6 rounded-2xl border border-gray-200 bg-white p-4">
+        <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-500">
+          {locale === 'ko' ? '인구 분포 내 위치' : 'Where you stand'}
+        </p>
+        <div className="mt-2">
+          <IqDistribution iq={result.estimatedIq} />
+        </div>
+      </section>
 
       {/* Strength / Weakness — visible to free users to whet appetite */}
       <section className="mt-6 grid grid-cols-2 gap-3">

@@ -131,6 +131,77 @@ export const extraKoQuestions: Question[] = [
     ],
     correct_id: 'C',
     explanation:
-      '귤이 가장 오른쪽, 사과는 배의 오른쪽이므로 배보다 오른쪽. 감은 사과 왼쪽. 가능한 순서는 감-배-사과-귤이고 가장 왼쪽은 감입니다.',
+      '정답은 C(감). 귤이 가장 오른쪽, 사과는 배의 오른쪽이므로 배보다 오른쪽. 감은 사과 왼쪽. 가능한 순서는 감-배-사과-귤이고 가장 왼쪽은 감입니다.',
+  },
+  // ───── 추가 문항 (셔플 모드 변별력 ↑) ─────
+  {
+    id: 'ko-108',
+    order_index: 108,
+    category: 'verbal',
+    difficulty: 2,
+    locale: 'ko',
+    question_text: '다음 중 나머지와 관계가 다른 것은?',
+    options: [
+      { id: 'A', text: '연필 — 글씨' },
+      { id: 'B', text: '망치 — 못' },
+      { id: 'C', text: '바늘 — 실' },
+      { id: 'D', text: '책 — 도서관' },
+    ],
+    correct_id: 'D',
+    explanation:
+      '정답은 D(책 — 도서관). A·B·C는 "도구와 그 결과/대상물"의 관계지만, D는 "사물과 그 사물이 있는 장소"라 관계 유형이 다릅니다.',
+  },
+  {
+    id: 'ko-109',
+    order_index: 109,
+    category: 'numerical',
+    difficulty: 3,
+    locale: 'ko',
+    question_text: '다음 수열의 빈칸에 들어갈 수는?  7, 14, 28, 56, ?',
+    options: [
+      { id: 'A', text: '84' },
+      { id: 'B', text: '98' },
+      { id: 'C', text: '112' },
+      { id: 'D', text: '128' },
+    ],
+    correct_id: 'C',
+    explanation:
+      '정답은 C(112). 매번 2배씩 증가하는 등비수열입니다. 56 × 2 = 112. A(+28)는 등차로 잘못 계산한 함정.',
+  },
+  {
+    id: 'ko-110',
+    order_index: 110,
+    category: 'spatial',
+    difficulty: 4,
+    locale: 'ko',
+    figure_id: 'f-upright',
+    question_text: '아래 글자를 180도 회전시킨 모습은?',
+    options: [
+      { id: 'A', figure_id: 'f-rot90' },
+      { id: 'B', figure_id: 'f-rot180' },
+      { id: 'C', figure_id: 'f-rot270' },
+      { id: 'D', figure_id: 'f-mirror' },
+    ],
+    correct_id: 'B',
+    explanation:
+      '정답은 B. 180도 회전은 글자가 위아래로 뒤집힌 모습입니다. A는 90도, C는 270도, D는 좌우 반전(거울상)이라 다릅니다.',
+  },
+  {
+    id: 'ko-111',
+    order_index: 111,
+    category: 'logical',
+    difficulty: 5,
+    locale: 'ko',
+    question_text:
+      '4명(가, 나, 다, 라)이 마라톤을 했습니다. 가는 나보다 늦었지만 다보다 빠릅니다. 라는 모두보다 늦었습니다. 1등은 누구일까요?',
+    options: [
+      { id: 'A', text: '가' },
+      { id: 'B', text: '나' },
+      { id: 'C', text: '다' },
+      { id: 'D', text: '라' },
+    ],
+    correct_id: 'B',
+    explanation:
+      '정답은 B(나). 조건을 합치면 나 > 가 > 다 > 라 순서(빠른 순). 1등은 나입니다. 라는 마지막인 게 명시되어 있어 답에서 제외.',
   },
 ];

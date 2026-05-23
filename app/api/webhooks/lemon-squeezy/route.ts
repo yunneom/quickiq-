@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import * as Sentry from '@sentry/nextjs';
+import { waitUntil } from '@vercel/functions';
 import { verifyWebhookSignature } from '@/lib/payments/lemon-squeezy';
 import { getSession, updateSession } from '@/lib/session-store';
 import { isSupabaseConfigured, createSupabaseAdmin } from '@/lib/supabase/server';
@@ -7,6 +8,7 @@ import { sendReport } from '@/lib/email/send-report';
 import { sendPurchaseEventCAPI } from '@/lib/analytics/capi';
 
 export const runtime = 'nodejs';
+export const maxDuration = 60; // Vercel — allow background work to finish
 
 interface LSWebhookPayload {
   meta?: {
@@ -99,19 +101,47 @@ export async function POST(req: Request) {
     updateSession(sessionId, { email, is_paid: true, paid_at: Date.now() });
   }
 
+  // Heavy work (PDF render, Resend, Meta CAPI) runs in the background so
+  // Lemon Squeezy gets a fast 200 well under its 15-second webhook timeout.
+  // waitUntil extends the function's lifetime until the promise resolves,
+  // so the buyer's email still goes out even though we already responded.
   const session = getSession(sessionId);
-  await sendReport({
-    sessionId,
-    email,
-    locale: payload.meta?.custom_data?.locale ?? session?.locale ?? 'ko',
-    result: session?.result,
-  });
-  await sendPurchaseEventCAPI({
-    email,
-    value: (payload.data?.attributes?.total ?? 990) / 100,
-    currency: payload.data?.attributes?.currency ?? 'USD',
-    eventId,
-  });
+  const locale = payload.meta?.custom_data?.locale ?? session?.locale ?? 'ko';
+  const totalCents = payload.data?.attributes?.total ?? 990;
+  const currency = payload.data?.attributes?.currency ?? 'USD';
+
+  waitUntil(
+    (async () => {
+      try {
+        await sendReport({
+          sessionId,
+          email,
+          locale,
+          result: session?.result,
+        });
+      } catch (err) {
+        console.error('[webhook bg] sendReport failed:', err);
+        Sentry.captureException(err, {
+          tags: { area: 'webhook', step: 'sendReport' },
+          extra: { sessionId },
+        });
+      }
+      try {
+        await sendPurchaseEventCAPI({
+          email,
+          value: totalCents / 100,
+          currency,
+          eventId,
+        });
+      } catch (err) {
+        console.error('[webhook bg] CAPI failed:', err);
+        Sentry.captureException(err, {
+          tags: { area: 'webhook', step: 'capi' },
+          extra: { sessionId },
+        });
+      }
+    })(),
+  );
 
   return NextResponse.json({ ok: true });
 }

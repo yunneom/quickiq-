@@ -128,6 +128,77 @@ export const extraEnQuestions: Question[] = [
     ],
     correct_id: 'C',
     explanation:
-      'Tangerine is at the far right; apple is right of pear; persimmon is left of apple. The only consistent order is persimmon — pear — apple — tangerine, so the far-left fruit is the persimmon.',
+      'Answer: C (persimmon). Tangerine is far right; apple is right of pear; persimmon is left of apple. The only consistent order is persimmon — pear — apple — tangerine.',
+  },
+  // ───── Additional pool questions ─────
+  {
+    id: 'en-108',
+    order_index: 108,
+    category: 'verbal',
+    difficulty: 2,
+    locale: 'en',
+    question_text: 'Which pair has a relationship different from the others?',
+    options: [
+      { id: 'A', text: 'pencil — writing' },
+      { id: 'B', text: 'hammer — nail' },
+      { id: 'C', text: 'needle — thread' },
+      { id: 'D', text: 'book — library' },
+    ],
+    correct_id: 'D',
+    explanation:
+      'Answer: D (book — library). A, B, C are tool-and-target pairs; D is object-and-location, a different kind of relationship.',
+  },
+  {
+    id: 'en-109',
+    order_index: 109,
+    category: 'numerical',
+    difficulty: 3,
+    locale: 'en',
+    question_text: 'What number comes next?  7, 14, 28, 56, ?',
+    options: [
+      { id: 'A', text: '84' },
+      { id: 'B', text: '98' },
+      { id: 'C', text: '112' },
+      { id: 'D', text: '128' },
+    ],
+    correct_id: 'C',
+    explanation:
+      'Answer: C (112). Geometric progression of ×2. 56 × 2 = 112. A (+28) is the trap of mistaking it for arithmetic.',
+  },
+  {
+    id: 'en-110',
+    order_index: 110,
+    category: 'spatial',
+    difficulty: 4,
+    locale: 'en',
+    figure_id: 'f-upright',
+    question_text: 'Which figure shows the letter below rotated 180°?',
+    options: [
+      { id: 'A', figure_id: 'f-rot90' },
+      { id: 'B', figure_id: 'f-rot180' },
+      { id: 'C', figure_id: 'f-rot270' },
+      { id: 'D', figure_id: 'f-mirror' },
+    ],
+    correct_id: 'B',
+    explanation:
+      'Answer: B. A 180° rotation flips the letter upside-down. A is 90°, C is 270°, D is a horizontal mirror.',
+  },
+  {
+    id: 'en-111',
+    order_index: 111,
+    category: 'logical',
+    difficulty: 5,
+    locale: 'en',
+    question_text:
+      'Four runners (A, B, C, D) ran a race. A was slower than B but faster than C. D was slower than everyone. Who finished first?',
+    options: [
+      { id: 'A', text: 'A' },
+      { id: 'B', text: 'B' },
+      { id: 'C', text: 'C' },
+      { id: 'D', text: 'D' },
+    ],
+    correct_id: 'B',
+    explanation:
+      'Answer: B. Combining the constraints gives the order (fastest → slowest): B > A > C > D. B finishes first.',
   },
 ];

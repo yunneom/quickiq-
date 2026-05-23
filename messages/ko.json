@@ -94,6 +94,10 @@
   "errors": {
     "sessionNotFound": "테스트 세션을 찾을 수 없습니다.",
     "alreadyCompleted": "이미 완료된 세션입니다.",
-    "rateLimited": "잠시 후 다시 시도해 주세요."
+    "rateLimited": "잠시 후 다시 시도해 주세요.",
+    "pageError": "문제가 발생했어요",
+    "pageErrorBody": "잠시 후 다시 시도해 주세요. 문제가 계속되면 운영팀에 알려주세요.",
+    "retry": "다시 시도",
+    "goHome": "처음으로"
   }
 }
