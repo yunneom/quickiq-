@@ -196,6 +196,7 @@ export default async function ResultPage({
           pct={result.topPercentile}
           locale={locale as Locale}
           url={shareUrl}
+          sessionId={sessionId}
         />
       </div>
 

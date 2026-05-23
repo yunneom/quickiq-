@@ -187,9 +187,29 @@ export function TestRunner({ locale }: Props) {
   );
 
   if (phase === 'loading') {
+    // Skeleton screen mirroring the test runner layout so the first paint
+    // doesn't look "broken" while the start API call is in flight.
     return (
-      <div className="grid min-h-[60vh] place-items-center text-gray-500">
-        {t('loading')}
+      <div className="mx-auto flex min-h-screen max-w-md flex-col px-5 pb-10 pt-6 animate-pulse">
+        <div className="flex items-center justify-between">
+          <div className="h-3 w-16 rounded bg-gray-200" />
+          <div className="h-3 w-20 rounded bg-gray-200" />
+        </div>
+        <div className="mt-2 h-2 w-full rounded-full bg-gray-200" />
+        <div className="mt-6 h-6 w-20 rounded-full bg-gray-200" />
+        <div className="mt-4 space-y-2">
+          <div className="h-5 w-11/12 rounded bg-gray-200" />
+          <div className="h-5 w-9/12 rounded bg-gray-200" />
+        </div>
+        <ul className="mt-6 space-y-3">
+          {[0, 1, 2, 3].map((i) => (
+            <li
+              key={i}
+              className="h-14 rounded-xl border border-gray-200 bg-gray-100"
+            />
+          ))}
+        </ul>
+        <p className="mt-6 text-center text-xs text-gray-400">{t('loading')}</p>
       </div>
     );
   }

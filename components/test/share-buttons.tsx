@@ -8,9 +8,11 @@ interface Props {
   pct: number;
   locale: 'ko' | 'en';
   url: string;
+  /** Optional — when set, enables an "Save result image" button. */
+  sessionId?: string;
 }
 
-export function ShareButtons({ pct, locale, url }: Props) {
+export function ShareButtons({ pct, locale, url, sessionId }: Props) {
   const t = useTranslations('result');
   const [copied, setCopied] = useState(false);
   const text = t('shareText', { pct });
@@ -106,6 +108,16 @@ export function ShareButtons({ pct, locale, url }: Props) {
         <p className="mt-2 text-[10px] text-emerald-600">
           {t('shareKakaoFallback')}
         </p>
+      )}
+
+      {sessionId && (
+        <a
+          href={`/${locale}/result/${sessionId}/opengraph-image`}
+          download={`iq-result-top-${pct}pct.png`}
+          className="mt-3 grid place-items-center rounded-xl border border-gray-200 bg-gray-50 py-3 text-xs font-semibold text-gray-700 hover:bg-gray-100"
+        >
+          {t('downloadImage')}
+        </a>
       )}
     </div>
   );

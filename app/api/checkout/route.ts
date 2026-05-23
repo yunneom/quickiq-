@@ -2,6 +2,11 @@ import { NextResponse } from 'next/server';
 import { createCheckoutUrl } from '@/lib/payments/lemon-squeezy';
 import { updateSession } from '@/lib/session-store';
 import { withErrorHandling } from '@/lib/api/with-error-handling';
+import {
+  checkRateLimit,
+  isRateLimitDisabled,
+  RATE_LIMIT_CHECKOUT,
+} from '@/lib/rate-limit';
 
 export const runtime = 'nodejs';
 
@@ -12,6 +17,23 @@ interface Body {
 }
 
 export const POST = withErrorHandling('checkout', async (req: Request) => {
+  const bypass =
+    isRateLimitDisabled() ||
+    (process.env.NODE_ENV !== 'production' &&
+      req.headers.get('x-test-bypass-rate-limit') === '1');
+  if (!bypass) {
+    const rl = checkRateLimit(req, RATE_LIMIT_CHECKOUT);
+    if (!rl.ok) {
+      return NextResponse.json(
+        { error: 'rate_limited', resetMs: rl.resetMs },
+        {
+          status: 429,
+          headers: { 'Retry-After': String(Math.ceil(rl.resetMs / 1000)) },
+        },
+      );
+    }
+  }
+
   let body: Body;
   try {
     body = (await req.json()) as Body;

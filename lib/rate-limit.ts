@@ -96,3 +96,17 @@ export const RATE_LIMIT_TEST_START: CheckOptions = {
 export function isRateLimitDisabled(): boolean {
   return process.env.RATE_LIMIT_DISABLED === '1';
 }
+
+/** Submit endpoint — 120/h gives plenty of headroom for one-off retries. */
+export const RATE_LIMIT_TEST_SUBMIT: CheckOptions = {
+  key: 'test-submit',
+  limit: 120,
+  windowMs: 60 * 60 * 1000,
+};
+
+/** Checkout endpoint — 60/h matches the test-start cap. */
+export const RATE_LIMIT_CHECKOUT: CheckOptions = {
+  key: 'checkout',
+  limit: 60,
+  windowMs: 60 * 60 * 1000,
+};

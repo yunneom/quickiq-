@@ -3,6 +3,7 @@ import { getTranslations, unstable_setRequestLocale } from 'next-intl/server';
 import { Button } from '@/components/ui/button';
 import { MetaPixel } from '@/components/analytics/meta-pixel';
 import { OrganizationLD, ProductLD, WebsiteLD } from '@/components/seo/json-ld';
+import { Faq } from '@/components/landing/faq';
 
 export default async function LandingPage({
   params: { locale },
@@ -51,6 +52,8 @@ export default async function LandingPage({
             <Trust>{t('trustTwo')}</Trust>
             <Trust>{t('trustThree')}</Trust>
           </ul>
+
+          <Faq />
         </div>
 
         <div className="sticky bottom-0 mt-10 bg-gradient-to-t from-[#fafafa] via-[#fafafa] to-transparent pb-2 pt-6">

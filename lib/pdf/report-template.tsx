@@ -10,21 +10,21 @@ import {
 import type { ScoreResult, AnswerInput } from '@/lib/scoring';
 import type { Question, Category } from '@/lib/questions/types';
 
-// Register Noto Sans Korean from a CDN. @react-pdf/renderer fetches the
-// file once per process and caches it in memory. Without this, Helvetica
-// (the default) renders Korean characters as blanks/blocks in the PDF.
-// Noto fonts are public-domain licensed (SIL OFL) so safe to embed.
+// Register Noto Sans Korean from the bundled font files. We previously
+// fetched them from jsdelivr — moving to local files removes the ~1s
+// cold-start network hop on the LS webhook path. SIL OFL licensed.
+//
+// IMPORTANT: @react-pdf needs an absolute file path on the server. We
+// resolve it via process.cwd() which, in Vercel, points at the function
+// root where `public/` is bundled.
+import path from 'node:path';
+
+const FONT_DIR = path.join(process.cwd(), 'public', 'fonts');
 Font.register({
   family: 'NotoSansKR',
   fonts: [
-    {
-      src: 'https://cdn.jsdelivr.net/npm/@fontsource/noto-sans-kr@5.2.8/files/noto-sans-kr-korean-400-normal.woff',
-      fontWeight: 400,
-    },
-    {
-      src: 'https://cdn.jsdelivr.net/npm/@fontsource/noto-sans-kr@5.2.8/files/noto-sans-kr-korean-700-normal.woff',
-      fontWeight: 700,
-    },
+    { src: path.join(FONT_DIR, 'noto-sans-kr-korean-400.woff'), fontWeight: 400 },
+    { src: path.join(FONT_DIR, 'noto-sans-kr-korean-700.woff'), fontWeight: 700 },
   ],
 });
 

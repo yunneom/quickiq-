@@ -4,6 +4,11 @@ import { getSession, updateSession } from '@/lib/session-store';
 import { scoreSession, type AnswerInput } from '@/lib/scoring';
 import { isSupabaseConfigured, createSupabaseAdmin } from '@/lib/supabase/server';
 import { withErrorHandling } from '@/lib/api/with-error-handling';
+import {
+  checkRateLimit,
+  isRateLimitDisabled,
+  RATE_LIMIT_TEST_SUBMIT,
+} from '@/lib/rate-limit';
 
 export const runtime = 'nodejs';
 
@@ -13,6 +18,25 @@ interface SubmitBody {
 }
 
 export const POST = withErrorHandling('test/submit', async (req: Request) => {
+  // Rate-limit submits the same way as starts — keeps abuse against the
+  // scoring endpoint bounded even though each submit needs a real session.
+  const bypass =
+    isRateLimitDisabled() ||
+    (process.env.NODE_ENV !== 'production' &&
+      req.headers.get('x-test-bypass-rate-limit') === '1');
+  if (!bypass) {
+    const rl = checkRateLimit(req, RATE_LIMIT_TEST_SUBMIT);
+    if (!rl.ok) {
+      return NextResponse.json(
+        { error: 'rate_limited', resetMs: rl.resetMs },
+        {
+          status: 429,
+          headers: { 'Retry-After': String(Math.ceil(rl.resetMs / 1000)) },
+        },
+      );
+    }
+  }
+
   let body: SubmitBody;
   try {
     body = (await req.json()) as SubmitBody;

@@ -19,7 +19,30 @@
       "headline": "Find your real IQ\nin 30 questions",
       "sub": "Free psychometric test.\nVerbal · numerical · spatial · logical strengths — in 7 minutes.",
       "cta": "Take the test · Free"
-    }
+    },
+    "faqTitle": "Frequently asked",
+    "faqs": [
+      {
+        "q": "Is it really free?",
+        "a": "Yes. Taking the 30 questions, getting your estimated IQ and top percentile — all free. Only the detailed PDF report (per-category scores, age-group comparison, all 30 explanations) is paid at $7.50."
+      },
+      {
+        "q": "How accurate is the score?",
+        "a": "It's an estimate that maps your correct-answer rate onto a normal distribution (mean 100, SD 15) — the same approach used in psychometrics. Not a clinical diagnosis; results can vary ±5–10 with mood and conditions."
+      },
+      {
+        "q": "How do I pay?",
+        "a": "Via Lemon Squeezy (global payment processor). Card, Apple Pay, KakaoPay, and more. Digital products are non-refundable once delivered."
+      },
+      {
+        "q": "When do I get the report?",
+        "a": "Immediately after payment — the PDF is auto-emailed to the address you provide. If it hasn't arrived in 5 minutes, check your spam folder."
+      },
+      {
+        "q": "How is my data handled?",
+        "a": "Your email is used only to deliver the report and is deleted after 90 days. Test responses are stored against anonymous session IDs and aren't linked to your identity."
+      }
+    ]
   },
   "test": {
     "loading": "Preparing your test...",
@@ -54,6 +77,7 @@
     "shareCopy": "Copy link",
     "shareCopied": "Copied!",
     "shareKakaoFallback": "Text copied — paste it into KakaoTalk",
+    "downloadImage": "Save result image",
     "disclaimer": "Estimated score, not a medical diagnosis.",
     "verbal": "Verbal",
     "numerical": "Numerical",
