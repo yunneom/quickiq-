@@ -179,6 +179,39 @@ cat .vercel/project.json
 ### Vercel Analytics + Speed Insights
 - `@vercel/analytics`, `@vercel/speed-insights` 가 layout에 자동 마운트됨
 - Vercel에 배포된 환경에서만 데이터 수집 (로컬 dev에선 비활성)
+- Cookie consent banner에서 "거부" 누르면 즉시 비활성화 (PIPA/GDPR)
+
+### Health endpoint
+**GET `/api/health`** — 외부 모니터링 도구(Pingdom, UptimeRobot 등)용 무인증 liveness 체크.
+
+응답 예시:
+```json
+{
+  "status": "ok",
+  "time": "2026-05-24T00:30:00.000Z",
+  "commit": "ca4c710",
+  "region": "icn1",
+  "integrations": {
+    "supabase": false,
+    "lemonSqueezy": true,
+    "resend": true,
+    "sentry": true,
+    "kakao": true,
+    "metaPixel": false
+  }
+}
+```
+
+→ `integrations.*`가 모두 true일 때 모든 외부 서비스 연결됨. UptimeRobot 등에서 `/api/health`를 1분 간격으로 polling하면 서비스 다운 즉시 알림 받음.
+
+### 운영자 endpoint 빠른 참조
+
+| Endpoint | 용도 | 인증 |
+|---|---|---|
+| `GET /api/health` | 모니터링 liveness + 통합 상태 | 무인증 |
+| `GET /api/test/pdf?sessionId=…` | paid 사용자 PDF 직접 다운로드 | sessionId 보유 |
+| `POST /api/email/resend` body: `{sessionId}` | paid 사용자 메일 재발송 | sessionId 보유 + 5회/시간 제한 |
+| `POST /api/webhooks/lemon-squeezy` | LS 결제 webhook 수신 | HMAC-SHA256 서명 검증 |
 
 ## 알려진 한계
 

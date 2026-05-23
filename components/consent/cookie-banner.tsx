@@ -18,6 +18,10 @@ function write(v: Consent) {
   if (typeof window === 'undefined' || v == null) return;
   try {
     window.localStorage.setItem(STORAGE_KEY, v);
+    // Notify same-tab listeners (the storage event only fires across
+    // tabs by default). GatedAnalytics listens for this to react
+    // immediately.
+    window.dispatchEvent(new StorageEvent('storage', { key: STORAGE_KEY }));
   } catch {
     // ignore — silent failure means the banner re-shows next visit
   }

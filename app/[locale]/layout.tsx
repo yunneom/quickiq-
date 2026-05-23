@@ -3,9 +3,8 @@ import { NextIntlClientProvider } from 'next-intl';
 import { getMessages, getTranslations, unstable_setRequestLocale } from 'next-intl/server';
 import { locales, type Locale } from '@/i18n';
 import { notFound } from 'next/navigation';
-import { Analytics } from '@vercel/analytics/react';
-import { SpeedInsights } from '@vercel/speed-insights/next';
 import { CookieBanner } from '@/components/consent/cookie-banner';
+import { GatedAnalytics } from '@/components/consent/gated-analytics';
 
 export function generateStaticParams() {
   return locales.map((locale) => ({ locale }));
@@ -62,13 +61,21 @@ export default async function LocaleLayout({
   const messages = await getMessages();
   return (
     <html lang={locale}>
+      <head>
+        {/* DNS prefetch for fonts CDN (used by edge OG image route) and
+            Lemon Squeezy checkout (loaded only on the checkout step). */}
+        <link rel="dns-prefetch" href="https://cdn.jsdelivr.net" />
+        <link rel="dns-prefetch" href="https://app.lemonsqueezy.com" />
+        {/* Preload the brand-color theme so it paints with the first byte
+            of HTML on iOS Safari (improves LCP visual stability). */}
+        <meta name="theme-color" content="#2554e6" />
+      </head>
       <body className="font-sans">
         <NextIntlClientProvider messages={messages}>
           <main className="min-h-screen safe-top safe-bottom">{children}</main>
           <CookieBanner />
         </NextIntlClientProvider>
-        <Analytics />
-        <SpeedInsights />
+        <GatedAnalytics />
       </body>
     </html>
   );
