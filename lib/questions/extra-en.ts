@@ -201,4 +201,225 @@ export const extraEnQuestions: Question[] = [
     explanation:
       'Answer: B. Combining the constraints gives the order (fastest → slowest): B > A > C > D. B finishes first.',
   },
+
+  // ───── Additional pool round 2 (+3 per category) ─────
+
+  // Verbal +3
+  {
+    id: 'en-112',
+    order_index: 112,
+    category: 'verbal',
+    difficulty: 3,
+    locale: 'en',
+    question_text: 'Which adverb best fills the blank?  "She ___ wished for her child\'s happiness."',
+    options: [
+      { id: 'A', text: 'dearly' },
+      { id: 'B', text: 'rarely' },
+      { id: 'C', text: 'accidentally' },
+      { id: 'D', text: 'recklessly' },
+    ],
+    correct_id: 'A',
+    explanation:
+      "Answer: A (dearly). It conveys the intensity of a parent's wish. The others don't match the positive, heartfelt context.",
+  },
+  {
+    id: 'en-113',
+    order_index: 113,
+    category: 'verbal',
+    difficulty: 4,
+    locale: 'en',
+    question_text: 'Conscience : Guilt = Body : ?',
+    options: [
+      { id: 'A', text: 'exercise' },
+      { id: 'B', text: 'pain' },
+      { id: 'C', text: 'brain' },
+      { id: 'D', text: 'heart' },
+    ],
+    correct_id: 'B',
+    explanation:
+      'Answer: B (pain). Guilt is how the conscience signals something is wrong; pain is how the body signals it. Both are "alarm signal" relations.',
+  },
+  {
+    id: 'en-114',
+    order_index: 114,
+    category: 'verbal',
+    difficulty: 5,
+    locale: 'en',
+    question_text: 'Which word is most different in meaning from the others?',
+    options: [
+      { id: 'A', text: 'prejudice' },
+      { id: 'B', text: 'bias' },
+      { id: 'C', text: 'insight' },
+      { id: 'D', text: 'stereotype' },
+    ],
+    correct_id: 'C',
+    explanation:
+      'Answer: C (insight). A, B, D all describe negative pre-formed judgments. "Insight" is a positive cognitive capacity — seeing the true nature of something.',
+  },
+
+  // Numerical +3
+  {
+    id: 'en-115',
+    order_index: 115,
+    category: 'numerical',
+    difficulty: 3,
+    locale: 'en',
+    question_text: 'What number comes next?  9, 4, 7, 4, 5, 4, ?, 4',
+    options: [
+      { id: 'A', text: '3' },
+      { id: 'B', text: '4' },
+      { id: 'C', text: '5' },
+      { id: 'D', text: '7' },
+    ],
+    correct_id: 'A',
+    explanation:
+      'Answer: A (3). Two interleaved sequences: even positions are all 4; odd positions step down by 2 (9 → 7 → 5 → 3).',
+  },
+  {
+    id: 'en-116',
+    order_index: 116,
+    category: 'numerical',
+    difficulty: 4,
+    locale: 'en',
+    question_text: 'If a 12% discount brings the price to $22, what was the original price?',
+    options: [
+      { id: 'A', text: '$23.50' },
+      { id: 'B', text: '$24.64' },
+      { id: 'C', text: '$25.00' },
+      { id: 'D', text: '$26.40' },
+    ],
+    correct_id: 'C',
+    explanation:
+      'Answer: C ($25). 88% = $22 → original = 22 ÷ 0.88 = $25. Reverse-engineering an original price from a discounted one.',
+  },
+  {
+    id: 'en-117',
+    order_index: 117,
+    category: 'numerical',
+    difficulty: 5,
+    locale: 'en',
+    question_text:
+      'From a 10 cm × 10 cm square sheet, nine 2 cm × 2 cm squares are cut out. What is the area of the remaining paper?',
+    options: [
+      { id: 'A', text: '36 cm²' },
+      { id: 'B', text: '50 cm²' },
+      { id: 'C', text: '64 cm²' },
+      { id: 'D', text: '72 cm²' },
+    ],
+    correct_id: 'C',
+    explanation:
+      'Answer: C (64 cm²). Total 100 cm² − 9 × 4 cm² = 100 − 36 = 64.',
+  },
+
+  // Spatial +3
+  {
+    id: 'en-118',
+    order_index: 118,
+    category: 'spatial',
+    difficulty: 3,
+    locale: 'en',
+    figure_id: 'arrow-down',
+    question_text: 'If you rotate the arrow below by 90° clockwise, which direction does it point?',
+    options: [
+      { id: 'A', figure_id: 'arrow-right' },
+      { id: 'B', figure_id: 'arrow-left' },
+      { id: 'C', figure_id: 'arrow-up' },
+      { id: 'D', figure_id: 'arrow-down' },
+    ],
+    correct_id: 'B',
+    explanation:
+      'Answer: B (left). A downward-pointing arrow rotated 90° clockwise points left.',
+  },
+  {
+    id: 'en-119',
+    order_index: 119,
+    category: 'spatial',
+    difficulty: 4,
+    locale: 'en',
+    question_text:
+      "A clock's hour hand moves from the 6 position to the 9 position. How many degrees did it rotate?",
+    options: [
+      { id: 'A', text: '60°' },
+      { id: 'B', text: '90°' },
+      { id: 'C', text: '120°' },
+      { id: 'D', text: '180°' },
+    ],
+    correct_id: 'B',
+    explanation:
+      'Answer: B (90°). The clock face is 12 equal segments of 30° each. 6 → 9 is 3 segments = 3 × 30° = 90°.',
+  },
+  {
+    id: 'en-120',
+    order_index: 120,
+    category: 'spatial',
+    difficulty: 5,
+    locale: 'en',
+    question_text:
+      'A 4 cm cube is painted on all outer faces, then sliced into 1 cm cubes. How many small cubes have exactly two painted faces?',
+    options: [
+      { id: 'A', text: '12' },
+      { id: 'B', text: '18' },
+      { id: 'C', text: '24' },
+      { id: 'D', text: '36' },
+    ],
+    correct_id: 'C',
+    explanation:
+      'Answer: C (24). Edge cubes have two painted faces. For a 4 cm cube: (4 − 2) = 2 edge cubes per edge × 12 edges = 24.',
+  },
+
+  // Logical +3
+  {
+    id: 'en-121',
+    order_index: 121,
+    category: 'logical',
+    difficulty: 3,
+    locale: 'en',
+    question_text:
+      '"Cats are animals. Animals breathe." If both statements are true, which is necessarily true?',
+    options: [
+      { id: 'A', text: 'All animals are cats.' },
+      { id: 'B', text: 'Cats breathe.' },
+      { id: 'C', text: 'Everything that breathes is a cat.' },
+      { id: 'D', text: 'Cats are not animals.' },
+    ],
+    correct_id: 'B',
+    explanation:
+      'Answer: B. Classic transitive syllogism. A and C are converse errors; D directly contradicts a premise.',
+  },
+  {
+    id: 'en-122',
+    order_index: 122,
+    category: 'logical',
+    difficulty: 4,
+    locale: 'en',
+    question_text:
+      'In a town, red-hat people always tell the truth, blue-hat people always lie. Someone says "My hat is blue." What color is their hat?',
+    options: [
+      { id: 'A', text: 'Red' },
+      { id: 'B', text: 'Blue' },
+      { id: 'C', text: 'Could be either' },
+      { id: 'D', text: 'Cannot be determined' },
+    ],
+    correct_id: 'D',
+    explanation:
+      "Answer: D. If red-hat (truth-teller), the statement 'my hat is blue' is false — contradiction. If blue-hat (liar), the statement is true — also contradiction. A self-defeating statement.",
+  },
+  {
+    id: 'en-123',
+    order_index: 123,
+    category: 'logical',
+    difficulty: 5,
+    locale: 'en',
+    question_text:
+      'Of four candidates A, B, C, D, exactly two passed an exam. All of these are true: "If A did not pass, then B did not pass." "If C passed, then D passed." "Exactly one of B and C passed." Who passed?',
+    options: [
+      { id: 'A', text: 'A and B' },
+      { id: 'B', text: 'A and C' },
+      { id: 'C', text: 'B and D' },
+      { id: 'D', text: 'C and D' },
+    ],
+    correct_id: 'A',
+    explanation:
+      'Answer: A (A and B). From rule 3, exactly one of B/C. If C passed, rule 2 → D too, giving 3 passers (contradicts "exactly two"). So C did NOT pass, B did. Rule 1 contrapositive: B passed → A passed. So A and B.',
+  },
 ];

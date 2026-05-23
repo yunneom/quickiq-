@@ -100,6 +100,9 @@ test('FAQ section appears and accordions expand', async ({ page }) => {
 });
 
 test('pdf endpoint requires payment', async ({ request }) => {
+  // PDF render in dev mode (cold compile + font load) can push past 60s,
+  // so give this single test plenty of headroom.
+  test.setTimeout(180_000);
   // 1. Create + complete a session (unpaid).
   const start = await (
     await request.post('/api/test/start', {

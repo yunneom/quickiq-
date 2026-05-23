@@ -31,7 +31,45 @@ Vercel 대시보드에서 "Project Settings → Domains → Edit"으로 1초 안
 2. **.kr / .co.kr** (한국 신뢰도, 1년 1.5~3만원) — 가비아, 후이즈
 3. **.io** (테크 서비스 인상, 1년 3~5만원) — 굳이는 아님
 
-도메인 구입 후 Vercel에서 1줄 추가로 연결됨 — DNS 변경은 자동 SSL까지 5~10분.
+#### 도메인 구입 후 마이그레이션 단계 (15분)
+
+1. **Vercel 프로젝트 설정에서 도메인 추가**
+   - `https://vercel.com/yybb-s-projects/quickiq/settings/domains`
+   - **Add** → 본인 도메인(예: `quickiq.com`) 입력 → **Add**
+   - Vercel이 DNS 레코드 2개 제공: `A` 레코드 (또는 `CNAME`) + 인증용 `TXT` 레코드
+
+2. **도메인 등록업체에서 DNS 레코드 추가**
+   - 가비아/후이즈/Cloudflare 등에서 본인 도메인 DNS 관리 페이지 접속
+   - Vercel이 알려준 레코드 그대로 추가
+   - 보통 Apex(`@`): A 레코드 `76.76.21.21`
+   - WWW(`www`): CNAME 레코드 `cname.vercel-dns.com`
+   - 인증 TXT: Vercel 지정값 그대로
+
+3. **DNS 전파 + SSL 발급 대기** (5~30분, 최대 24시간)
+   - Vercel Domains 페이지에서 ⏳ 표시 → ✅ 표시로 바뀌면 끝
+   - 자동으로 Let's Encrypt SSL 발급됨
+
+4. **`NEXT_PUBLIC_APP_URL` env 변경**
+   - Vercel → Settings → Environment Variables
+   - `NEXT_PUBLIC_APP_URL`을 `https://quickiq.com`(본인 도메인)으로 수정
+   - 재배포 트리거 (빈 commit push 또는 Vercel 대시보드 Redeploy)
+
+5. **Resend 도메인 인증 추가** (이메일 발신지 변경 시)
+   - Resend → Domains → Add Domain → 본인 도메인
+   - Resend가 제공하는 SPF/DKIM/DMARC TXT 레코드를 DNS에 추가
+   - 인증 완료 후 `RESEND_FROM_EMAIL`을 `report@본인도메인` 으로 변경
+   - 이제 광고 사용자 모두에게 PDF 메일 발송 가능 (sandbox 한계 해제)
+
+6. **Lemon Squeezy webhook URL 갱신**
+   - Lemon Squeezy → Settings → Webhooks → 기존 webhook 편집
+   - URL을 `https://본인도메인/api/webhooks/lemon-squeezy` 로 수정
+   - 또는 새 도메인용 webhook을 추가하고 기존 거 비활성화
+
+7. **이전 vercel.app 도메인은 자동 redirect**
+   - Vercel이 자동으로 옛 URL을 새 도메인으로 308 리다이렉트
+   - 광고에 옛 URL이 살아있는 경우도 안전
+
+도메인 마이그레이션 총 소요: **DNS 추가 5분 + 전파 대기 5–30분 + Resend/LS 갱신 5분 = 약 30분**.
 
 ## 운영 시작까지 가장 빠른 경로 (사용자 직접)
 
@@ -218,9 +256,23 @@ cat .vercel/project.json
 | Endpoint | 용도 | 인증 |
 |---|---|---|
 | `GET /api/health` | 모니터링 liveness + 통합 상태 | 무인증 |
+| `GET /api/admin/stats` | 응시/결제/평균 IQ 통계 | `x-admin-token` 헤더 |
 | `GET /api/test/pdf?sessionId=…` | paid 사용자 PDF 직접 다운로드 | sessionId 보유 |
 | `POST /api/email/resend` body: `{sessionId}` | paid 사용자 메일 재발송 | sessionId 보유 + 5회/시간 제한 |
 | `POST /api/webhooks/lemon-squeezy` | LS 결제 webhook 수신 | HMAC-SHA256 서명 검증 |
+
+Admin 통계 사용 예시:
+```bash
+curl https://7iq.vercel.app/api/admin/stats \
+  -H "x-admin-token: $ADMIN_TOKEN"
+```
+
+### SQL migration 검증
+DB 마이그레이션 파일 정합성 정적 검증:
+```bash
+npm run verify:sql
+```
+괄호/따옴표 균형, 중복 테이블/정책 정의, 흔한 오타를 잡습니다. Supabase에 올리기 전 한 번 돌려두면 안전.
 
 ## 알려진 한계
 
