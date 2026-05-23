@@ -38,6 +38,15 @@ interface Props {
   answers?: AnswerInput[];
 }
 
+interface CategoryInterpretation {
+  /** strong: score ≥ 75 */
+  strong: string;
+  /** mid: 40 ≤ score < 75 */
+  mid: string;
+  /** weak: score < 40 */
+  weak: string;
+}
+
 const T = {
   ko: {
     title: '상세 IQ 리포트',
@@ -51,15 +60,39 @@ const T = {
     logical: '논리 추론',
     interpretationTitle: '영역별 해석',
     interpretation: {
-      verbal:
-        '언어 영역은 단어와 문장의 관계를 이해하고 의미를 추론하는 능력입니다. 점수가 높을수록 어휘력과 독해력이 우수한 경향이 있습니다.',
-      numerical:
-        '수리 영역은 숫자 패턴 인식, 산술 추론, 비례 사고에 관여합니다. 점수가 높을수록 정량적 문제 해결에 강점을 보입니다.',
-      spatial:
-        '공간 영역은 도형의 회전, 전개, 위치 관계를 시각화하는 능력입니다. 디자인·공학적 사고와 연관이 깊습니다.',
-      logical:
-        '논리 영역은 전제로부터 결론을 도출하는 연역적·귀납적 추론 능력입니다. 일상의 의사결정에서 자주 활용됩니다.',
-    },
+      verbal: {
+        strong:
+          '언어 영역에서 두드러진 점수입니다. 어휘 관계 추론, 문장 분석, 비례 관계 파악 등 언어 기반 사고가 강점입니다. 글쓰기·기획·의사소통 직무에서 빛을 발하는 능력.',
+        mid:
+          '언어 영역은 안정적인 수준입니다. 익숙한 어휘는 빠르게 처리하지만, 추상적 비유나 다단계 어휘 관계에서 시간이 더 필요할 수 있습니다.',
+        weak:
+          '언어 영역은 개발 여지가 큰 부분입니다. 어휘 노출량을 늘리고 비교·대조 같은 관계 사고를 의식적으로 연습하면 단기간 개선이 가능합니다.',
+      },
+      numerical: {
+        strong:
+          '수리 영역에서 강한 점수입니다. 패턴 인식, 비율·비례, 다단계 산술이 빠릅니다. 데이터·재무·엔지니어링 분야에서 직관적으로 일하실 수 있는 유형.',
+        mid:
+          '수리 영역은 평균 수준입니다. 단순 산술은 안정적이지만 복합 패턴(피보나치형, ×2+1형)에서 한 박자 늦을 수 있습니다.',
+        weak:
+          '수리 영역은 더 연습이 필요한 부분입니다. 사고 자체보다는 익숙함의 문제인 경우가 많습니다 — 매일 짧은 수열·산술 퍼즐 10분이 효과적.',
+      },
+      spatial: {
+        strong:
+          '공간 영역이 인상적입니다. 도형 회전·전개·거울 변환을 머릿속에서 빠르게 처리합니다. 디자인, 건축, UI/UX, 외과의 같은 시각 정보 집약 직무에 어울리는 강점.',
+        mid:
+          '공간 영역은 안정적입니다. 직관적인 회전과 전개는 잘 처리하지만, 3D 단면 추론이나 4단계 이상의 시각 변환에서는 시간이 더 걸릴 수 있습니다.',
+        weak:
+          '공간 영역은 잠재력 큰 부분입니다. 종이 접기, 큐브 퍼즐, 도면 그리기 같은 시각 훈련은 사고력 자체보다 빠르게 향상되는 영역입니다.',
+      },
+      logical: {
+        strong:
+          '논리 영역에서 두드러진 점수입니다. 삼단논법, 대우 명제, 순서 추론, 다중 조건 처리가 모두 강합니다. 법조·전략 컨설팅·코딩 직무에서 핵심 자질.',
+        mid:
+          '논리 영역은 평균에 가깝습니다. 명제 자체는 잘 다루지만, 3개 이상의 조건이 얽히는 순서 추론에서 실수가 발생할 수 있습니다.',
+        weak:
+          '논리 영역은 개발 여지가 큰 부분입니다. 일상에서 "만약 ~라면" 같은 가정을 의식적으로 펼쳐 보는 연습이 가장 효과적입니다.',
+      },
+    } satisfies Record<string, CategoryInterpretation>,
     breakdownTitle: '문항별 분석',
     breakdownSubtitle: '응시하신 30문항의 정답과 해설입니다.',
     yourAnswer: '내 답',
@@ -84,15 +117,39 @@ const T = {
     logical: 'Logical Reasoning',
     interpretationTitle: 'Interpretation',
     interpretation: {
-      verbal:
-        'Verbal reasoning measures vocabulary and the ability to infer relationships between words and sentences. Higher scores correlate with strong reading comprehension.',
-      numerical:
-        'Numerical reasoning covers pattern recognition with numbers, arithmetic, and proportional thinking — often used in quantitative problem-solving.',
-      spatial:
-        'Spatial reasoning is the ability to visualize rotations, unfoldings, and positional relationships — linked to design and engineering aptitudes.',
-      logical:
-        'Logical reasoning evaluates deductive and inductive inference — drawing valid conclusions from premises in everyday decisions.',
-    },
+      verbal: {
+        strong:
+          "Strong verbal reasoning. You handle word relations, sentence analysis, and analogies with ease — a hallmark trait for writing, planning, and communication roles.",
+        mid:
+          "Balanced verbal reasoning. Familiar vocabulary is fast, but abstract metaphors or multi-step word relations may need an extra beat.",
+        weak:
+          "Verbal reasoning has room to grow. Increasing vocabulary exposure and deliberately practicing analogies tends to lift this area quickly.",
+      },
+      numerical: {
+        strong:
+          "Strong numerical reasoning. Pattern recognition, ratios, and multi-step arithmetic come naturally — ideal for data, finance, and engineering work.",
+        mid:
+          "Numerical reasoning is around the average. Basic arithmetic is solid, but composite patterns (Fibonacci-like, ×2+1) can slow you down.",
+        weak:
+          "Numerical reasoning needs more reps. Often a familiarity issue, not a capability gap — 10 minutes of daily number puzzles compounds fast.",
+      },
+      spatial: {
+        strong:
+          "Impressive spatial reasoning. Rotations, unfoldings, and mirror transformations happen quickly in your head — great fit for design, architecture, UI/UX, surgery.",
+        mid:
+          "Stable spatial reasoning. Direct rotations and unfoldings work well, but 3D cross-sections and 4+ step visual transformations take longer.",
+        weak:
+          "Spatial reasoning is highly trainable. Paper-folding, cube puzzles, and sketching from imagination improve this area faster than most.",
+      },
+      logical: {
+        strong:
+          "Strong logical reasoning. Syllogisms, contrapositives, ordering, and multi-constraint puzzles all click — a core trait for law, strategy, and coding.",
+        mid:
+          "Logical reasoning around the average. Simple propositions are easy, but ordering puzzles with 3+ overlapping constraints can trip you up.",
+        weak:
+          "Logical reasoning has room to grow. Deliberately walking through 'if X then Y' chains in daily decisions is the most efficient practice.",
+      },
+    } satisfies Record<string, CategoryInterpretation>,
     breakdownTitle: 'Question-by-question breakdown',
     breakdownSubtitle: 'Your answers, the correct answers, and explanations for all 30 questions.',
     yourAnswer: 'You',
@@ -219,6 +276,12 @@ const styles = StyleSheet.create({
 
 const CATEGORY_ORDER: Category[] = ['verbal', 'numerical', 'spatial', 'logical'];
 
+function pickInterpretation(i: CategoryInterpretation, score: number): string {
+  if (score >= 75) return i.strong;
+  if (score >= 40) return i.mid;
+  return i.weak;
+}
+
 export function ReportPdf({
   sessionId,
   locale,
@@ -267,10 +330,22 @@ export function ReportPdf({
         ))}
 
         <Text style={styles.sectionTitle}>{t.interpretationTitle}</Text>
-        <Text style={styles.para}>{t.interpretation.verbal}</Text>
-        <Text style={styles.para}>{t.interpretation.numerical}</Text>
-        <Text style={styles.para}>{t.interpretation.spatial}</Text>
-        <Text style={styles.para}>{t.interpretation.logical}</Text>
+        <Text style={styles.para}>
+          <Text style={{ fontWeight: 700 }}>{t.verbal} ({cs.verbal}) — </Text>
+          {pickInterpretation(t.interpretation.verbal, cs.verbal)}
+        </Text>
+        <Text style={styles.para}>
+          <Text style={{ fontWeight: 700 }}>{t.numerical} ({cs.numerical}) — </Text>
+          {pickInterpretation(t.interpretation.numerical, cs.numerical)}
+        </Text>
+        <Text style={styles.para}>
+          <Text style={{ fontWeight: 700 }}>{t.spatial} ({cs.spatial}) — </Text>
+          {pickInterpretation(t.interpretation.spatial, cs.spatial)}
+        </Text>
+        <Text style={styles.para}>
+          <Text style={{ fontWeight: 700 }}>{t.logical} ({cs.logical}) — </Text>
+          {pickInterpretation(t.interpretation.logical, cs.logical)}
+        </Text>
 
         <View style={styles.footerBox}>
           <View style={styles.footerRow}>

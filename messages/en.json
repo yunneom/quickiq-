@@ -1,17 +1,17 @@
 {
   "meta": {
-    "title": "What percentile is your IQ?",
-    "description": "Psychometric-grade 30-question IQ test. Get your estimated IQ and category strengths in 7 minutes. Detailed PDF report for $7.50.",
+    "title": "7-Minute IQ Test — Your Estimated IQ + Domain Strengths",
+    "description": "30 psychometric-grade questions to estimate your IQ and analyze strengths across verbal, numerical, spatial, and logical reasoning. Free instant result, $7.50 for detailed PDF.",
     "ogTitle": "What percentile is your IQ?",
-    "ogDescription": "30 questions, 7 minutes. Free estimated IQ."
+    "ogDescription": "30 questions · 7 minutes · Free"
   },
   "landing": {
     "headline": "What percentile\nis your IQ?",
-    "sub": "Psychometric-grade 30 questions in about 7 minutes.\nObjectively measure your strengths across 4 domains.",
-    "cta": "Take the test — Free",
-    "trustOne": "30 psychometric questions",
-    "trustTwo": "Taken by 120,000+ globally",
-    "trustThree": "Average time: 7 minutes",
+    "sub": "Expert-designed 30 questions.\nIn 7 minutes, get your estimated IQ and a 4-domain strength breakdown — free.",
+    "cta": "Start free · 7 minutes",
+    "trustOne": "30 psychometric questions · 4-domain analysis",
+    "trustTwo": "Instant result on submission",
+    "trustThree": "$7.50 PDF report — includes all 30 explanations",
     "disclaimer": "Estimated score, not a clinical diagnosis.",
     "footerPrivacy": "Privacy Policy",
     "footerTerms": "Terms of Service"
@@ -39,8 +39,8 @@
     "estimatedIq": "Estimated IQ {iq}",
     "estimatedIqLabel": "Estimated IQ",
     "categoryTitle": "Score by category",
-    "lockNotice": "Full breakdown delivered as a PDF after purchase.",
-    "buyCta": "Get the full report — $7.50",
+    "lockNotice": "Per-category scores, age-group comparison, and 30-question explanations — all in your PDF report.",
+    "buyCta": "$7.50 · Get the full report (PDF · all 30 explained)",
     "shareTitle": "Share your result",
     "shareText": "I scored top {pct}% on the estimated IQ test! How about you?",
     "shareKakao": "KakaoTalk",
@@ -69,9 +69,9 @@
     "avgLabel": "Average",
     "durationLabel": "Time taken",
     "durationFormat": "{min}m {sec}s",
-    "summaryHookHigh": "Excellent — your score is well above the average range.",
-    "summaryHookMid": "Solid score with clear strengths and areas to develop.",
-    "summaryHookLow": "Plenty of potential here — explore your category breakdown."
+    "summaryHookHigh": "Top-tier score. Your PDF report shows exactly which domains lift you above the average.",
+    "summaryHookMid": "Balanced score around the average. Leveraging strengths and shoring up weaknesses moves the needle most.",
+    "summaryHookLow": "This score doesn't show your full potential. Find your hidden strengths in the category breakdown."
   },
   "checkout": {
     "title": "Get your full report",

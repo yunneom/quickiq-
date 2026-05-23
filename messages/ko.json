@@ -1,17 +1,17 @@
 {
   "meta": {
-    "title": "당신의 추정 IQ는 상위 몇 %?",
-    "description": "심리측정학 기반 30문항으로 추정 IQ와 영역별 강점을 분석합니다. 무료 응시, 9,900원으로 상세 리포트.",
+    "title": "7분 IQ 테스트 — 당신의 추정 IQ와 영역별 강점",
+    "description": "심리측정학 기반 30문항으로 추정 IQ와 4영역(언어·수리·공간·논리) 강점을 무료로 확인하세요. 결과 즉시 확인, 9,900원으로 상세 PDF 리포트.",
     "ogTitle": "당신의 IQ는 상위 몇 %일까?",
-    "ogDescription": "30문항 7분. 무료로 추정 IQ 확인하기."
+    "ogDescription": "심리측정학 30문항 · 7분 · 무료"
   },
   "landing": {
     "headline": "당신의 IQ는\n상위 몇 %일까?",
-    "sub": "심리측정학 기반 30문항, 약 7분.\n4가지 영역의 강점을 객관적으로 확인하세요.",
-    "cta": "지금 무료로 테스트",
-    "trustOne": "심리측정학 기반 30문항",
-    "trustTwo": "전 세계 12만+ 명 응시",
-    "trustThree": "평균 소요 시간 7분",
+    "sub": "전문가가 설계한 30문항.\n7분 안에 추정 IQ와 4영역 강점을 무료로 확인하세요.",
+    "cta": "무료로 시작하기 · 7분",
+    "trustOne": "심리측정학 기반 30문항 · 4영역 분석",
+    "trustTwo": "응시 후 결과 즉시 확인",
+    "trustThree": "9,900원 PDF 리포트 — 30문항 해설 포함",
     "disclaimer": "본 결과는 추정치이며 임상적 진단이 아닙니다.",
     "footerPrivacy": "개인정보처리방침",
     "footerTerms": "이용약관"
@@ -39,8 +39,8 @@
     "estimatedIq": "추정 IQ {iq}",
     "estimatedIqLabel": "추정 IQ",
     "categoryTitle": "영역별 점수",
-    "lockNotice": "상세 분석은 결제 후 PDF로 발송됩니다.",
-    "buyCta": "9,900원으로 상세 리포트 받기",
+    "lockNotice": "영역별 점수·동연령대 비교·30문항 정오답 해설을 PDF로 받아보세요.",
+    "buyCta": "9,900원 · 상세 리포트 받기 (PDF · 30문항 해설 포함)",
     "shareTitle": "결과 공유하기",
     "shareText": "나는 추정 IQ 상위 {pct}%! 너는?",
     "shareKakao": "카카오톡",
@@ -69,9 +69,9 @@
     "avgLabel": "평균",
     "durationLabel": "소요 시간",
     "durationFormat": "{min}분 {sec}초",
-    "summaryHookHigh": "축하해요! 인구의 상위에 해당하는 점수예요.",
-    "summaryHookMid": "안정적인 점수예요. 영역별로 강·약점이 보입니다.",
-    "summaryHookLow": "충분히 잠재력 있는 결과예요. 영역별 분석으로 강점을 찾아보세요."
+    "summaryHookHigh": "상위권 점수입니다. 어떤 영역에서 두드러지는지 PDF에서 정확히 확인하세요.",
+    "summaryHookMid": "평균에 가까운 균형 잡힌 점수예요. 강점 영역을 활용하고 약점을 보완하면 큰 차이를 만들 수 있어요.",
+    "summaryHookLow": "지금 점수가 잠재력 전부를 보여주지는 않아요. 영역별 분석에서 숨겨진 강점을 찾아보세요."
   },
   "checkout": {
     "title": "상세 리포트 받기",
