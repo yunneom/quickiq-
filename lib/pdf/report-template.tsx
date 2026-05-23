@@ -18,11 +18,11 @@ Font.register({
   family: 'NotoSansKR',
   fonts: [
     {
-      src: 'https://cdn.jsdelivr.net/npm/@fontsource/noto-sans-kr@5.0.18/files/noto-sans-kr-korean-400-normal.ttf',
+      src: 'https://cdn.jsdelivr.net/npm/@fontsource/noto-sans-kr@5.2.8/files/noto-sans-kr-korean-400-normal.woff',
       fontWeight: 400,
     },
     {
-      src: 'https://cdn.jsdelivr.net/npm/@fontsource/noto-sans-kr@5.0.18/files/noto-sans-kr-korean-700-normal.ttf',
+      src: 'https://cdn.jsdelivr.net/npm/@fontsource/noto-sans-kr@5.2.8/files/noto-sans-kr-korean-700-normal.woff',
       fontWeight: 700,
     },
   ],
