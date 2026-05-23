@@ -5,6 +5,20 @@ export const alt = 'IQ Test — 7분 만에 추정 IQ 확인';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 
+// Embed Noto Sans KR so KakaoTalk / X / iMessage crawlers render the
+// Korean copy with proper glyphs (the Edge runtime image-response system
+// has no Korean fonts by default — characters render as tofu).
+async function fontData(weight: 400 | 700): Promise<ArrayBuffer> {
+  const file =
+    weight === 700
+      ? 'noto-sans-kr-korean-700-normal.woff'
+      : 'noto-sans-kr-korean-400-normal.woff';
+  const res = await fetch(
+    `https://cdn.jsdelivr.net/npm/@fontsource/noto-sans-kr@5.2.8/files/${file}`,
+  );
+  return res.arrayBuffer();
+}
+
 /**
  * Click-optimized OG image — appears when the URL is shared on
  * Instagram, KakaoTalk, X, Facebook, iMessage, Slack, etc.
@@ -14,6 +28,7 @@ export const contentType = 'image/png';
  *  - One bold visual anchor (the "%" sign) instead of stock graphics
  */
 export default async function Image() {
+  const [regular, bold] = await Promise.all([fontData(400), fontData(700)]);
   return new ImageResponse(
     (
       <div
@@ -22,8 +37,7 @@ export default async function Image() {
           height: '100%',
           background: 'linear-gradient(135deg, #2554e6 0%, #1d40b8 60%, #15308f 100%)',
           color: 'white',
-          fontFamily:
-            'system-ui, -apple-system, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif',
+          fontFamily: 'NotoSansKR',
           display: 'flex',
           position: 'relative',
         }}
@@ -145,6 +159,12 @@ export default async function Image() {
         </div>
       </div>
     ),
-    { ...size },
+    {
+      ...size,
+      fonts: [
+        { name: 'NotoSansKR', data: regular, weight: 400, style: 'normal' },
+        { name: 'NotoSansKR', data: bold, weight: 700, style: 'normal' },
+      ],
+    },
   );
 }

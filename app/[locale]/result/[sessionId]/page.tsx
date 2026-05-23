@@ -7,6 +7,7 @@ import { CategoryBars } from '@/components/test/category-bars';
 import { IqDistribution } from '@/components/test/iq-distribution';
 import { TimingBars } from '@/components/test/timing-bars';
 import { ShareButtons } from '@/components/test/share-buttons';
+import { PaidActions } from '@/components/test/paid-actions';
 import { locales, type Locale } from '@/i18n';
 import type { ScoreResult } from '@/lib/scoring';
 import {
@@ -177,8 +178,11 @@ export default async function ResultPage({
             </Button>
           </Link>
         ) : (
-          <div className="rounded-xl bg-green-50 px-4 py-3 text-sm text-green-700">
-            ✅ {tThanks('body')}
+          <div className="space-y-3">
+            <div className="rounded-xl bg-green-50 px-4 py-3 text-sm text-green-700">
+              ✅ {tThanks('body')}
+            </div>
+            <PaidActions sessionId={sessionId} locale={locale as Locale} />
           </div>
         )}
       </div>

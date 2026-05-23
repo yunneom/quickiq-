@@ -10,6 +10,17 @@ interface Params {
   params: { locale: string; sessionId: string };
 }
 
+async function fontData(weight: 400 | 700): Promise<ArrayBuffer> {
+  const file =
+    weight === 700
+      ? 'noto-sans-kr-korean-700-normal.woff'
+      : 'noto-sans-kr-korean-400-normal.woff';
+  const res = await fetch(
+    `https://cdn.jsdelivr.net/npm/@fontsource/noto-sans-kr@5.2.8/files/${file}`,
+  );
+  return res.arrayBuffer();
+}
+
 interface ApiResponse {
   result?: {
     estimatedIq?: number;
@@ -69,6 +80,8 @@ export default async function Image({ params }: Params) {
 
   const hasScore = pct != null && iq != null;
 
+  const [regular, bold] = await Promise.all([fontData(400), fontData(700)]);
+
   return new ImageResponse(
     (
       <div
@@ -77,8 +90,7 @@ export default async function Image({ params }: Params) {
           height: '100%',
           background: 'linear-gradient(135deg, #2554e6 0%, #1d40b8 60%, #15308f 100%)',
           color: 'white',
-          fontFamily:
-            'system-ui, -apple-system, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif',
+          fontFamily: 'NotoSansKR',
           display: 'flex',
           position: 'relative',
         }}
@@ -197,6 +209,12 @@ export default async function Image({ params }: Params) {
         </div>
       </div>
     ),
-    { ...size },
+    {
+      ...size,
+      fonts: [
+        { name: 'NotoSansKR', data: regular, weight: 400, style: 'normal' },
+        { name: 'NotoSansKR', data: bold, weight: 700, style: 'normal' },
+      ],
+    },
   );
 }

@@ -5,6 +5,8 @@ import { test, expect } from '@playwright/test';
  * These run without the bypass header so we actually exercise the gate.
  */
 
+const BYPASS_HEADERS = { 'x-test-bypass-rate-limit': '1' };
+
 test('rate limit kicks in once the per-IP cap is exceeded', async ({ request }) => {
   // Limit was raised to 60/hour for production headroom (see lib/rate-limit.ts).
   // Hit /api/test/start 61 times with the *same* IP (request fixture reuses
@@ -69,4 +71,66 @@ test('404 page renders for unknown routes inside [locale]', async ({ page }) => 
   });
   expect(response?.status()).toBe(404);
   await expect(page.locator('text=404')).toBeVisible();
+});
+
+test('health endpoint reports integration status', async ({ request }) => {
+  const res = await request.get('/api/health');
+  expect(res.status()).toBe(200);
+  const body = (await res.json()) as {
+    status: string;
+    integrations: Record<string, boolean>;
+  };
+  expect(body.status).toBe('ok');
+  // The keys must exist regardless of whether the env vars are set.
+  for (const key of ['supabase', 'lemonSqueezy', 'resend', 'sentry', 'kakao', 'metaPixel']) {
+    expect(body.integrations).toHaveProperty(key);
+  }
+});
+
+test('FAQ section appears and accordions expand', async ({ page }) => {
+  await page.goto('/ko');
+  const faq = page.getByText('자주 묻는 질문');
+  await expect(faq).toBeVisible();
+  // First question
+  const firstQ = page.getByRole('button', { name: /정말 무료인가요/ });
+  await firstQ.click();
+  await expect(
+    page.getByText(/30문항 응시와 추정 IQ \+ 상위 백분위 확인까지/),
+  ).toBeVisible();
+});
+
+test('pdf endpoint requires payment', async ({ request }) => {
+  // 1. Create + complete a session (unpaid).
+  const start = await (
+    await request.post('/api/test/start', {
+      data: { locale: 'ko' },
+      headers: BYPASS_HEADERS,
+    })
+  ).json();
+  const answers = start.questions.map((q: { id: string; correct_id: string }) => ({
+    question_id: q.id,
+    selected_id: q.correct_id,
+    time_ms: 5000,
+  }));
+  await request.post('/api/test/submit', {
+    data: { sessionId: start.sessionId, answers },
+    headers: BYPASS_HEADERS,
+  });
+
+  // 2. PDF should 402 when not paid.
+  const unpaid = await request.get(
+    `/api/test/pdf?sessionId=${start.sessionId}`,
+  );
+  expect(unpaid.status()).toBe(402);
+
+  // 3. Mock-pay, then PDF should return application/pdf.
+  await request.get(
+    `/api/checkout/mock?sessionId=${start.sessionId}&email=qa@example.com`,
+    { maxRedirects: 0 },
+  );
+  const paid = await request.get(
+    `/api/test/pdf?sessionId=${start.sessionId}`,
+  );
+  expect(paid.status()).toBe(200);
+  expect(paid.headers()['content-type']).toContain('application/pdf');
 });
