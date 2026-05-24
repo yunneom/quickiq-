@@ -26,11 +26,24 @@ export async function generateMetadata({
       title: t('ogTitle'),
       description: t('ogDescription'),
       type: 'website',
+      locale: params.locale === 'en' ? 'en_US' : 'ko_KR',
+      url: `${base}/${params.locale}`,
     },
     twitter: {
       card: 'summary_large_image',
       title: t('ogTitle'),
       description: t('ogDescription'),
+    },
+    // Canonical + hreflang for the locale root. Child routes inherit
+    // the metadataBase + provide their own canonical when needed (e.g.
+    // /about has its own generateMetadata).
+    alternates: {
+      canonical: `/${params.locale}`,
+      languages: {
+        ko: '/ko',
+        en: '/en',
+        'x-default': '/ko',
+      },
     },
     appleWebApp: {
       capable: true,

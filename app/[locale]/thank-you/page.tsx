@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { getTranslations, unstable_setRequestLocale } from 'next-intl/server';
@@ -5,6 +6,12 @@ import { Button } from '@/components/ui/button';
 import { KakaoChannelButton } from '@/components/test/kakao-channel-button';
 import { FunnelBeacon } from '@/components/analytics/funnel-beacon';
 import { locales, type Locale } from '@/i18n';
+
+// Post-payment confirmation page — has no SEO value and only renders
+// meaningful content when sessionId is set; keep it out of the index.
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 
 export default async function ThankYouPage({
   params: { locale },

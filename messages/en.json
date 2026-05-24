@@ -194,6 +194,24 @@
     "kakaoChannelTitle": "Add KakaoTalk channel",
     "kakaoChannelDesc": "Get new IQ content and follow-up tests on KakaoTalk."
   },
+  "about": {
+    "title": "How this test was built",
+    "subtitle": "7iq is a 30-question short-form IQ test grounded in established psychometric principles. It's a self-check tool, not a diagnostic instrument.",
+    "methodologyTitle": "Methodology",
+    "methodologyBody": "Your correct-answer rate maps onto a normal distribution with mean 100 and standard deviation 15 — the same baseline model used by clinical IQ instruments. Results here are estimates, not medical assessments.",
+    "categoriesTitle": "Four reasoning domains",
+    "verbalTitle": "Verbal reasoning",
+    "verbalBody": "Word relationships, analogies, and vocabulary-based problem solving. Shows up directly in daily communication and reading comprehension.",
+    "numericalTitle": "Numerical reasoning",
+    "numericalBody": "Rapid recognition of numeric patterns — sequences, ratios, unit conversion. Core to data interpretation and financial judgment.",
+    "spatialTitle": "Spatial reasoning",
+    "spatialBody": "Mental manipulation of visual information — rotation, nets, symmetry. Strongly correlated with design, architecture, and surgical fields.",
+    "logicalTitle": "Logical reasoning",
+    "logicalBody": "Drawing valid conclusions from premises and detecting contradictions. Foundation for programming, law, and strategy work.",
+    "limitsTitle": "Limits and disclaimers",
+    "limitsBody": "Your estimated IQ can vary by ±5–10 depending on rest, time of day, and focus. This is not a substitute for a clinical assessment (e.g. WAIS-IV).",
+    "back": "Back to the test"
+  },
   "cookies": {
     "message": "We use cookies for anonymous analytics. Tap 'Accept' to agree to our privacy policy.",
     "accept": "Accept",

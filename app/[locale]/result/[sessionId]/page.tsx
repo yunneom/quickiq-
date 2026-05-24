@@ -1,7 +1,15 @@
+import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { getTranslations, unstable_setRequestLocale } from 'next-intl/server';
 import { headers } from 'next/headers';
+
+// Per-session result URL — has no SEO value (unique UUID, user-owned).
+// We still want Google to follow share links for crawl discovery but
+// not index them, to keep result URLs from polluting search.
+export const metadata: Metadata = {
+  robots: { index: false, follow: true },
+};
 import { Button } from '@/components/ui/button';
 import { CategoryBars } from '@/components/test/category-bars';
 import { FunnelBeacon } from '@/components/analytics/funnel-beacon';

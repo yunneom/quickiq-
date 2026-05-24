@@ -1,8 +1,15 @@
+import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getTranslations, unstable_setRequestLocale } from 'next-intl/server';
 import { CheckoutForm } from '@/components/test/checkout-form';
 import { FunnelBeacon } from '@/components/analytics/funnel-beacon';
 import { locales, type Locale } from '@/i18n';
+
+// Conversion path — never index in search results. Each session is
+// unique and the URL is meaningless to outside visitors.
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 
 export default async function CheckoutPage({
   params: { locale, sessionId },

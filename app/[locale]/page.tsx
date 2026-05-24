@@ -1,11 +1,20 @@
 import Link from 'next/link';
-import { getTranslations, unstable_setRequestLocale } from 'next-intl/server';
+import {
+  getMessages,
+  getTranslations,
+  unstable_setRequestLocale,
+} from 'next-intl/server';
 import { Button } from '@/components/ui/button';
 import { MetaPixel } from '@/components/analytics/meta-pixel';
 import { UtmCapture } from '@/components/analytics/utm-capture';
 import { SocialProof } from '@/components/landing/social-proof';
 import { ReportPreview } from '@/components/landing/report-preview';
-import { OrganizationLD, ProductLD, WebsiteLD } from '@/components/seo/json-ld';
+import {
+  FaqLD,
+  OrganizationLD,
+  ProductLD,
+  WebsiteLD,
+} from '@/components/seo/json-ld';
 import { Faq } from '@/components/landing/faq';
 
 export default async function LandingPage({
@@ -18,6 +27,12 @@ export default async function LandingPage({
   const tMeta = await getTranslations('meta');
   const base = process.env.NEXT_PUBLIC_APP_URL ?? 'https://7iq.vercel.app';
   const loc = (locale === 'en' ? 'en' : 'ko') as 'ko' | 'en';
+  // Reach into the raw message tree to pull the FAQ array for JSON-LD
+  // — `getTranslations` can't iterate unknown-length lists.
+  const messages = (await getMessages()) as unknown as {
+    landing?: { faqs?: Array<{ q: string; a: string }> };
+  };
+  const faqs = messages?.landing?.faqs ?? [];
   // A/B variant: set NEXT_PUBLIC_LANDING_VARIANT=b on Vercel to swap.
   // Defaults to 'a' for stable copy under live traffic.
   const variant = process.env.NEXT_PUBLIC_LANDING_VARIANT === 'b' ? 'b' : 'a';
@@ -36,6 +51,7 @@ export default async function LandingPage({
         priceKRW={Number(process.env.NEXT_PUBLIC_PRICE_KRW ?? 9900)}
         locale={loc}
       />
+      {faqs.length > 0 && <FaqLD faqs={faqs} />}
       <MetaPixel />
       <UtmCapture />
       <div className="mx-auto flex min-h-screen max-w-md flex-col px-5 pb-10 pt-12">
