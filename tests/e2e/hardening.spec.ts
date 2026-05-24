@@ -120,6 +120,28 @@ test('short-URL redirects an unknown code back to landing', async ({ request }) 
   expect(res.headers()['location']).toMatch(/\/$/);
 });
 
+test('admin endpoints 404 without a valid token', async ({ request }) => {
+  // /api/admin/stats must look invisible (404 not 401) when no token
+  // is set — keeps the endpoint from being a beacon for attackers.
+  const noToken = await request.get('/api/admin/stats');
+  expect(noToken.status()).toBe(404);
+
+  const badToken = await request.get('/api/admin/stats', {
+    headers: { 'x-admin-token': 'definitely-not-the-real-one' },
+  });
+  expect(badToken.status()).toBe(404);
+
+  // Same shape for the per-session endpoint.
+  const detail = await request.get('/api/admin/sessions/some-uuid', {
+    headers: { 'x-admin-token': 'definitely-not-the-real-one' },
+  });
+  expect(detail.status()).toBe(404);
+
+  // And the CSV export.
+  const csv = await request.get('/api/admin/sessions.csv');
+  expect(csv.status()).toBe(404);
+});
+
 test('health endpoint reports integration status', async ({ request }) => {
   const res = await request.get('/api/health');
   expect(res.status()).toBe(200);

@@ -163,6 +163,14 @@ export default function AdminPage() {
         as of {new Date(stats.generatedAt).toLocaleString()}
       </p>
 
+      <button
+        type="button"
+        onClick={() => void downloadCsv(token)}
+        className="mt-3 inline-flex items-center gap-1 rounded-md border border-gray-200 px-2 py-1 text-[11px] font-medium text-gray-600 hover:bg-gray-50"
+      >
+        ↓ Sessions CSV
+      </button>
+
       <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
         <Card label="Sessions" value={stats.totals.sessions} />
         <Card label="Completed" value={stats.totals.completed} />
@@ -442,6 +450,32 @@ function SessionLookup({ token }: { token: string }) {
       )}
     </>
   );
+}
+
+/**
+ * Fetch the CSV with the admin token in headers (so the token never
+ * appears in the URL / referer), then trigger a blob download. We
+ * can't just use a plain <a download> because the endpoint requires
+ * the auth header.
+ */
+async function downloadCsv(token: string) {
+  const res = await fetch('/api/admin/sessions.csv', {
+    headers: { 'x-admin-token': token },
+    cache: 'no-store',
+  });
+  if (!res.ok) {
+    alert(`CSV download failed: HTTP ${res.status}`);
+    return;
+  }
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `iq-sessions-${new Date().toISOString().slice(0, 10)}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 
 function Card({

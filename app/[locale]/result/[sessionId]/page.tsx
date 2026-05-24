@@ -13,6 +13,7 @@ export const metadata: Metadata = {
 import { Button } from '@/components/ui/button';
 import { CategoryBars } from '@/components/test/category-bars';
 import { FunnelBeacon } from '@/components/analytics/funnel-beacon';
+import { ResultHero } from '@/components/test/result-hero';
 import { CategoryRadar } from '@/components/test/category-radar';
 import { CompareCard } from '@/components/test/compare-card';
 import { ResultQr } from '@/components/test/result-qr';
@@ -121,35 +122,12 @@ export default async function ResultPage({
     <div className="mx-auto flex min-h-screen max-w-md flex-col px-5 pb-10 pt-8">
       <FunnelBeacon event="IQ_ResultViewed" params={{ isPaid }} />
       {/* Hero score card */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-500 to-brand-700 px-6 py-8 text-white shadow-lg">
-        <div className="absolute -right-12 -top-12 h-44 w-44 rounded-full bg-white/10" />
-        <div className="absolute -bottom-16 -left-12 h-44 w-44 rounded-full bg-white/5" />
-
-        <div className="relative" data-testid="result-hero">
-          <p className="text-xs uppercase tracking-widest opacity-80">
-            {t('title')}
-          </p>
-          <p
-            className="mt-2 text-5xl font-extrabold tracking-tight"
-            data-testid="result-percentile"
-          >
-            {t('topPercentile', { pct: result.topPercentile })}
-          </p>
-          <div className="mt-4 flex flex-wrap items-center gap-2">
-            <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-semibold backdrop-blur">
-              {t('estimatedIq', { iq: result.estimatedIq })}
-            </span>
-            <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-semibold backdrop-blur">
-              {t(`classification.${classKey}`)}
-            </span>
-            {durationLabel && (
-              <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-medium backdrop-blur">
-                {durationLabel}
-              </span>
-            )}
-          </div>
-        </div>
-      </div>
+      <ResultHero
+        topPercentile={result.topPercentile}
+        estimatedIq={result.estimatedIq}
+        classKey={classKey}
+        durationLabel={durationLabel}
+      />
 
       <p className="mt-5 text-sm text-gray-600">{t(hookKey)}</p>
 
