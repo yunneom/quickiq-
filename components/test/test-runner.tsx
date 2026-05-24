@@ -12,6 +12,51 @@ import { Figure } from '@/components/figures/figure';
 
 const PER_QUESTION_SECONDS = 60;
 const AUTO_ADVANCE_DELAY_MS = 350;
+const RESUME_TTL_MS = 30 * 60 * 1000; // 30 min — refresh within this window restores progress
+
+interface ResumeBlob {
+  sessionId: string;
+  questions: Question[];
+  index: number;
+  answers: AnswerInput[];
+  savedAt: number;
+  locale: 'ko' | 'en';
+}
+
+function resumeKey(locale: 'ko' | 'en') {
+  return `iq-test-resume-${locale}`;
+}
+
+function readResume(locale: 'ko' | 'en'): ResumeBlob | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = window.localStorage.getItem(resumeKey(locale));
+    if (!raw) return null;
+    const b = JSON.parse(raw) as ResumeBlob;
+    if (b.locale !== locale) return null;
+    if (Date.now() - b.savedAt > RESUME_TTL_MS) {
+      window.localStorage.removeItem(resumeKey(locale));
+      return null;
+    }
+    return b;
+  } catch {
+    return null;
+  }
+}
+
+function writeResume(blob: ResumeBlob) {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(resumeKey(blob.locale), JSON.stringify(blob));
+  } catch {
+    // QuotaExceeded etc. — silent
+  }
+}
+
+function clearResume(locale: 'ko' | 'en') {
+  if (typeof window === 'undefined') return;
+  window.localStorage.removeItem(resumeKey(locale));
+}
 
 interface Props {
   locale: 'ko' | 'en';
@@ -54,6 +99,19 @@ export function TestRunner({ locale }: Props) {
     let cancelled = false;
     (async () => {
       try {
+        // Try to resume an in-flight session from localStorage first —
+        // accidental refresh / tab close shouldn't lose answers.
+        const resumed = readResume(locale);
+        if (resumed) {
+          setSessionId(resumed.sessionId);
+          setQuestions(resumed.questions);
+          setIndex(resumed.index);
+          setAnswers(resumed.answers);
+          setPhase('running');
+          questionStartedAtRef.current = Date.now();
+          return;
+        }
+
         const res = await fetch('/api/test/start', {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
@@ -157,6 +215,19 @@ export function TestRunner({ locale }: Props) {
     }, AUTO_ADVANCE_DELAY_MS);
   }
 
+  // Persist current progress every time index/answers change.
+  useEffect(() => {
+    if (phase !== 'running' || !sessionId || questions.length === 0) return;
+    writeResume({
+      sessionId,
+      questions,
+      index,
+      answers,
+      savedAt: Date.now(),
+      locale,
+    });
+  }, [phase, sessionId, questions, index, answers, locale]);
+
   function handleAdvance(picked: OptionId | null) {
     if (advancingRef.current) return;
     advancingRef.current = true;
@@ -180,6 +251,8 @@ export function TestRunner({ locale }: Props) {
     if (!sessionId) return;
     setPhase('submitting');
     trackEvent('CompleteTest');
+    // Resume blob no longer needed once we're submitting.
+    clearResume(locale);
     try {
       const res = await fetch('/api/test/submit', {
         method: 'POST',

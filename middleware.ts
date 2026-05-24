@@ -1,10 +1,16 @@
 import createMiddleware from 'next-intl/middleware';
 import { locales, defaultLocale } from './i18n';
 
+// `localeDetection: true` makes next-intl read Accept-Language on the
+// first hit and redirect to /ko vs /en automatically. Korean carriers
+// usually send `ko-KR,en-US;q=0.9` so KR users land on /ko by default,
+// English browsers land on /en. Users can override by typing /ko or
+// /en explicitly — the choice is then remembered via a cookie.
 export default createMiddleware({
   locales,
   defaultLocale,
   localePrefix: 'always',
+  localeDetection: true,
 });
 
 export const config = {

@@ -4,6 +4,7 @@ import { getTranslations, unstable_setRequestLocale } from 'next-intl/server';
 import { headers } from 'next/headers';
 import { Button } from '@/components/ui/button';
 import { CategoryBars } from '@/components/test/category-bars';
+import { CompareCard } from '@/components/test/compare-card';
 import { IqDistribution } from '@/components/test/iq-distribution';
 import { TimingBars } from '@/components/test/timing-bars';
 import { ShareButtons } from '@/components/test/share-buttons';
@@ -189,9 +190,15 @@ export default async function ResultPage({
 
       {/* Timing per category — surface "fast intuitive" strength */}
       {result.categoryTiming && (
-        <div className="mt-6">
-          <TimingBars timing={result.categoryTiming} />
-        </div>
+        <section className="mt-8">
+          <h2 className="text-base font-semibold text-gray-900">
+            {t('timingTitle')}
+          </h2>
+          <p className="mt-1 text-xs text-gray-500">{t('timingHint')}</p>
+          <div className="mt-3 rounded-2xl border border-gray-200 bg-white p-4">
+            <TimingBars timing={result.categoryTiming} />
+          </div>
+        </section>
       )}
 
       {/* Share */}
@@ -202,6 +209,11 @@ export default async function ResultPage({
           url={shareUrl}
           sessionId={sessionId}
         />
+      </div>
+
+      {/* Compare with a friend */}
+      <div className="mt-4">
+        <CompareCard sessionId={sessionId} locale={locale as Locale} />
       </div>
 
       <p className="mt-8 text-center text-xs text-gray-400">{t('disclaimer')}</p>
