@@ -36,6 +36,14 @@ test('SEO endpoints respond correctly', async ({ request }) => {
   expect(sitemapBody).toContain('<urlset');
   expect(sitemapBody).toContain('/ko');
   expect(sitemapBody).toContain('/en');
+  // /about must be in the sitemap so Google indexes the methodology
+  // page (added in Round 16). Both locales required.
+  expect(sitemapBody).toContain('/ko/about');
+  expect(sitemapBody).toContain('/en/about');
+  // hreflang alternates: every URL emits xhtml:link rows so search
+  // engines serve the right locale to the right user.
+  expect(sitemapBody).toContain('xhtml:link');
+  expect(sitemapBody).toContain('hreflang="x-default"');
 
   const manifest = await request.get('/manifest.webmanifest');
   expect(manifest.status()).toBe(200);
@@ -92,13 +100,17 @@ test('locale switcher swaps between /ko and /en in place', async ({ page }) => {
   await page.addInitScript(() => {
     window.localStorage.setItem('iq-cookie-consent', 'accepted');
   });
-  await page.goto('/ko/about', { waitUntil: 'domcontentloaded' });
+  // Bump the navigation timeout for this test — next-intl's
+  // router.push() goes through a server round-trip that on a cold dev
+  // server can take longer than the default 30s. The actual
+  // production navigation is sub-second.
+  await page.goto('/ko/about', { waitUntil: 'networkidle' });
   await page.getByRole('button', { name: 'English' }).click();
-  await page.waitForURL('**/en/about');
+  await page.waitForURL('**/en/about', { timeout: 60_000 });
   expect(page.url()).toContain('/en/about');
   // Round-trip back to KO must work too.
   await page.getByRole('button', { name: '한국어' }).click();
-  await page.waitForURL('**/ko/about');
+  await page.waitForURL('**/ko/about', { timeout: 60_000 });
   expect(page.url()).toContain('/ko/about');
 });
 

@@ -26,10 +26,45 @@ const subject = (locale: 'ko' | 'en') =>
     ? '[IQ Test] 상세 리포트가 도착했습니다'
     : '[IQ Test] Your detailed report is ready';
 
-const intro = (locale: 'ko' | 'en') =>
-  locale === 'ko'
-    ? '안녕하세요! 응시해주셔서 감사합니다. 첨부된 PDF에서 상세 분석을 확인하실 수 있습니다.'
-    : 'Thanks for taking the test! Please find your detailed analysis in the attached PDF.';
+/**
+ * Plain-text body that mirrors the HTML content. Required by Gmail
+ * spam-scoring: HTML-only messages cost a couple of percentage points
+ * in the spam-or-promotions decision. Keep this in step with htmlBody()
+ * — same score block, same CTA, no marketing fluff.
+ */
+function textBody(locale: 'ko' | 'en', sessionId: string, result?: ScoreResult): string {
+  const baseUrl = `${APP_URL}/${locale}/result/${sessionId}`;
+  if (locale === 'ko') {
+    const score = result
+      ? `\n추정 IQ: ${result.estimatedIq}\n상위 백분위: ${result.topPercentile}%\n`
+      : '';
+    return [
+      'IQ Test 상세 리포트',
+      '',
+      '안녕하세요!',
+      '응시해주셔서 감사합니다. 첨부된 PDF에 상세 분석이 들어 있습니다.',
+      score,
+      '결과 페이지에서 30문항 해설을 바로 보세요:',
+      baseUrl,
+      '',
+      '본 점수는 추정치이며 임상적 진단이 아닙니다.',
+    ].join('\n');
+  }
+  const score = result
+    ? `\nEstimated IQ: ${result.estimatedIq}\nTop percentile: ${result.topPercentile}%\n`
+    : '';
+  return [
+    'Your IQ Test Report',
+    '',
+    'Hi there!',
+    'Thanks for taking the test. Your detailed analysis is in the attached PDF.',
+    score,
+    'See the 30-question breakdown online:',
+    baseUrl,
+    '',
+    'This is an estimated score, not a clinical diagnosis.',
+  ].join('\n');
+}
 
 function htmlBody(locale: 'ko' | 'en', sessionId: string, result?: ScoreResult): string {
   const t = locale === 'ko'
@@ -139,7 +174,7 @@ export async function sendReport(input: SendInput): Promise<void> {
       from: FROM,
       to: input.email,
       subject: subject(input.locale),
-      text: intro(input.locale),
+      text: textBody(input.locale, input.sessionId, input.result),
       html: htmlBody(input.locale, input.sessionId, input.result),
       attachments: pdfBuffer
         ? [

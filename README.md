@@ -289,13 +289,13 @@ npm run verify:sql
 
 | 영역 | 상태 |
 |------|------|
-| 라우트 | 30+ (페이지 13 + API 10+ + SEO 메타 8) |
+| 라우트 | 35+ (페이지 14 + API 16 + SEO 메타 8) |
 | 더미 문항 | 한/영 각 30문항 + 영역별 12개 풀, 공간 6개 SVG |
 | 빌드 | next build 통과 |
 | 타입 | tsc --noEmit 0 에러 |
 | Lint | 0 경고 |
-| Unit | node:test 15개 케이스 (`npm run test:unit`) — Levenshtein 회귀 차단 |
-| E2E | Playwright 15개 (smoke 11 + hardening 12)** 통과 |
+| Unit | node:test 44개 케이스 (`npm run test:unit`) — email-typo, classify, ab, pricing, speed, webhook-signature, duration |
+| E2E | Playwright 16개 (smoke 11 + hardening 5) 통과 |
 | 보안 헤더 | CSP, X-Frame-Options DENY 외 4개 |
 | Rate limit | IP당 60회/시간, SHA-256 해시 |
 | Sentry | client/server/edge 3개 config + 모든 critical API wrapping |
@@ -306,12 +306,15 @@ npm run verify:sql
 
 > ** 일부 smoke 카운트는 추가됨; 총 15-시나리오 풀 e2e.
 
-### Round 13–18 추가 기능 요약
+### Round 13–28 추가 기능 요약
 
 - **공유**: Web Share API native sheet, 8-char short URL `/r/{code}`, 1080×1080 IG feed + 1080×1920 story 이미지
-- **전환**: free signature-strength tease (paywall 위), exit-intent modal (1회성), 미드테스트 응원 배너 (Q15/Q25)
-- **결제 UX**: Levenshtein-기반 email typo 제안 (gmial.com → gmail.com)
-- **SEO**: FAQPage JSON-LD, `/about` 페이지 (방법론+영역설명), hreflang sitemap, 전환 경로 noindex
+- **전환**: free signature-strength tease (paywall 위), exit-intent modal (1회성), 미드테스트 응원 배너 (Q15/Q25), share-to-unlock bonus insight
+- **결제 UX**: Levenshtein-기반 email typo 제안 (gmial.com → gmail.com), 환불 정책 카드 (체크아웃), text+html email
+- **A/B**: `lib/ab.ts` SHA bucket assignment + paywall CTA copy 실험 (`paywall-cta-v1`) — `/admin → A/B experiments` 카드에서 variant별 conversion
+- **가격**: `NEXT_PUBLIC_PRICE_KRW` A/B (per Vercel env), `NEXT_PUBLIC_USD_KRW_PEG` FX 조정, `/admin → By price` revenue 세그먼트
+- **SEO**: FAQPage + Article JSON-LD, `/about` 페이지 (방법론+영역설명), hreflang sitemap, 전환 경로 noindex
 - **a11y**: `:focus-visible` 키보드 ring, `prefers-reduced-motion` 존중, 로케일 스위처
-- **성능**: IntersectionObserver-deferred mounts (QR + InstallPrompt + Retake)
-- **운영**: PWA install prompt, 24h retake CTA, 난이도 별표 (★), FAQ 10개, /admin funnel/locale/7-day 차트
+- **성능**: IntersectionObserver-deferred mounts (QR + InstallPrompt + Retake + Explanations)
+- **운영**: PWA install prompt + shortcuts, 24h retake CTA, 난이도 별표 (★), FAQ 10개, /admin funnel/locale/7-day 차트 + by-price + experiments, `/api/admin/sessions/[id]` lookup, `/api/admin/sessions.csv` export, `/api/admin/funnel/reset`
+- **콘텐츠**: speed percentile (`fast/normal/slow`), duration percentile (faster-than-X%), paid 30-question accordion (PDF 대기 시간 흡수)
