@@ -7,6 +7,7 @@ import { CategoryBars } from '@/components/test/category-bars';
 import { CategoryRadar } from '@/components/test/category-radar';
 import { CompareCard } from '@/components/test/compare-card';
 import { ResultQr } from '@/components/test/result-qr';
+import { InstallPrompt } from '@/components/test/install-prompt';
 import { IqDistribution } from '@/components/test/iq-distribution';
 import { TimingBars } from '@/components/test/timing-bars';
 import { ShareButtons } from '@/components/test/share-buttons';
@@ -243,6 +244,22 @@ export default async function ResultPage({
       {/* QR for in-person share */}
       <div className="mt-4">
         <ResultQr url={`/${locale}/result/${sessionId}`} />
+      </div>
+
+      {/* Add-to-home-screen prompt */}
+      <div className="mt-4">
+        <InstallPrompt />
+      </div>
+
+      {/* Re-take test CTA */}
+      <div className="mt-6 rounded-2xl border border-gray-200 bg-white p-4">
+        <p className="text-sm font-semibold text-gray-700">{t('retakeTitle')}</p>
+        <p className="mt-1 text-xs text-gray-500">{t('retakeBody')}</p>
+        <Link href={`/${locale}/test`} className="mt-3 block">
+          <Button size="md" variant="secondary" className="w-full">
+            {t('retakeCta')}
+          </Button>
+        </Link>
       </div>
 
       <p className="mt-8 text-center text-xs text-gray-400">{t('disclaimer')}</p>

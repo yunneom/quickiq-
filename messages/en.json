@@ -44,6 +44,26 @@
       {
         "q": "How is my data handled?",
         "a": "Your email is used only to deliver the report and is deleted after 90 days. Test responses are stored against anonymous session IDs and aren't linked to your identity."
+      },
+      {
+        "q": "Can I take the test more than once?",
+        "a": "There's no hard limit, but for accuracy we recommend waiting 24 hours between attempts. Scores tend to cluster within a narrow band when conditions match."
+      },
+      {
+        "q": "Is the paid report a one-time purchase?",
+        "a": "Yes — once paid, that session's result page stays unlocked forever. Bookmark the URL or save the emailed PDF for permanent access."
+      },
+      {
+        "q": "Do I need to register a business to accept payments?",
+        "a": "Operator note — Lemon Squeezy is a Merchant of Record, so no business registration is required to launch. Tax/VAT handling is automatic."
+      },
+      {
+        "q": "Can I compare results with a friend?",
+        "a": "Yes — after unlocking, the result page has a 'Create compare link' card. Paste your friend's session UUID and you'll get a side-by-side compare page."
+      },
+      {
+        "q": "Why can't I go back to previous questions?",
+        "a": "We measure response time per question; allowing review would dilute the signal. A strict 60s-per-question flow matches the standard IQ assessment conditions."
       }
     ]
   },
@@ -85,6 +105,14 @@
     "shareCopy": "Copy link",
     "shareCopied": "Copied!",
     "shareKakaoFallback": "Text copied — paste it into KakaoTalk",
+    "shareNative": "Share to other apps",
+    "pwaTitle": "Add to home screen",
+    "pwaBody": "Quickly revisit your result or show it to friends later.",
+    "pwaInstall": "Install",
+    "pwaInstallediOS": "Share menu → Add to Home Screen",
+    "retakeTitle": "Take it again",
+    "retakeBody": "For accuracy we recommend waiting 24 hours (condition effects).",
+    "retakeCta": "Start new test",
     "downloadImage": "Save result image",
     "downloadStory": "IG story image (1080×1920)",
     "downloadPdf": "Download PDF report",

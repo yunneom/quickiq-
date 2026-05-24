@@ -378,14 +378,20 @@ export function TestRunner({ locale }: Props) {
           (transitioning ? 'opacity-60' : 'opacity-100 animate-[fadein_220ms_ease-out]')
         }
       >
-        {/* category label */}
-        <div
-          className={
-            'mt-6 inline-flex w-fit rounded-full px-3 py-1 text-xs font-semibold ' +
-            CATEGORY_PILL[current.category]
-          }
-        >
-          {t(`category.${current.category}`)}
+        {/* category label + difficulty stars */}
+        <div className="mt-6 flex items-center gap-2">
+          <span
+            className={
+              'inline-flex w-fit rounded-full px-3 py-1 text-xs font-semibold ' +
+              CATEGORY_PILL[current.category]
+            }
+          >
+            {t(`category.${current.category}`)}
+          </span>
+          <span className="text-xs text-gray-400" aria-label={`difficulty ${current.difficulty}`}>
+            {'★'.repeat(current.difficulty)}
+            {'☆'.repeat(5 - current.difficulty)}
+          </span>
         </div>
 
         {/* question */}

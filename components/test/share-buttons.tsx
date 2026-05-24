@@ -31,6 +31,24 @@ export function ShareButtons({ pct, locale, url, sessionId }: Props) {
     }
   };
 
+  // Web Share API — when available (most mobile browsers, Safari 12+,
+  // Edge/Chrome on Android), opens the OS native share sheet. Lets
+  // users pick from any installed app (Messages, KakaoTalk, Telegram,
+  // LinkedIn, etc.) instead of being limited to the four buttons.
+  const nativeShare = async () => {
+    if (typeof navigator === 'undefined' || !navigator.share) {
+      void copy();
+      return;
+    }
+    try {
+      await navigator.share({ title: t('shareTitle'), text, url: absoluteUrl });
+    } catch {
+      // user dismissed the share sheet or share blocked — silent
+    }
+  };
+  const hasNativeShare =
+    typeof navigator !== 'undefined' && typeof navigator.share === 'function';
+
   const xHref = `https://x.com/intent/post?text=${encodeURIComponent(
     text,
   )}&url=${encodeURIComponent(absoluteUrl)}`;
@@ -64,7 +82,18 @@ export function ShareButtons({ pct, locale, url, sessionId }: Props) {
 
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-4">
-      <p className="text-sm font-semibold text-gray-700">{t('shareTitle')}</p>
+      <div className="flex items-center justify-between">
+        <p className="text-sm font-semibold text-gray-700">{t('shareTitle')}</p>
+        {hasNativeShare && (
+          <button
+            type="button"
+            onClick={nativeShare}
+            className="text-xs font-medium text-brand-600 underline-offset-2 hover:underline"
+          >
+            {t('shareNative')}
+          </button>
+        )}
+      </div>
       <div
         className={
           'mt-3 grid gap-2 ' +
