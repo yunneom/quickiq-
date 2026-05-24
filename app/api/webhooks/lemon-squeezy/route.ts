@@ -41,6 +41,18 @@ export async function POST(req: Request) {
       sigLen: signature?.length ?? 0,
       sigPrefix: signature?.slice(0, 12) ?? null,
     });
+    // Surface to Sentry at warning level (not error) so it shows in the
+    // dashboard but doesn't page the operator. Persistent volume here =
+    // either LS secret drift or an attacker probing — both deserve eyes.
+    Sentry.captureMessage('webhook signature verify failed', {
+      level: 'warning',
+      tags: { area: 'webhook', step: 'verify' },
+      extra: {
+        reason: check.reason,
+        bodyLen: raw.length,
+        sigLen: signature?.length ?? 0,
+      },
+    });
     return NextResponse.json(
       { error: 'invalid_signature', reason: check.reason },
       { status: 401 },
@@ -62,6 +74,25 @@ export async function POST(req: Request) {
   const email = payload.data?.attributes?.user_email;
   const eventId = payload.meta?.webhook_id ?? payload.data?.id;
   if (!sessionId || !email || !eventId) {
+    // This is *our* config bug (the LS checkout custom_data isn't set
+    // correctly) or LS sending an event we didn't expect. Surface it
+    // so we notice instead of silently 400-ing every order.
+    console.error('[webhook] missing required fields', {
+      hasSessionId: Boolean(sessionId),
+      hasEmail: Boolean(email),
+      hasEventId: Boolean(eventId),
+      eventName,
+    });
+    Sentry.captureMessage('webhook missing required fields', {
+      level: 'error',
+      tags: { area: 'webhook', step: 'parse' },
+      extra: {
+        hasSessionId: Boolean(sessionId),
+        hasEmail: Boolean(email),
+        hasEventId: Boolean(eventId),
+        eventName,
+      },
+    });
     return NextResponse.json({ error: 'missing_fields' }, { status: 400 });
   }
 
