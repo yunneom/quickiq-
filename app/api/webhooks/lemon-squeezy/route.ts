@@ -135,6 +135,14 @@ export async function POST(req: Request) {
     if (seen.duplicate) {
       return NextResponse.json({ ok: true, duplicate: true });
     }
+    // Belt-and-suspenders: if the session is already marked paid (a
+    // different webhook_id but same session_id arrived first), don't
+    // re-fire the email. LS docs say retries reuse the webhook_id but
+    // we've seen edge cases with manual re-sends from the dashboard.
+    const existing = getSession(sessionId);
+    if (existing?.is_paid) {
+      return NextResponse.json({ ok: true, duplicate: 'already_paid' });
+    }
     updateSession(sessionId, { email, is_paid: true, paid_at: Date.now() });
   }
 

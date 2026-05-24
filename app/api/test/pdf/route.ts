@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import * as Sentry from '@sentry/nextjs';
 import { renderReportPdf } from '@/lib/pdf/render';
 import { getQuestions } from '@/lib/questions';
 import { getSession } from '@/lib/session-store';
@@ -32,13 +33,37 @@ export const GET = withErrorHandling('test/pdf', async (req: Request) => {
   }
 
   const questions = getQuestions(session.locale);
-  const pdf = await renderReportPdf({
-    sessionId,
-    locale: session.locale,
-    result: session.result,
-    questions,
-    answers: session.answers,
-  });
+  let pdf: Buffer;
+  try {
+    pdf = await renderReportPdf({
+      sessionId,
+      locale: session.locale,
+      result: session.result,
+      questions,
+      answers: session.answers,
+    });
+  } catch (err) {
+    // PDF render can fail on font-CDN flake (jsdelivr down) or memory
+    // pressure on a cold edge worker. Surface a structured 503 with a
+    // retry hint so the client can suggest "try again in a minute"
+    // instead of showing the generic 500 page.
+    console.error('[pdf] render failed', err);
+    Sentry.captureException(err, {
+      tags: { area: 'pdf', step: 'render' },
+      extra: { sessionId },
+    });
+    return NextResponse.json(
+      {
+        error: 'pdf_render_failed',
+        message: 'PDF temporarily unavailable. Please try again shortly.',
+        retryAfterSeconds: 30,
+      },
+      {
+        status: 503,
+        headers: { 'Retry-After': '30' },
+      },
+    );
+  }
 
   return new NextResponse(new Uint8Array(pdf), {
     status: 200,

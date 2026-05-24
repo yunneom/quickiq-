@@ -247,6 +247,7 @@
     "pageErrorTip": "Tip: if a test session got stuck, tap \"Go home\" and start fresh.",
     "retry": "Try again",
     "goHome": "Go home",
+    "skipToContent": "Skip to content",
     "notFoundTitle": "Page not found",
     "notFoundBody": "The page may have moved or no longer exists."
   }

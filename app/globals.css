@@ -58,6 +58,26 @@ textarea {
   border-radius: 6px;
 }
 
+/* Skip-to-content link. Invisible until focused (keyboard tab),
+   becomes a pill at the top-left so keyboard users can jump past the
+   cookie banner / sticky CTA to the test content. Standard pattern;
+   screen readers will announce it on first focus. */
+.skip-to-content {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  background: #2554e6;
+  color: #ffffff;
+  padding: 10px 16px;
+  border-radius: 0 0 8px 0;
+  z-index: 100;
+  font-weight: 600;
+  text-decoration: none;
+}
+.skip-to-content:focus {
+  left: 0;
+}
+
 /* Honor reduced motion: kill the entrance animation that re-runs on
    every question advance during the test (vestibular safety). */
 @media (prefers-reduced-motion: reduce) {

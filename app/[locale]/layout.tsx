@@ -72,6 +72,11 @@ export default async function LocaleLayout({
   if (!locales.includes(locale as Locale)) notFound();
   unstable_setRequestLocale(locale);
   const messages = await getMessages();
+  // Read the skip-link label from the message tree directly so we can
+  // render it in plain HTML (no useTranslations hook in a server file).
+  const skipLabel =
+    (messages as unknown as { errors?: { skipToContent?: string } }).errors
+      ?.skipToContent ?? 'Skip to content';
   return (
     <html lang={locale}>
       <head>
@@ -84,8 +89,19 @@ export default async function LocaleLayout({
         <meta name="theme-color" content="#2554e6" />
       </head>
       <body className="font-sans">
+        {/* Skip-to-content link — visible only when keyboard-focused
+            (see .skip-to-content in globals.css). Keyboard users can
+            tab past the cookie banner / sticky CTA into the test. */}
+        <a href="#main-content" className="skip-to-content">
+          {skipLabel}
+        </a>
         <NextIntlClientProvider messages={messages}>
-          <main className="min-h-screen safe-top safe-bottom">{children}</main>
+          <main
+            id="main-content"
+            className="min-h-screen safe-top safe-bottom"
+          >
+            {children}
+          </main>
           <CookieBanner />
         </NextIntlClientProvider>
         <GatedAnalytics />
