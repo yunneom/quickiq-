@@ -30,8 +30,21 @@ export default async function CheckoutPage({
         <CheckoutForm sessionId={sessionId} locale={locale as Locale} />
       </div>
 
+      {/* Refund-policy card. Prominent (own block, not a footnote) so
+          pre-purchase anxiety gets answered before the user has to
+          search for it. */}
+      <section className="mt-4 rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3">
+        <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-500">
+          {t('refundTitle')}
+        </p>
+        <ul className="mt-2 space-y-1.5 text-[11px] leading-relaxed text-gray-600">
+          <li>· {t('refundBullet1')}</li>
+          <li>· {t('refundBullet2')}</li>
+          <li>· {t('refundBullet3')}</li>
+        </ul>
+      </section>
+
       <p className="mt-4 text-center text-xs text-gray-500">{t('secureNote')}</p>
-      <p className="mt-1 text-center text-xs text-gray-400">{t('refundPolicy')}</p>
     </div>
   );
 }

@@ -166,6 +166,7 @@
     "speedFast": "또래 평균보다 {pct}% 빨라요 — 직관형",
     "speedNormal": "평균과 비슷한 페이스 — 신중형",
     "speedSlow": "평균보다 {pct}% 느린 페이스 — 정확도 우선형",
+    "durationPctLine": "응시자 {pct}%보다 빠르게 완료",
     "summaryHookHigh": "상위권 점수입니다. 어떤 영역에서 두드러지는지 PDF에서 정확히 확인하세요.",
     "summaryHookMid": "평균에 가까운 균형 잡힌 점수예요. 강점 영역을 활용하고 약점을 보완하면 큰 차이를 만들 수 있어요.",
     "summaryHookLow": "지금 점수가 잠재력 전부를 보여주지는 않아요. 영역별 분석에서 숨겨진 강점을 찾아보세요.",
@@ -198,6 +199,10 @@
     "priceLabel": "9,900원 (KRW)",
     "payButton": "결제하기",
     "refundPolicy": "디지털 콘텐츠 특성상 발송 후 환불은 불가합니다.",
+    "refundTitle": "환불 안내",
+    "refundBullet1": "결제 후 결과 페이지는 영구적으로 잠금 해제됩니다.",
+    "refundBullet2": "PDF가 도착하지 않은 경우 결과 페이지의 \"이메일 재발송\" 버튼을 사용하세요.",
+    "refundBullet3": "디지털 콘텐츠 특성상 PDF 발송 완료 후 환불은 어렵습니다.",
     "secureNote": "결제는 Lemon Squeezy를 통해 안전하게 처리됩니다.",
     "processing": "결제창으로 이동 중...",
     "errorGeneric": "결제 시작 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요."

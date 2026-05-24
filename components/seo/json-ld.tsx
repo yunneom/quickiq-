@@ -86,6 +86,43 @@ export function WebsiteLD({ url, name, locale }: WebsiteLDProps) {
   );
 }
 
+interface ArticleLDProps {
+  headline: string;
+  description: string;
+  url: string;
+  locale: 'ko' | 'en';
+}
+
+/**
+ * Article schema for the /about page. Tells Google "this is an
+ * editorial piece about IQ testing methodology" so it can surface
+ * the page for queries like "how is IQ calculated" or "WAIS-IV vs
+ * online test" rather than competing with the conversion-optimized
+ * landing page.
+ */
+export function ArticleLD({ headline, description, url, locale }: ArticleLDProps) {
+  const data = {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline,
+    description,
+    inLanguage: locale,
+    mainEntityOfPage: { '@type': 'WebPage', '@id': url },
+    author: { '@type': 'Organization', name: '7iq' },
+    publisher: {
+      '@type': 'Organization',
+      name: '7iq',
+    },
+  };
+  return (
+    <script
+      type="application/ld+json"
+      // eslint-disable-next-line react/no-danger
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
+    />
+  );
+}
+
 interface FaqLDProps {
   faqs: Array<{ q: string; a: string }>;
 }

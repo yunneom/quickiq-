@@ -31,6 +31,7 @@ import type { ScoreResult } from '@/lib/scoring';
 import {
   AVERAGE_CATEGORY_SCORES,
   classifyIq,
+  durationPercentile,
   leadSizeKey,
   speedInsight,
   strengthsAndWeaknesses,
@@ -116,6 +117,7 @@ export default async function ResultPage({
   const durationLabel = formatDuration(durationMs, ({ min, sec }) =>
     t('durationFormat', { min, sec }),
   );
+  const durationPct = durationPercentile(durationMs);
   const shareUrl = `/${locale}`;
 
   return (
@@ -136,6 +138,11 @@ export default async function ResultPage({
       {speed && (
         <p className="mt-2 inline-block rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">
           ⚡ {t(speedCopyKey, { pct: Math.abs(speed.deltaPct) })}
+        </p>
+      )}
+      {durationPct !== null && durationPct >= 50 && (
+        <p className="mt-1 text-[11px] text-slate-500">
+          ⏱ {t('durationPctLine', { pct: durationPct })}
         </p>
       )}
 

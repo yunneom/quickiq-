@@ -91,6 +91,51 @@ export interface SpeedInsight {
  * Returns null when no timing data is available (older sessions, or
  * Supabase-stored sessions where we don't yet persist timing).
  */
+/**
+ * Map total test duration onto a rough "you finished faster than X%
+ * of takers" percentile. The reference distribution is the same
+ * normal model as the IQ band — mean 7 min (420s), SD 2 min (120s).
+ * We treat _faster_ as the higher percentile (40th percentile of time
+ * → "faster than 40%") because that's how users naturally read it.
+ *
+ * Returns null when `durationMs` is missing or under 90s (probably a
+ * bot / abandoned session) — we don't want to flatter people for
+ * spamming A.
+ */
+const DURATION_MEAN_S = 420;
+const DURATION_SD_S = 120;
+
+export function durationPercentile(durationMs: number | null): number | null {
+  if (!durationMs || durationMs < 90_000) return null;
+  const seconds = durationMs / 1000;
+  const z = (seconds - DURATION_MEAN_S) / DURATION_SD_S;
+  // Lower seconds → lower z → lower CDF → larger "faster than %".
+  // P(takers slower than me) = 1 - CDF(z)
+  const cum = normalCdf(z);
+  const fasterThanPct = Math.round((1 - cum) * 100);
+  // Avoid extreme edges that look like fabrications.
+  return Math.max(1, Math.min(99, fasterThanPct));
+}
+
+function normalCdf(z: number): number {
+  // Abramowitz & Stegun 26.2.17 approximation — identical to the one in
+  // lib/scoring/index.ts but duplicated here to keep classify.ts free
+  // of cross-module dependencies (avoids circular imports).
+  const a1 = 0.254829592;
+  const a2 = -0.284496736;
+  const a3 = 1.421413741;
+  const a4 = -1.453152027;
+  const a5 = 1.061405429;
+  const p = 0.3275911;
+  const sign = z < 0 ? -1 : 1;
+  const absZ = Math.abs(z) / Math.SQRT2;
+  const t = 1.0 / (1.0 + p * absZ);
+  const y =
+    1.0 -
+    ((((a5 * t + a4) * t + a3) * t + a2) * t + a1) * t * Math.exp(-absZ * absZ);
+  return 0.5 * (1 + sign * y);
+}
+
 export function speedInsight(timing: {
   verbal: number;
   numerical: number;

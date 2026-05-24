@@ -166,6 +166,7 @@
     "speedFast": "{pct}% faster than average — intuitive",
     "speedNormal": "Around average pace — deliberate",
     "speedSlow": "{pct}% slower than average — accuracy-first",
+    "durationPctLine": "Faster than {pct}% of test takers",
     "summaryHookHigh": "Top-tier score. Your PDF report shows exactly which domains lift you above the average.",
     "summaryHookMid": "Balanced score around the average. Leveraging strengths and shoring up weaknesses moves the needle most.",
     "summaryHookLow": "This score doesn't show your full potential. Find your hidden strengths in the category breakdown.",
@@ -198,6 +199,10 @@
     "priceLabel": "$7.50 (USD)",
     "payButton": "Pay now",
     "refundPolicy": "Digital content — no refunds after delivery.",
+    "refundTitle": "Refund policy",
+    "refundBullet1": "After payment, your result page stays unlocked permanently.",
+    "refundBullet2": "If the PDF email doesn't arrive, use the \"Resend email\" button on your result page.",
+    "refundBullet3": "Digital content — refunds aren't possible after the PDF has been delivered.",
     "secureNote": "Payments are handled securely by Lemon Squeezy.",
     "processing": "Redirecting to checkout...",
     "errorGeneric": "Something went wrong. Please try again."

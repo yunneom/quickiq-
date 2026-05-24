@@ -7,6 +7,7 @@ import {
 } from 'next-intl/server';
 import { locales, type Locale } from '@/i18n';
 import { LocaleSwitcher } from '@/components/landing/locale-switcher';
+import { ArticleLD } from '@/components/seo/json-ld';
 
 interface PageParams {
   params: { locale: string };
@@ -49,8 +50,17 @@ export default async function AboutPage({ params: { locale } }: PageParams) {
     { titleKey: 'logicalTitle', bodyKey: 'logicalBody' },
   ];
 
+  const base = process.env.NEXT_PUBLIC_APP_URL ?? 'https://7iq.vercel.app';
+  const loc = (locale === 'en' ? 'en' : 'ko') as 'ko' | 'en';
+
   return (
     <article className="mx-auto max-w-md px-5 pb-12 pt-10">
+      <ArticleLD
+        headline={t('title')}
+        description={t('subtitle')}
+        url={`${base}/${locale}/about`}
+        locale={loc}
+      />
       <h1 className="text-3xl font-extrabold leading-tight text-gray-900">
         {t('title')}
       </h1>
