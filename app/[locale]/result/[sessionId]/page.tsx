@@ -31,6 +31,7 @@ import {
   AVERAGE_CATEGORY_SCORES,
   classifyIq,
   leadSizeKey,
+  speedInsight,
   strengthsAndWeaknesses,
   summaryHookKey,
 } from '@/lib/scoring/classify';
@@ -98,6 +99,13 @@ export default async function ResultPage({
   const { strength, weakness } = strengthsAndWeaknesses(result.categoryScores);
   const hookKey = summaryHookKey(result.topPercentile);
   const leadKey = leadSizeKey(result.categoryScores);
+  const speed = speedInsight(result.categoryTiming);
+  const speedCopyKey =
+    speed?.key === 'fast'
+      ? 'speedFast'
+      : speed?.key === 'slow'
+      ? 'speedSlow'
+      : 'speedNormal';
   const signatureKey =
     leadKey === 'dominant'
       ? 'signatureDominant'
@@ -144,6 +152,14 @@ export default async function ResultPage({
       </div>
 
       <p className="mt-5 text-sm text-gray-600">{t(hookKey)}</p>
+
+      {/* Speed micro-insight — free, uses categoryTiming we already
+          collect. Skipped when timing data is missing or 0. */}
+      {speed && (
+        <p className="mt-2 inline-block rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">
+          ⚡ {t(speedCopyKey, { pct: Math.abs(speed.deltaPct) })}
+        </p>
+      )}
 
       {/* IQ bell-curve distribution with user position */}
       <section className="mt-6 rounded-2xl border border-gray-200 bg-white p-4">

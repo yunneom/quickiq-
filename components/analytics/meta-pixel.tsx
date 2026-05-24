@@ -65,6 +65,30 @@ export function trackFunnel(name: FunnelEvent, params?: Record<string, unknown>)
   if (typeof window === 'undefined') return;
   const fbq = (window as unknown as { fbq?: (...args: unknown[]) => void }).fbq;
   if (typeof fbq === 'function') fbq('trackCustom', name, params);
+  // Sentry breadcrumb: when an exception later fires, the Sentry event
+  // will carry the user's funnel trail (TestStart → Q15Answered → ...)
+  // so we can see where in the flow the crash happened. Sentry.SDK lazy-
+  // checked so this never fails when Sentry isn't loaded.
+  try {
+    const sentryGlobal = (window as unknown as {
+      Sentry?: {
+        addBreadcrumb?: (b: {
+          category: string;
+          message: string;
+          level: string;
+          data?: unknown;
+        }) => void;
+      };
+    }).Sentry;
+    sentryGlobal?.addBreadcrumb?.({
+      category: 'funnel',
+      message: name,
+      level: 'info',
+      data: params,
+    });
+  } catch {
+    // ignore
+  }
   // Mirror into our public stats endpoint so we can see funnel drop-off
   // even without a Meta Pixel ID configured (in early launch when we're
   // still waiting for Meta approval).

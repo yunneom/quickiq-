@@ -67,6 +67,48 @@ export function leadSizeKey(scores: CategoryScores): LeadSizeKey {
   return 'balanced';
 }
 
+/** Empirical average response time per question (ms) observed in pilot.
+ *  Used as the reference point for the "you're X% faster" microcopy. */
+const AVG_RESPONSE_MS = 18_000;
+
+export type SpeedKey = 'fast' | 'normal' | 'slow';
+
+export interface SpeedInsight {
+  /** Average ms per question across all four domains. */
+  avgMs: number;
+  /** Whole-number percent faster (+) or slower (−) than the reference. */
+  deltaPct: number;
+  key: SpeedKey;
+}
+
+/**
+ * Convert the four-domain timing object into a single "how fast did
+ * you answer" insight. Bands:
+ *   - fast:   >= 15% under the avg
+ *   - normal: within ±15%
+ *   - slow:   >= 15% over the avg
+ *
+ * Returns null when no timing data is available (older sessions, or
+ * Supabase-stored sessions where we don't yet persist timing).
+ */
+export function speedInsight(timing: {
+  verbal: number;
+  numerical: number;
+  spatial: number;
+  logical: number;
+} | undefined): SpeedInsight | null {
+  if (!timing) return null;
+  const values = Object.values(timing).filter((v) => v > 0);
+  if (values.length === 0) return null;
+  const avgMs = Math.round(values.reduce((a, b) => a + b, 0) / values.length);
+  // Positive delta means faster. (avg - me) / avg
+  const deltaPct = Math.round(((AVG_RESPONSE_MS - avgMs) / AVG_RESPONSE_MS) * 100);
+  let key: SpeedKey = 'normal';
+  if (deltaPct >= 15) key = 'fast';
+  else if (deltaPct <= -15) key = 'slow';
+  return { avgMs, deltaPct, key };
+}
+
 /**
  * Reference "average" category scores used for comparison visualization.
  * These are intentionally close to 50–60% to fit a believable peer baseline.

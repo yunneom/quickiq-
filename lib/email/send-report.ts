@@ -39,7 +39,8 @@ function htmlBody(locale: 'ko' | 'en', sessionId: string, result?: ScoreResult):
         intro: '응시해주셔서 감사합니다. 첨부된 PDF에 상세 분석이 들어있습니다.',
         scoreLabel: '추정 IQ',
         pctLabel: '상위 백분위',
-        cta: '결과 페이지 다시 보기',
+        cta: '결과 페이지에서 30문항 해설 바로 보기',
+        ctaSub: '브라우저에서 영역별 점수 + 30문항 풀이까지 즉시 확인할 수 있어요.',
         footer: '본 점수는 추정치이며 임상적 진단이 아닙니다.',
       }
     : {
@@ -48,7 +49,8 @@ function htmlBody(locale: 'ko' | 'en', sessionId: string, result?: ScoreResult):
         intro: 'Thanks for taking the test. Your detailed analysis is in the attached PDF.',
         scoreLabel: 'Estimated IQ',
         pctLabel: 'Top percentile',
-        cta: 'View result page',
+        cta: 'See the 30-question breakdown online',
+        ctaSub: 'Domain scores + every question explained, instantly in your browser.',
         footer: 'This is an estimated score, not a clinical diagnosis.',
       };
 
@@ -81,10 +83,11 @@ function htmlBody(locale: 'ko' | 'en', sessionId: string, result?: ScoreResult):
               <h1 style="margin:8px 0 16px;font-size:22px;font-weight:700;color:#111827;">${t.title}</h1>
               <p style="margin:0;font-size:14px;color:#374151;line-height:1.6;">${t.greet}<br>${t.intro}</p>
               ${scoreBlock}
-              <p style="margin:0;font-size:13px;color:#6b7280;line-height:1.6;">${t.footer}</p>
               <div style="margin:24px 0 0;">
                 <a href="${APP_URL}/${locale}/result/${sessionId}" style="display:inline-block;background:#2554e6;color:#ffffff;text-decoration:none;font-weight:600;font-size:14px;padding:12px 22px;border-radius:10px;">${t.cta}</a>
+                <p style="margin:8px 0 0;font-size:12px;color:#6b7280;line-height:1.5;">${t.ctaSub}</p>
               </div>
+              <p style="margin:20px 0 0;font-size:13px;color:#6b7280;line-height:1.6;">${t.footer}</p>
             </td>
           </tr>
         </table>
