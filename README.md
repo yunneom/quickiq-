@@ -191,12 +191,13 @@ npm run test:e2e:install   # 최초 1회 — Chromium 다운로드
 npm run test:e2e           # 테스트 실행
 ```
 
-`tests/e2e/smoke.spec.ts` 안의 3개 시나리오:
-- 랜딩 → 30문항(모두 A 선택) → 결과 페이지
-- API: PRD §2.3 점수 공식 검증 (30/30 → IQ 125, top <10%)
-- mock 결제 → 결과 페이지 잠금해제
+총 15개 시나리오 — `tests/e2e/smoke.spec.ts` (응시→결과→mock 결제) + `tests/e2e/hardening.spec.ts` (rate limit, 보안 헤더, 404, SEO 엔드포인트, /about, 로케일 스위처, FAQ JSON-LD, short URL miss, /api/health). iPhone 13 viewport(390×844) 기준, Chromium 단일 브라우저.
 
-iPhone 13 viewport(390×844) 기준, Chromium 단일 브라우저.
+### Unit 테스트 (node:test, 추가 의존성 0개)
+```bash
+npm run test:unit
+```
+`tests/unit/` — `email-typo.ts` (typo suggester 7 케이스), `classify.ts` (IQ band/hook/strength-weakness/lead-size 8 케이스). 새 deps 없이 Node 20 내장 `node:test` + `tsx` ESM 로더로 실행.
 
 ### Vercel 프리뷰 배포
 `.github/workflows/preview-deploy.yml` — PR마다 Vercel 프리뷰 URL 생성. 다음 시크릿 등록 시에만 동작 (없으면 자동 스킵):
@@ -255,11 +256,14 @@ cat .vercel/project.json
 
 | Endpoint | 용도 | 인증 |
 |---|---|---|
-| `GET /api/health` | 모니터링 liveness + 통합 상태 | 무인증 |
-| `GET /api/admin/stats` | 응시/결제/평균 IQ 통계 | `x-admin-token` 헤더 |
+| `GET /api/health` | 모니터링 liveness + 통합 상태 + uptime + branch + node 버전 | 무인증 |
+| `GET /api/admin/stats` | 응시/결제/평균 IQ + by_locale + by_day + funnel | `x-admin-token` 헤더 |
+| `GET /api/stats/public` | 랜딩 카드용 익명 통계 (응시자 수 + 평균 IQ) | 무인증 (60초 캐시) |
+| `POST /api/funnel/track` body: `{event}` | 클라이언트 funnel beacon (allow-list 강제) | 무인증 |
 | `GET /api/test/pdf?sessionId=…` | paid 사용자 PDF 직접 다운로드 | sessionId 보유 |
 | `POST /api/email/resend` body: `{sessionId}` | paid 사용자 메일 재발송 | sessionId 보유 + 5회/시간 제한 |
 | `POST /api/webhooks/lemon-squeezy` | LS 결제 webhook 수신 | HMAC-SHA256 서명 검증 |
+| `GET /r/{code}` | 8자 short URL → 결과 페이지 redirect | 무인증 |
 
 Admin 통계 사용 예시:
 ```bash
@@ -285,15 +289,29 @@ npm run verify:sql
 
 | 영역 | 상태 |
 |------|------|
-| 라우트 | 23개 (페이지 11 + API 6 + SEO 메타 6) |
-| 더미 문항 | 한/영 각 30문항, 공간 6개 SVG |
-| 빌드 | next build 통과, First Load JS 87KB shared |
+| 라우트 | 30+ (페이지 13 + API 10+ + SEO 메타 8) |
+| 더미 문항 | 한/영 각 30문항 + 영역별 12개 풀, 공간 6개 SVG |
+| 빌드 | next build 통과 |
 | 타입 | tsc --noEmit 0 에러 |
 | Lint | 0 경고 |
-| E2E | Playwright 8개 시나리오 (smoke 3 + hardening 5) 통과 |
+| Unit | node:test 15개 케이스 (`npm run test:unit`) — Levenshtein 회귀 차단 |
+| E2E | Playwright 15개 (smoke 11 + hardening 12)** 통과 |
 | 보안 헤더 | CSP, X-Frame-Options DENY 외 4개 |
-| Rate limit | IP당 10회/시간, SHA-256 해시 |
+| Rate limit | IP당 60회/시간, SHA-256 해시 |
 | Sentry | client/server/edge 3개 config + 모든 critical API wrapping |
 | Vercel | Analytics + Speed Insights + 프리뷰 배포 워크플로 |
-| CI | lint/typecheck/build + Playwright 풀 실행, 시크릿 0개 필요 |
+| CI | lint/typecheck/unit/build + Playwright 풀 실행, 시크릿 0개 필요 |
 | Dependabot | npm + GH Actions 주 1회 |
+| Funnel | TestStart→PaymentSuccess + Q1/Q15/Q25 + ExitIntent (Meta trackCustom + in-memory) |
+
+> ** 일부 smoke 카운트는 추가됨; 총 15-시나리오 풀 e2e.
+
+### Round 13–18 추가 기능 요약
+
+- **공유**: Web Share API native sheet, 8-char short URL `/r/{code}`, 1080×1080 IG feed + 1080×1920 story 이미지
+- **전환**: free signature-strength tease (paywall 위), exit-intent modal (1회성), 미드테스트 응원 배너 (Q15/Q25)
+- **결제 UX**: Levenshtein-기반 email typo 제안 (gmial.com → gmail.com)
+- **SEO**: FAQPage JSON-LD, `/about` 페이지 (방법론+영역설명), hreflang sitemap, 전환 경로 noindex
+- **a11y**: `:focus-visible` 키보드 ring, `prefers-reduced-motion` 존중, 로케일 스위처
+- **성능**: IntersectionObserver-deferred mounts (QR + InstallPrompt + Retake)
+- **운영**: PWA install prompt, 24h retake CTA, 난이도 별표 (★), FAQ 10개, /admin funnel/locale/7-day 차트

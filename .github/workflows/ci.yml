@@ -30,6 +30,11 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
+      - name: Unit tests
+        # Cheap (~1s) — runs before build so a broken pure-function
+        # implementation fails fast without waiting for Next compilation.
+        run: npm run test:unit
+
       - name: Build
         # CI build runs without secrets — the app must compile cleanly in
         # dev-mode (no Supabase / Lemon Squeezy / Resend keys). All external
