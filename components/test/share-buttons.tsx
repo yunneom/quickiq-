@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { shareToKakao } from '@/lib/share/kakao';
+import { markShareBonusUnlocked } from '@/components/test/share-bonus';
 
 interface Props {
   pct: number;
@@ -35,6 +36,8 @@ export function ShareButtons({ pct, locale, url, sessionId }: Props) {
       await navigator.clipboard.writeText(`${text}\n${absoluteUrl}`);
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
+      // Share-to-unlock: a successful copy counts as a share intent.
+      markShareBonusUnlocked();
     } catch {
       // ignore
     }
@@ -51,6 +54,7 @@ export function ShareButtons({ pct, locale, url, sessionId }: Props) {
     }
     try {
       await navigator.share({ title: t('shareTitle'), text, url: absoluteUrl });
+      markShareBonusUnlocked();
     } catch {
       // user dismissed the share sheet or share blocked — silent
     }
@@ -78,6 +82,7 @@ export function ShareButtons({ pct, locale, url, sessionId }: Props) {
       imageUrl: `${absoluteUrl}/opengraph-image`,
       linkUrl: absoluteUrl,
     });
+    if (ok) markShareBonusUnlocked();
     if (!ok) {
       try {
         await navigator.clipboard.writeText(`${text}\n${absoluteUrl}`);

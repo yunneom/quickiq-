@@ -15,6 +15,7 @@ import {
   ProductLD,
   WebsiteLD,
 } from '@/components/seo/json-ld';
+import { priceKRW } from '@/lib/pricing';
 import { Faq } from '@/components/landing/faq';
 import { LocaleSwitcher } from '@/components/landing/locale-switcher';
 
@@ -49,7 +50,7 @@ export default async function LandingPage({
         name={tMeta('title')}
         description={tMeta('description')}
         url={base}
-        priceKRW={Number(process.env.NEXT_PUBLIC_PRICE_KRW ?? 9900)}
+        priceKRW={priceKRW()}
         locale={loc}
       />
       {faqs.length > 0 && <FaqLD faqs={faqs} />}

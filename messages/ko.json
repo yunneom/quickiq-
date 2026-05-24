@@ -171,7 +171,9 @@
     "exitIntentTitle": "30문항 해설, 정말 안 받아 가실 건가요?",
     "exitIntentBody": "PDF에는 영역별 상세 점수와 30문항 정오답 풀이가 들어 있어요. 결과 페이지는 결제 후 영구적으로 다시 볼 수 있습니다.",
     "exitIntentCta": "9,900원 · 상세 리포트 받기",
-    "exitIntentDismiss": "지금은 괜찮아요"
+    "exitIntentDismiss": "지금은 괜찮아요",
+    "bonusTitle": "🎁 공유 보너스 인사이트",
+    "bonusBody": "당신의 응답 패턴은 상위 {pct}% 그룹에서 자주 보이는 '깊이형 사고' 유형에 가깝습니다. 빠르게 풀기보다 정확도를 우선하는 경향이 있어요."
   },
   "checkout": {
     "title": "상세 리포트 받기",

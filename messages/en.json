@@ -171,7 +171,9 @@
     "exitIntentTitle": "Leaving without the 30-question breakdown?",
     "exitIntentBody": "The PDF includes per-category scores and explanations for every question. Your result page stays unlocked permanently after purchase.",
     "exitIntentCta": "$7.50 · Get the full report",
-    "exitIntentDismiss": "Maybe later"
+    "exitIntentDismiss": "Maybe later",
+    "bonusTitle": "🎁 Share bonus insight",
+    "bonusBody": "Your answer pattern matches the 'depth-first thinker' profile often seen in the top {pct}% — accuracy-prioritized over speed."
   },
   "checkout": {
     "title": "Get your full report",

@@ -22,6 +22,7 @@ import { DeferMount } from '@/components/test/defer-mount';
 import { IqDistribution } from '@/components/test/iq-distribution';
 import { TimingBars } from '@/components/test/timing-bars';
 import { ShareButtons } from '@/components/test/share-buttons';
+import { ShareBonus } from '@/components/test/share-bonus';
 import { PaidActions } from '@/components/test/paid-actions';
 import { locales, type Locale } from '@/i18n';
 import type { ScoreResult } from '@/lib/scoring';
@@ -268,6 +269,9 @@ export default async function ResultPage({
           sessionId={sessionId}
         />
       </div>
+
+      {/* Share-to-unlock bonus — hidden until a share action fires */}
+      <ShareBonus pct={result.topPercentile} />
 
       {/* Compare with a friend */}
       <div className="mt-4">
