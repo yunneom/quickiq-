@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { getTranslations, unstable_setRequestLocale } from 'next-intl/server';
 import { Button } from '@/components/ui/button';
 import { KakaoChannelButton } from '@/components/test/kakao-channel-button';
+import { FunnelBeacon } from '@/components/analytics/funnel-beacon';
 import { locales, type Locale } from '@/i18n';
 
 export default async function ThankYouPage({
@@ -18,6 +19,7 @@ export default async function ThankYouPage({
 
   return (
     <div className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center px-5 text-center">
+      <FunnelBeacon event="IQ_PaymentSuccess" />
       <div className="grid h-16 w-16 place-items-center rounded-full bg-green-100 text-3xl">
         ✅
       </div>

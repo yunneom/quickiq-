@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import { getTranslations, unstable_setRequestLocale } from 'next-intl/server';
 import { CheckoutForm } from '@/components/test/checkout-form';
+import { FunnelBeacon } from '@/components/analytics/funnel-beacon';
 import { locales, type Locale } from '@/i18n';
 
 export default async function CheckoutPage({
@@ -14,6 +15,7 @@ export default async function CheckoutPage({
 
   return (
     <div className="mx-auto flex min-h-screen max-w-md flex-col px-5 pb-10 pt-10">
+      <FunnelBeacon event="IQ_CheckoutViewed" />
       <h1 className="text-2xl font-bold text-gray-900">{t('title')}</h1>
       <p className="mt-2 text-sm text-gray-600">{t('subtitle')}</p>
 

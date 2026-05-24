@@ -81,6 +81,48 @@ export function shortCodeFor(sessionId: string): string {
   return sessionId.slice(0, 8);
 }
 
+// ── Funnel event counters (in-memory) ────────────────────────────────────────
+
+/**
+ * Lightweight rolling counters per funnel event. We store the timestamps
+ * (not just totals) so the admin dashboard can compute "last 24h" without
+ * a separate aggregation step. Events older than the retention window
+ * are GC'd lazily on every increment.
+ */
+const FUNNEL_RETENTION_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+
+const g3 = globalThis as unknown as {
+  __iqFunnel?: Map<string, number[]>;
+};
+if (!g3.__iqFunnel) g3.__iqFunnel = new Map();
+const funnelStore = g3.__iqFunnel;
+
+export function recordFunnelEvent(eventName: string): void {
+  const cutoff = Date.now() - FUNNEL_RETENTION_MS;
+  const arr = funnelStore.get(eventName) ?? [];
+  // Drop expired entries on the way in to keep memory bounded.
+  let dropTo = 0;
+  while (dropTo < arr.length && arr[dropTo] < cutoff) dropTo += 1;
+  const fresh = dropTo === 0 ? arr : arr.slice(dropTo);
+  fresh.push(Date.now());
+  funnelStore.set(eventName, fresh);
+}
+
+export function readFunnelCounts(): Record<string, { total: number; last24h: number; last1h: number }> {
+  const now = Date.now();
+  const out: Record<string, { total: number; last24h: number; last1h: number }> = {};
+  const day = now - 24 * 60 * 60 * 1000;
+  const hour = now - 60 * 60 * 1000;
+  for (const [event, timestamps] of funnelStore) {
+    out[event] = {
+      total: timestamps.length,
+      last24h: timestamps.filter((t) => t >= day).length,
+      last1h: timestamps.filter((t) => t >= hour).length,
+    };
+  }
+  return out;
+}
+
 // ── Webhook idempotency (in-memory, falls back to Supabase when configured) ──
 
 const IDEMPOTENCY_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours

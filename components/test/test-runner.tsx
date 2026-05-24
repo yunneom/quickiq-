@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { trackEvent } from '@/components/analytics/meta-pixel';
+import { trackEvent, trackFunnel } from '@/components/analytics/meta-pixel';
 import type { Question, OptionId, Category } from '@/lib/questions/types';
 import type { AnswerInput } from '@/lib/scoring';
 import { Figure } from '@/components/figures/figure';
@@ -125,6 +125,7 @@ export function TestRunner({ locale }: Props) {
         setQuestions(data.questions);
         setPhase('running');
         trackEvent('StartTest');
+        trackFunnel('IQ_TestStart', { locale });
         questionStartedAtRef.current = Date.now();
       } catch (e) {
         console.error(e);
@@ -251,6 +252,12 @@ export function TestRunner({ locale }: Props) {
     };
     const nextAnswers = [...answers, answer];
     setAnswers(nextAnswers);
+    // Funnel beacons at 1 / 15 / 25 answered so we can see exactly where
+    // visitors drop off without hauling the entire answer array around.
+    const answered = nextAnswers.length;
+    if (answered === 1) trackFunnel('IQ_Q1Answered');
+    else if (answered === 15) trackFunnel('IQ_Q15Answered');
+    else if (answered === 25) trackFunnel('IQ_Q25Answered');
     if (index + 1 >= questions.length) {
       submit(nextAnswers);
     } else {
@@ -262,6 +269,7 @@ export function TestRunner({ locale }: Props) {
     if (!sessionId) return;
     setPhase('submitting');
     trackEvent('CompleteTest');
+    trackFunnel('IQ_TestSubmitted');
     // Resume blob no longer needed once we're submitting.
     clearResume(locale);
     try {
@@ -370,6 +378,16 @@ export function TestRunner({ locale }: Props) {
           );
         })}
       </div>
+
+      {/* Encouragement banner — shown briefly when crossing the half-way
+          mark (Q15) and the home stretch (Q25). Cheap, no-state DOM only;
+          its presence is purely keyed on `index` so it disappears once
+          the user moves on to the next question. */}
+      {(index === 14 || index === 24) && (
+        <div className="mt-3 rounded-xl border border-brand-200 bg-brand-50 px-3 py-2 text-center text-xs font-medium text-brand-700">
+          {index === 14 ? t('cheerHalf') : t('cheerFinal')}
+        </div>
+      )}
 
       <div
         key={current.id}

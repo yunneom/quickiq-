@@ -87,7 +87,9 @@
       "logical": "논리 추론"
     },
     "noBack": "이전 문항으로 돌아갈 수 없습니다.",
-    "completing": "채점 중..."
+    "completing": "채점 중...",
+    "cheerHalf": "절반 통과! 조금만 더 가면 영역별 강점 결과가 나와요.",
+    "cheerFinal": "거의 다 왔어요. 마지막 5문항도 집중!"
   },
   "result": {
     "title": "당신의 추정 IQ",
@@ -164,7 +166,12 @@
     "signatureTitle": "한눈에 보는 시그니처 강점",
     "signatureDominant": "{cat} 영역이 다른 영역을 압도적으로 앞섰어요. 이 강점을 살리는 직무·학습 추천은 PDF에서 확인하세요.",
     "signatureClear": "{cat} 영역에서 또렷한 우위를 보였어요. PDF에서 다른 3영역과의 점수 차이와 활용 팁을 받아보세요.",
-    "signatureBalanced": "4영역이 비슷하게 균형 잡힌 프로필이에요. 상위 강점 추출과 보완 영역 가이드는 PDF에서 확인하세요."
+    "signatureBalanced": "4영역이 비슷하게 균형 잡힌 프로필이에요. 상위 강점 추출과 보완 영역 가이드는 PDF에서 확인하세요.",
+    "exitIntentEyebrow": "잠시만요",
+    "exitIntentTitle": "30문항 해설, 정말 안 받아 가실 건가요?",
+    "exitIntentBody": "PDF에는 영역별 상세 점수와 30문항 정오답 풀이가 들어 있어요. 결과 페이지는 결제 후 영구적으로 다시 볼 수 있습니다.",
+    "exitIntentCta": "9,900원 · 상세 리포트 받기",
+    "exitIntentDismiss": "지금은 괜찮아요"
   },
   "checkout": {
     "title": "상세 리포트 받기",

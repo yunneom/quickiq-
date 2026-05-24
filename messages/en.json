@@ -87,7 +87,9 @@
       "logical": "Logical Reasoning"
     },
     "noBack": "You cannot return to previous questions.",
-    "completing": "Scoring..."
+    "completing": "Scoring...",
+    "cheerHalf": "Halfway there! Your domain breakdown is right around the corner.",
+    "cheerFinal": "Final stretch — only 5 left. Stay sharp!"
   },
   "result": {
     "title": "Your Estimated IQ",
@@ -164,7 +166,12 @@
     "signatureTitle": "Your signature strength at a glance",
     "signatureDominant": "Your {cat} reasoning dominates the other three domains. The PDF maps this strength to careers and study paths.",
     "signatureClear": "You show a clear edge in {cat} reasoning. The PDF breaks down exact margins and how to leverage them.",
-    "signatureBalanced": "A balanced four-domain profile. The PDF surfaces subtle leads and shoring-up tips you can't see here."
+    "signatureBalanced": "A balanced four-domain profile. The PDF surfaces subtle leads and shoring-up tips you can't see here.",
+    "exitIntentEyebrow": "Wait —",
+    "exitIntentTitle": "Leaving without the 30-question breakdown?",
+    "exitIntentBody": "The PDF includes per-category scores and explanations for every question. Your result page stays unlocked permanently after purchase.",
+    "exitIntentCta": "$7.50 · Get the full report",
+    "exitIntentDismiss": "Maybe later"
   },
   "checkout": {
     "title": "Get your full report",

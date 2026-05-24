@@ -4,10 +4,12 @@ import { getTranslations, unstable_setRequestLocale } from 'next-intl/server';
 import { headers } from 'next/headers';
 import { Button } from '@/components/ui/button';
 import { CategoryBars } from '@/components/test/category-bars';
+import { FunnelBeacon } from '@/components/analytics/funnel-beacon';
 import { CategoryRadar } from '@/components/test/category-radar';
 import { CompareCard } from '@/components/test/compare-card';
 import { ResultQr } from '@/components/test/result-qr';
 import { InstallPrompt } from '@/components/test/install-prompt';
+import { ExitIntentModal } from '@/components/test/exit-intent-modal';
 import { IqDistribution } from '@/components/test/iq-distribution';
 import { TimingBars } from '@/components/test/timing-bars';
 import { ShareButtons } from '@/components/test/share-buttons';
@@ -91,6 +93,7 @@ export default async function ResultPage({
 
   return (
     <div className="mx-auto flex min-h-screen max-w-md flex-col px-5 pb-10 pt-8">
+      <FunnelBeacon event="IQ_ResultViewed" params={{ isPaid }} />
       {/* Hero score card */}
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-500 to-brand-700 px-6 py-8 text-white shadow-lg">
         <div className="absolute -right-12 -top-12 h-44 w-44 rounded-full bg-white/10" />
@@ -284,6 +287,11 @@ export default async function ResultPage({
       </div>
 
       <p className="mt-8 text-center text-xs text-gray-400">{t('disclaimer')}</p>
+
+      {/* Exit-intent modal — free users only, one-shot dismissal */}
+      {!isPaid && (
+        <ExitIntentModal locale={locale as Locale} sessionId={sessionId} />
+      )}
     </div>
   );
 }

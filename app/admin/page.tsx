@@ -16,8 +16,41 @@ interface Stats {
     estimatedIq: number | null;
     emailDomain: string | null;
   }>;
+  by_campaign?: Array<{
+    name: string;
+    sessions: number;
+    completed: number;
+    paid: number;
+    conversion_pct: number;
+  }>;
+  by_locale?: Array<{
+    locale: 'ko' | 'en';
+    sessions: number;
+    completed: number;
+    paid: number;
+    conversion_pct: number;
+  }>;
+  by_day?: Array<{
+    date: string;
+    sessions: number;
+    completed: number;
+    paid: number;
+  }>;
+  funnel?: Record<string, { total: number; last24h: number; last1h: number }>;
   note: string;
 }
+
+const FUNNEL_ORDER = [
+  'IQ_TestStart',
+  'IQ_Q1Answered',
+  'IQ_Q15Answered',
+  'IQ_Q25Answered',
+  'IQ_TestSubmitted',
+  'IQ_ResultViewed',
+  'IQ_CheckoutViewed',
+  'IQ_PaymentSuccess',
+  'IQ_ExitIntent',
+];
 
 const TOKEN_KEY = 'iq-admin-token';
 
@@ -158,6 +191,101 @@ export default function AdminPage() {
           ))}
         </tbody>
       </table>
+
+      {stats.funnel && (
+        <>
+          <h2 className="mt-10 text-sm font-semibold uppercase tracking-wider text-gray-500">
+            Funnel (last 24 h)
+          </h2>
+          <div className="mt-2 space-y-1.5">
+            {FUNNEL_ORDER.map((name) => {
+              const row = stats.funnel?.[name];
+              const start = stats.funnel?.['IQ_TestStart']?.last24h ?? 0;
+              const v = row?.last24h ?? 0;
+              const pct = start === 0 ? 0 : Math.round((v / start) * 100);
+              return (
+                <div key={name} className="flex items-center gap-2 text-xs">
+                  <span className="w-44 truncate text-gray-600">{name}</span>
+                  <div className="relative h-2 flex-1 rounded-full bg-gray-100">
+                    <div
+                      className="h-full rounded-full bg-brand-500"
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+                  <span className="w-14 text-right font-medium tabular-nums text-gray-900">
+                    {v}
+                  </span>
+                  <span className="w-10 text-right text-[10px] text-gray-400">
+                    {pct}%
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </>
+      )}
+
+      {stats.by_locale && (
+        <>
+          <h2 className="mt-10 text-sm font-semibold uppercase tracking-wider text-gray-500">
+            By locale
+          </h2>
+          <table className="mt-2 w-full text-xs">
+            <thead className="border-b border-gray-200 text-left text-[10px] uppercase text-gray-400">
+              <tr>
+                <th className="py-2">locale</th>
+                <th>sessions</th>
+                <th>completed</th>
+                <th>paid</th>
+                <th>conv %</th>
+              </tr>
+            </thead>
+            <tbody>
+              {stats.by_locale.map((row) => (
+                <tr key={row.locale} className="border-b border-gray-100">
+                  <td className="py-2 font-medium">{row.locale}</td>
+                  <td>{row.sessions}</td>
+                  <td>{row.completed}</td>
+                  <td>{row.paid}</td>
+                  <td>{row.conversion_pct}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </>
+      )}
+
+      {stats.by_day && (
+        <>
+          <h2 className="mt-10 text-sm font-semibold uppercase tracking-wider text-gray-500">
+            Last 7 days
+          </h2>
+          <div className="mt-2 flex items-end gap-1.5">
+            {stats.by_day.map((d) => {
+              const max = Math.max(
+                1,
+                ...(stats.by_day ?? []).map((x) => x.sessions),
+              );
+              const h = Math.round((d.sessions / max) * 80);
+              return (
+                <div
+                  key={d.date}
+                  className="flex flex-1 flex-col items-center gap-1"
+                  title={`${d.date} — ${d.sessions} sessions, ${d.paid} paid`}
+                >
+                  <div
+                    className="w-full rounded-t bg-brand-500"
+                    style={{ height: `${h}px` }}
+                  />
+                  <span className="text-[9px] text-gray-400">
+                    {d.date.slice(5)}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </>
+      )}
 
       <p className="mt-10 text-[10px] text-gray-400">{stats.note}</p>
     </div>

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { withErrorHandling } from '@/lib/api/with-error-handling';
+import { readFunnelCounts } from '@/lib/session-store';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -89,6 +90,49 @@ export const GET = withErrorHandling('admin/stats', async (req: Request) => {
     }))
     .sort((a, b) => b.sessions - a.sessions);
 
+  // ── By-locale split (ko vs en) ──
+  const byLocale = (['ko', 'en'] as const).map((loc) => {
+    const all = sessions.filter((s) => s.locale === loc);
+    const done = all.filter((s) => s.completed_at);
+    const pd = all.filter((s) => s.is_paid);
+    return {
+      locale: loc,
+      sessions: all.length,
+      completed: done.length,
+      paid: pd.length,
+      conversion_pct:
+        done.length === 0
+          ? 0
+          : Math.round((pd.length / done.length) * 1000) / 10,
+    };
+  });
+
+  // ── Last-7-day timeline (UTC days, oldest first) ──
+  const byDay: Array<{ date: string; sessions: number; completed: number; paid: number }> = [];
+  for (let i = 6; i >= 0; i--) {
+    const day = new Date(now - i * DAY);
+    const dayStart = Date.UTC(
+      day.getUTCFullYear(),
+      day.getUTCMonth(),
+      day.getUTCDate(),
+    );
+    const dayEnd = dayStart + DAY;
+    const inDay = sessions.filter(
+      (s) => s.started_at >= dayStart && s.started_at < dayEnd,
+    );
+    const date = new Date(dayStart).toISOString().slice(0, 10);
+    byDay.push({
+      date,
+      sessions: inDay.length,
+      completed: inDay.filter((s) => s.completed_at).length,
+      paid: inDay.filter((s) => s.is_paid).length,
+    });
+  }
+
+  // ── Funnel drop-off (in-memory counters, mirrors what the client
+  //    sends via /api/funnel/track and what Meta sees as trackCustom). ──
+  const funnel = readFunnelCounts();
+
   return NextResponse.json(
     {
       generatedAt: new Date().toISOString(),
@@ -108,6 +152,9 @@ export const GET = withErrorHandling('admin/stats', async (req: Request) => {
       recent_sessions_24h: sinceDay.length,
       // Last 10 paid orders (most recent first), email masked.
       by_campaign: byCampaign,
+      by_locale: byLocale,
+      by_day: byDay,
+      funnel,
       recent_paid: paid
         .sort((a, b) => (b.paid_at ?? 0) - (a.paid_at ?? 0))
         .slice(0, 10)
