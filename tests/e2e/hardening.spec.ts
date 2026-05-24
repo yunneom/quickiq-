@@ -73,6 +73,53 @@ test('404 page renders for unknown routes inside [locale]', async ({ page }) => 
   await expect(page.locator('text=404')).toBeVisible();
 });
 
+test('/about renders methodology + four-domain sections', async ({ page }) => {
+  // The /about route is a static SEO page; we only check structural
+  // signals (h1 present, four domain cards visible) rather than exact
+  // copy, since the copy may evolve and we'd rather flag broken
+  // rendering than every wording tweak.
+  await page.goto('/ko/about', { waitUntil: 'domcontentloaded' });
+  await expect(page.locator('h1')).toBeVisible();
+  // 4 domain cards == 4 list items inside the categories <ul>.
+  const lis = page.locator('article ul li');
+  await expect(lis).toHaveCount(4);
+});
+
+test('locale switcher swaps between /ko and /en in place', async ({ page }) => {
+  // Pre-set cookie consent so the bottom banner doesn't intercept our
+  // footer clicks. The banner is a fixed-position overlay that covers
+  // the LocaleSwitcher on a phone viewport.
+  await page.addInitScript(() => {
+    window.localStorage.setItem('iq-cookie-consent', 'accepted');
+  });
+  await page.goto('/ko/about', { waitUntil: 'domcontentloaded' });
+  await page.getByRole('button', { name: 'English' }).click();
+  await page.waitForURL('**/en/about');
+  expect(page.url()).toContain('/en/about');
+  // Round-trip back to KO must work too.
+  await page.getByRole('button', { name: '한국어' }).click();
+  await page.waitForURL('**/ko/about');
+  expect(page.url()).toContain('/ko/about');
+});
+
+test('faq JSON-LD is emitted on the landing page', async ({ request }) => {
+  const res = await request.get('/ko');
+  const html = await res.text();
+  // Look for the FAQPage schema marker — exact JSON shape is fragile,
+  // but the @type is stable.
+  expect(html).toContain('"@type":"FAQPage"');
+  expect(html).toContain('"@type":"Question"');
+});
+
+test('short-URL redirects an unknown code back to landing', async ({ request }) => {
+  // We can't easily mint a real session in this isolated request
+  // context, but the *miss* path (no matching session) must redirect
+  // to / rather than 404 so failed shares still funnel into the test.
+  const res = await request.get('/r/deadbeef', { maxRedirects: 0 });
+  expect([307, 308]).toContain(res.status());
+  expect(res.headers()['location']).toMatch(/\/$/);
+});
+
 test('health endpoint reports integration status', async ({ request }) => {
   const res = await request.get('/api/health');
   expect(res.status()).toBe(200);

@@ -15,13 +15,29 @@ export const dynamic = 'force-dynamic';
  * a single GET shows what's wired up. We never echo secret material —
  * just a boolean per service.
  */
+// Pin first import time per process so we can report cold-start age.
+const PROCESS_BOOTED_AT = Date.now();
+
 export async function GET() {
+  // Memory usage is informational only — high RSS doesn't fail the
+  // probe, but lets the operator catch a leak before the platform OOMs.
+  let memMB: number | null = null;
+  try {
+    const m = process.memoryUsage();
+    memMB = Math.round(m.rss / 1024 / 1024);
+  } catch {
+    // Edge runtime doesn't expose memoryUsage — silent skip.
+  }
   return NextResponse.json(
     {
       status: 'ok',
       time: new Date().toISOString(),
+      uptime_s: Math.round((Date.now() - PROCESS_BOOTED_AT) / 1000),
       commit: process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ?? null,
+      branch: process.env.VERCEL_GIT_COMMIT_REF ?? null,
       region: process.env.VERCEL_REGION ?? null,
+      node: process.versions?.node ?? null,
+      mem_rss_mb: memMB,
       integrations: {
         supabase: isSupabaseConfigured(),
         lemonSqueezy: isLemonSqueezyConfigured(),
