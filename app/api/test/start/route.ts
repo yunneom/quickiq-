@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getQuestions } from '@/lib/questions';
-import { createSession } from '@/lib/session-store';
+import { createSession, updateSession } from '@/lib/session-store';
 import { isSupabaseConfigured, createSupabaseAdmin } from '@/lib/supabase/server';
 import {
   checkRateLimit,
@@ -8,6 +8,7 @@ import {
   RATE_LIMIT_TEST_START,
 } from '@/lib/rate-limit';
 import { withErrorHandling } from '@/lib/api/with-error-handling';
+import { variantAB } from '@/lib/ab';
 
 export const runtime = 'nodejs';
 
@@ -61,13 +62,19 @@ export const POST = withErrorHandling('test/start', async (req: Request) => {
   }
 
   const session = createSession(locale);
+  // Stamp A/B variants at session start so they're stable across all
+  // subsequent renders (result hero, paywall CTA copy, exit-intent
+  // wording, etc.). Salt per experiment prevents correlation.
+  const abPatch: Record<string, string> = {
+    paywallCta: variantAB(session.id, 'paywall-cta-v1'),
+  };
   // Persist UTM attribution captured by the client (admin uses this for
   // per-campaign conversion reporting). We trust the client value here
   // since it's only for analytics, not auth or pricing.
-  if (body.utm && typeof body.utm === 'object') {
-    const { updateSession } = await import('@/lib/session-store');
-    updateSession(session.id, { utm: body.utm });
-  }
+  updateSession(session.id, {
+    ab: abPatch,
+    ...(body.utm && typeof body.utm === 'object' ? { utm: body.utm } : {}),
+  });
   return NextResponse.json({
     sessionId: session.id,
     questions: getQuestions(locale),

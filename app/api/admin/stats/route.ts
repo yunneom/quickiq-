@@ -15,6 +15,7 @@ interface StoredSession {
   price_krw?: number;
   email?: string;
   utm?: Record<string, string>;
+  ab?: Record<string, string>;
   result?: {
     rawScore: number;
     estimatedIq: number;
@@ -153,6 +154,39 @@ export const GET = withErrorHandling('admin/stats', async (req: Request) => {
     }))
     .sort((a, b) => a.price_krw - b.price_krw);
 
+  // ── A/B experiment segmentation: for each experiment name, count
+  //    sessions/completed/paid per variant. Surfaces in the admin
+  //    dashboard as a "By experiment" table.
+  const abAgg = new Map<
+    string,
+    Map<string, { sessions: number; completed: number; paid: number }>
+  >();
+  for (const s of sessions) {
+    if (!s.ab) continue;
+    for (const [exp, variant] of Object.entries(s.ab)) {
+      const byVariant = abAgg.get(exp) ?? new Map();
+      const cur = byVariant.get(variant) ?? { sessions: 0, completed: 0, paid: 0 };
+      cur.sessions += 1;
+      if (s.completed_at) cur.completed += 1;
+      if (s.is_paid) cur.paid += 1;
+      byVariant.set(variant, cur);
+      abAgg.set(exp, byVariant);
+    }
+  }
+  const byExperiment = Array.from(abAgg.entries()).map(([experiment, vmap]) => ({
+    experiment,
+    variants: Array.from(vmap.entries())
+      .map(([variant, agg]) => ({
+        variant,
+        ...agg,
+        conversion_pct:
+          agg.sessions === 0
+            ? 0
+            : Math.round((agg.paid / agg.sessions) * 1000) / 10,
+      }))
+      .sort((a, b) => a.variant.localeCompare(b.variant)),
+  }));
+
   // ── Funnel drop-off (in-memory counters, mirrors what the client
   //    sends via /api/funnel/track and what Meta sees as trackCustom). ──
   const funnel = readFunnelCounts();
@@ -179,6 +213,7 @@ export const GET = withErrorHandling('admin/stats', async (req: Request) => {
       by_locale: byLocale,
       by_day: byDay,
       by_price: byPrice,
+      by_experiment: byExperiment,
       funnel,
       recent_paid: paid
         .sort((a, b) => (b.paid_at ?? 0) - (a.paid_at ?? 0))

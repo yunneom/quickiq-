@@ -99,6 +99,7 @@
     "categoryTitle": "Score by category",
     "lockNotice": "Per-category scores, age-group comparison, and 30-question explanations — all in your PDF report.",
     "buyCta": "$7.50 · Get the full report (PDF · all 30 explained)",
+    "buyCtaUrgent": "$7.50 now · 30 explanations + domain scores",
     "shareTitle": "Share your result",
     "shareText": "I just scored top {pct}% — care to try? (7 min)",
     "shareKakao": "KakaoTalk",
@@ -173,7 +174,14 @@
     "exitIntentCta": "$7.50 · Get the full report",
     "exitIntentDismiss": "Maybe later",
     "bonusTitle": "🎁 Share bonus insight",
-    "bonusBody": "Your answer pattern matches the 'depth-first thinker' profile often seen in the top {pct}% — accuracy-prioritized over speed."
+    "bonusBody": "Your answer pattern matches the 'depth-first thinker' profile often seen in the top {pct}% — accuracy-prioritized over speed.",
+    "explanationsTitle": "30-question breakdown",
+    "explanationsHint": "Tap any question to see the explanation. The same content is in your PDF.",
+    "explanationsLoading": "Loading explanations...",
+    "explanationsCorrect": "Correct",
+    "explanationsWrong": "Wrong",
+    "explanationsChose": "Chose",
+    "explanationsAnswer": "Answer"
   },
   "checkout": {
     "title": "Get your full report",

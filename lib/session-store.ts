@@ -22,6 +22,11 @@ export interface StoredSession {
    * the admin dashboard can compare conversion across price A/B
    * cohorts even after we change the live `NEXT_PUBLIC_PRICE_KRW`. */
   price_krw?: number;
+  /** Stable A/B variant assignments stamped at session-start time so
+   * the same user sees the same variants throughout, and the admin
+   * dashboard can later segment paid conversion by variant. Free-form
+   * map keyed by experiment name; values are 'a' | 'b' (or similar). */
+  ab?: Record<string, string>;
   started_at: number;
   completed_at?: number;
   answers?: AnswerInput[];

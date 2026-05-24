@@ -32,6 +32,9 @@ export const GET = withErrorHandling('test/result', async (req: Request) => {
         locale: data.locale,
         isPaid: data.is_paid,
         durationMs: null,
+        // A/B variants aren't yet persisted in Supabase — surface an
+        // empty map so the client picks the default branch.
+        ab: {},
         result: {
           rawScore: data.raw_score,
           total: 30,
@@ -58,6 +61,7 @@ export const GET = withErrorHandling('test/result', async (req: Request) => {
     locale: session.locale,
     isPaid: Boolean(session.is_paid),
     durationMs,
+    ab: session.ab ?? {},
     result: session.result,
   });
 });

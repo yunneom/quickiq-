@@ -99,6 +99,7 @@
     "categoryTitle": "영역별 점수",
     "lockNotice": "영역별 점수·동연령대 비교·30문항 정오답 해설을 PDF로 받아보세요.",
     "buyCta": "9,900원 · 상세 리포트 받기 (PDF · 30문항 해설 포함)",
+    "buyCtaUrgent": "지금 9,900원 · 30문항 해설 + 영역별 점수 받기",
     "shareTitle": "결과 공유하기",
     "shareText": "나는 추정 IQ 상위 {pct}% 나왔어 — 너도 한 번 풀어볼래? (7분)",
     "shareKakao": "카카오톡",
@@ -173,7 +174,14 @@
     "exitIntentCta": "9,900원 · 상세 리포트 받기",
     "exitIntentDismiss": "지금은 괜찮아요",
     "bonusTitle": "🎁 공유 보너스 인사이트",
-    "bonusBody": "당신의 응답 패턴은 상위 {pct}% 그룹에서 자주 보이는 '깊이형 사고' 유형에 가깝습니다. 빠르게 풀기보다 정확도를 우선하는 경향이 있어요."
+    "bonusBody": "당신의 응답 패턴은 상위 {pct}% 그룹에서 자주 보이는 '깊이형 사고' 유형에 가깝습니다. 빠르게 풀기보다 정확도를 우선하는 경향이 있어요.",
+    "explanationsTitle": "30문항 정오답 해설",
+    "explanationsHint": "각 문항을 눌러 해설을 확인하세요. PDF에도 동일한 내용이 들어 있습니다.",
+    "explanationsLoading": "해설을 불러오는 중...",
+    "explanationsCorrect": "정답",
+    "explanationsWrong": "오답",
+    "explanationsChose": "선택",
+    "explanationsAnswer": "정답"
   },
   "checkout": {
     "title": "상세 리포트 받기",

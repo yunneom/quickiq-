@@ -19,6 +19,7 @@ import { ResultQr } from '@/components/test/result-qr';
 import { InstallPrompt } from '@/components/test/install-prompt';
 import { ExitIntentModal } from '@/components/test/exit-intent-modal';
 import { DeferMount } from '@/components/test/defer-mount';
+import { ExplanationsAccordion } from '@/components/test/explanations-accordion';
 import { IqDistribution } from '@/components/test/iq-distribution';
 import { TimingBars } from '@/components/test/timing-bars';
 import { ShareButtons } from '@/components/test/share-buttons';
@@ -39,6 +40,8 @@ interface ApiResponse {
   locale: 'ko' | 'en';
   isPaid: boolean;
   durationMs: number | null;
+  /** Map of experimentName → variant assigned at session start. */
+  ab?: Record<string, string>;
   result: ScoreResult;
 }
 
@@ -85,7 +88,12 @@ export default async function ResultPage({
     );
   }
 
-  const { result, isPaid, durationMs } = data;
+  const { result, isPaid, durationMs, ab } = data;
+  // Paywall CTA copy A/B (assigned at session start in /api/test/start).
+  // Variant 'b' tries a more urgent wording; we'll know which wins from
+  // /admin → "By price (A/B)" combined with funnel CheckoutViewed rate.
+  const paywallCtaKey =
+    ab?.paywallCta === 'b' ? 'buyCtaUrgent' : 'buyCta';
   const classKey = classifyIq(result.estimatedIq);
   const { strength, weakness } = strengthsAndWeaknesses(result.categoryScores);
   const hookKey = summaryHookKey(result.topPercentile);
@@ -234,7 +242,7 @@ export default async function ResultPage({
         {!isPaid ? (
           <Link href={`/${locale}/checkout/${sessionId}`} prefetch>
             <Button size="lg" className="w-full">
-              {t('buyCta')}
+              {t(paywallCtaKey)}
             </Button>
           </Link>
         ) : (
@@ -272,6 +280,14 @@ export default async function ResultPage({
 
       {/* Share-to-unlock bonus — hidden until a share action fires */}
       <ShareBonus pct={result.topPercentile} />
+
+      {/* Paid 30-question explanation accordion — deferred mount so the
+          fetch doesn't block above-the-fold paint */}
+      {isPaid && (
+        <DeferMount placeholderClassName="mt-8 h-12">
+          <ExplanationsAccordion sessionId={sessionId} />
+        </DeferMount>
+      )}
 
       {/* Compare with a friend */}
       <div className="mt-4">
