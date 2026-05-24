@@ -51,6 +51,36 @@ export function updateSession(id: string, patch: Partial<StoredSession>): Stored
   return next;
 }
 
+/**
+ * Resolve an 8-character short code (first 8 chars of the session UUID)
+ * back to the full session id. Used by /r/[code] to keep shared URLs
+ * short for SMS / voice / printed QR scenarios.
+ *
+ * Returns undefined when there is no match or the prefix collides with
+ * more than one live session (extremely unlikely with 4 billion possible
+ * 8-hex-char prefixes vs. our session volume, but we still guard).
+ */
+export function resolveShortCode(code: string): string | undefined {
+  if (!/^[0-9a-fA-F]{8}$/.test(code)) return undefined;
+  const target = code.toLowerCase();
+  let match: string | undefined;
+  for (const id of sessions.keys()) {
+    if (id.slice(0, 8).toLowerCase() === target) {
+      if (match) return undefined; // ambiguous — bail
+      match = id;
+    }
+  }
+  return match;
+}
+
+/**
+ * Inverse of `resolveShortCode` — gives the first 8 chars of the session
+ * UUID. Kept as a helper so callers don't sprinkle `.slice(0, 8)` calls.
+ */
+export function shortCodeFor(sessionId: string): string {
+  return sessionId.slice(0, 8);
+}
+
 // ── Webhook idempotency (in-memory, falls back to Supabase when configured) ──
 
 const IDEMPOTENCY_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours

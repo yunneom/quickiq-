@@ -114,6 +114,7 @@
     "retakeCta": "새 테스트 시작",
     "shareKakaoFallback": "카카오톡 앱에 붙여넣기 — 텍스트가 복사되었어요",
     "downloadImage": "결과 이미지 저장",
+    "downloadFeed": "인스타 피드 이미지 (1080×1080)",
     "downloadStory": "인스타 스토리용 이미지 (1080×1920)",
     "downloadPdf": "PDF 리포트 다운로드",
     "radarTitle": "4영역 한눈에 보기",
@@ -159,7 +160,11 @@
     "timingSlow": "느림",
     "summaryHookHigh": "상위권 점수입니다. 어떤 영역에서 두드러지는지 PDF에서 정확히 확인하세요.",
     "summaryHookMid": "평균에 가까운 균형 잡힌 점수예요. 강점 영역을 활용하고 약점을 보완하면 큰 차이를 만들 수 있어요.",
-    "summaryHookLow": "지금 점수가 잠재력 전부를 보여주지는 않아요. 영역별 분석에서 숨겨진 강점을 찾아보세요."
+    "summaryHookLow": "지금 점수가 잠재력 전부를 보여주지는 않아요. 영역별 분석에서 숨겨진 강점을 찾아보세요.",
+    "signatureTitle": "한눈에 보는 시그니처 강점",
+    "signatureDominant": "{cat} 영역이 다른 영역을 압도적으로 앞섰어요. 이 강점을 살리는 직무·학습 추천은 PDF에서 확인하세요.",
+    "signatureClear": "{cat} 영역에서 또렷한 우위를 보였어요. PDF에서 다른 3영역과의 점수 차이와 활용 팁을 받아보세요.",
+    "signatureBalanced": "4영역이 비슷하게 균형 잡힌 프로필이에요. 상위 강점 추출과 보완 영역 가이드는 PDF에서 확인하세요."
   },
   "checkout": {
     "title": "상세 리포트 받기",
@@ -167,6 +172,7 @@
     "emailLabel": "이메일",
     "emailPlaceholder": "you@example.com",
     "emailInvalid": "유효한 이메일을 입력해주세요.",
+    "emailSuggest": "혹시 {suggestion} 아닌가요? 눌러서 자동 수정",
     "priceLabel": "9,900원 (KRW)",
     "payButton": "결제하기",
     "refundPolicy": "디지털 콘텐츠 특성상 발송 후 환불은 불가합니다.",

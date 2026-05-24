@@ -51,6 +51,23 @@ export function summaryHookKey(topPercentile: number): 'summaryHookHigh' | 'summ
 }
 
 /**
+ * Pick the "lead size" key for the free signature-insight card based on
+ * how much the strongest domain outscores the second-strongest. A wide
+ * lead earns the louder copy variant ("dominant"), a close race earns
+ * the gentler one ("balanced"). Used to vary the FOMO message above
+ * the locked category breakdown so it doesn't feel templated.
+ */
+export type LeadSizeKey = 'dominant' | 'clear' | 'balanced';
+
+export function leadSizeKey(scores: CategoryScores): LeadSizeKey {
+  const sorted = Object.values(scores).slice().sort((a, b) => b - a);
+  const gap = (sorted[0] ?? 0) - (sorted[1] ?? 0);
+  if (gap >= 18) return 'dominant';
+  if (gap >= 8) return 'clear';
+  return 'balanced';
+}
+
+/**
  * Reference "average" category scores used for comparison visualization.
  * These are intentionally close to 50–60% to fit a believable peer baseline.
  */

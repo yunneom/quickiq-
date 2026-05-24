@@ -16,10 +16,19 @@ export function ShareButtons({ pct, locale, url, sessionId }: Props) {
   const t = useTranslations('result');
   const [copied, setCopied] = useState(false);
   const text = t('shareText', { pct });
-  const absoluteUrl =
+  // Prefer the 8-char short URL `/r/{code}` over the full
+  // `/{locale}/result/{uuid}` path when we know the session id. Short
+  // URLs are dramatically easier to share via SMS / voice / printed QR
+  // and still resolve to the right locale because /r looks up the
+  // session's saved locale before redirecting.
+  const longUrl =
     typeof window === 'undefined'
       ? url
       : new URL(url, window.location.origin).toString();
+  const absoluteUrl =
+    sessionId && typeof window !== 'undefined'
+      ? `${window.location.origin}/r/${sessionId.slice(0, 8)}`
+      : longUrl;
 
   const copy = async () => {
     try {
@@ -140,18 +149,25 @@ export function ShareButtons({ pct, locale, url, sessionId }: Props) {
       )}
 
       {sessionId && (
-        <div className="mt-3 grid grid-cols-2 gap-2">
+        <div className="mt-3 grid grid-cols-3 gap-2">
           <a
             href={`/${locale}/result/${sessionId}/opengraph-image`}
             download={`iq-result-top-${pct}pct.png`}
-            className="grid place-items-center rounded-xl border border-gray-200 bg-gray-50 py-3 text-xs font-semibold text-gray-700 hover:bg-gray-100"
+            className="grid place-items-center rounded-xl border border-gray-200 bg-gray-50 py-3 text-[11px] font-semibold text-gray-700 hover:bg-gray-100"
           >
             {t('downloadImage')}
           </a>
           <a
+            href={`/${locale}/result/${sessionId}/feed-image`}
+            download={`iq-feed-top-${pct}pct.png`}
+            className="grid place-items-center rounded-xl border border-pink-200 bg-pink-50 py-3 text-[11px] font-semibold text-pink-900 hover:bg-pink-100"
+          >
+            {t('downloadFeed')}
+          </a>
+          <a
             href={`/${locale}/result/${sessionId}/story-image`}
             download={`iq-story-top-${pct}pct.png`}
-            className="grid place-items-center rounded-xl border border-amber-200 bg-amber-50 py-3 text-xs font-semibold text-amber-900 hover:bg-amber-100"
+            className="grid place-items-center rounded-xl border border-amber-200 bg-amber-50 py-3 text-[11px] font-semibold text-amber-900 hover:bg-amber-100"
           >
             {t('downloadStory')}
           </a>

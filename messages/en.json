@@ -114,6 +114,7 @@
     "retakeBody": "For accuracy we recommend waiting 24 hours (condition effects).",
     "retakeCta": "Start new test",
     "downloadImage": "Save result image",
+    "downloadFeed": "IG feed image (1080×1080)",
     "downloadStory": "IG story image (1080×1920)",
     "downloadPdf": "Download PDF report",
     "radarTitle": "Four domains at a glance",
@@ -159,7 +160,11 @@
     "timingSlow": "Slow",
     "summaryHookHigh": "Top-tier score. Your PDF report shows exactly which domains lift you above the average.",
     "summaryHookMid": "Balanced score around the average. Leveraging strengths and shoring up weaknesses moves the needle most.",
-    "summaryHookLow": "This score doesn't show your full potential. Find your hidden strengths in the category breakdown."
+    "summaryHookLow": "This score doesn't show your full potential. Find your hidden strengths in the category breakdown.",
+    "signatureTitle": "Your signature strength at a glance",
+    "signatureDominant": "Your {cat} reasoning dominates the other three domains. The PDF maps this strength to careers and study paths.",
+    "signatureClear": "You show a clear edge in {cat} reasoning. The PDF breaks down exact margins and how to leverage them.",
+    "signatureBalanced": "A balanced four-domain profile. The PDF surfaces subtle leads and shoring-up tips you can't see here."
   },
   "checkout": {
     "title": "Get your full report",
@@ -167,6 +172,7 @@
     "emailLabel": "Email",
     "emailPlaceholder": "you@example.com",
     "emailInvalid": "Please enter a valid email.",
+    "emailSuggest": "Did you mean {suggestion}? Tap to fix.",
     "priceLabel": "$7.50 (USD)",
     "payButton": "Pay now",
     "refundPolicy": "Digital content — no refunds after delivery.",

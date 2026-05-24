@@ -17,6 +17,7 @@ import type { ScoreResult } from '@/lib/scoring';
 import {
   AVERAGE_CATEGORY_SCORES,
   classifyIq,
+  leadSizeKey,
   strengthsAndWeaknesses,
   summaryHookKey,
 } from '@/lib/scoring/classify';
@@ -76,6 +77,13 @@ export default async function ResultPage({
   const classKey = classifyIq(result.estimatedIq);
   const { strength, weakness } = strengthsAndWeaknesses(result.categoryScores);
   const hookKey = summaryHookKey(result.topPercentile);
+  const leadKey = leadSizeKey(result.categoryScores);
+  const signatureKey =
+    leadKey === 'dominant'
+      ? 'signatureDominant'
+      : leadKey === 'clear'
+      ? 'signatureClear'
+      : 'signatureBalanced';
   const durationLabel = formatDuration(durationMs, ({ min, sec }) =>
     t('durationFormat', { min, sec }),
   );
@@ -171,6 +179,19 @@ export default async function ResultPage({
             </span>
           </div>
         </div>
+      </section>
+
+      {/* Free signature-insight card — narrative tease above the paywall,
+          chosen by the gap between #1 and #2 category. Wider gap = louder
+          copy variant. Always shown (paid users get a pleasant recap;
+          free users get a FOMO hook). */}
+      <section className="mt-6 rounded-2xl border border-brand-200 bg-gradient-to-br from-brand-50 to-white px-4 py-4">
+        <p className="text-[10px] font-semibold uppercase tracking-wider text-brand-700">
+          {t('signatureTitle')}
+        </p>
+        <p className="mt-1 text-sm font-medium text-gray-800">
+          {t(signatureKey, { cat: t(strength) })}
+        </p>
       </section>
 
       {/* Category bars */}

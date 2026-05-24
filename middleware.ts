@@ -14,9 +14,11 @@ export default createMiddleware({
 });
 
 export const config = {
-  // Exclude all opengraph-image route variants (root + per-result dynamic)
-  // and other SEO/asset endpoints from i18n middleware.
+  // Exclude all opengraph-image route variants (root + per-result dynamic),
+  // other SEO/asset endpoints, and the `/r/{code}` short-URL redirect
+  // (which derives its own locale from the resolved session) from i18n
+  // middleware.
   matcher: [
-    '/((?!api|_next|_vercel|opengraph-image|story-image|icon|apple-icon|manifest|.*\\.png|.*\\.jpg|.*\\..*).*)',
+    '/((?!api|_next|_vercel|opengraph-image|story-image|feed-image|icon|apple-icon|manifest|r/|.*\\.png|.*\\.jpg|.*\\..*).*)',
   ],
 };

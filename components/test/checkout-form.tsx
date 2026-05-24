@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { trackEvent } from '@/components/analytics/meta-pixel';
+import { suggestEmailFix } from '@/lib/email-typo';
 
 interface Props {
   sessionId: string;
@@ -17,6 +18,12 @@ export function CheckoutForm({ sessionId, locale }: Props) {
   const [email, setEmail] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  // Only suggest when the email looks roughly complete (has @ and a dot
+  // in the domain) so users don't see flicker on every keystroke.
+  const suggestion = useMemo(() => {
+    if (!email.includes('@')) return null;
+    return suggestEmailFix(email);
+  }, [email]);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -60,6 +67,15 @@ export function CheckoutForm({ sessionId, locale }: Props) {
           inputMode="email"
         />
         {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
+        {!error && suggestion && (
+          <button
+            type="button"
+            onClick={() => setEmail(suggestion)}
+            className="mt-1 text-xs font-medium text-brand-600 underline-offset-2 hover:underline"
+          >
+            {t('emailSuggest', { suggestion })}
+          </button>
+        )}
       </div>
 
       <div className="flex items-center justify-between rounded-xl bg-gray-50 px-4 py-3">
