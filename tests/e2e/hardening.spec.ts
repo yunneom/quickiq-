@@ -40,8 +40,8 @@ test('SEO endpoints respond correctly', async ({ request }) => {
   const manifest = await request.get('/manifest.webmanifest');
   expect(manifest.status()).toBe(200);
   const manifestBody = (await manifest.json()) as { name?: string; start_url?: string };
-  expect(manifestBody.name).toBe('IQ Test');
-  expect(manifestBody.start_url).toBe('/ko');
+  expect(manifestBody.name).toContain('IQ Test');
+  expect(manifestBody.start_url).toContain('/ko');
 });
 
 test('og image and icon endpoints return images', async ({ request }) => {

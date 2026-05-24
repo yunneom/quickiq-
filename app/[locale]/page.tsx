@@ -73,6 +73,7 @@ export default async function LandingPage({
             <Trust>{t('trustOne')}</Trust>
             <Trust>{t('trustTwo')}</Trust>
             <Trust>{t('trustThree')}</Trust>
+            <Trust>{t('trustFour')}</Trust>
           </ul>
 
           <SocialProof />
