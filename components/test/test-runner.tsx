@@ -204,9 +204,19 @@ export function TestRunner({ locale }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [index, phase, current?.id]);
 
+  // NEXT_PUBLIC_AUTO_ADVANCE=off lets users review their pick before
+  // confirming. With the default value (any other) the runner auto-
+  // advances after ~350 ms, which is faster but irreversible.
+  const autoAdvanceEnabled = process.env.NEXT_PUBLIC_AUTO_ADVANCE !== 'off';
+
   function pickOption(id: OptionId) {
     if (advancingRef.current || transitioning) return;
     setSelected(id);
+    if (!autoAdvanceEnabled) {
+      // Wait for an explicit Next click — the existing CTA button below
+      // already handles the case where `selected` is non-null.
+      return;
+    }
     // Auto-advance after a short delay so user sees the highlight.
     if (tickIntervalRef.current) clearInterval(tickIntervalRef.current);
     if (advanceTimeoutRef.current) clearTimeout(advanceTimeoutRef.current);

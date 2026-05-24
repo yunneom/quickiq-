@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { MetaPixel } from '@/components/analytics/meta-pixel';
 import { UtmCapture } from '@/components/analytics/utm-capture';
 import { SocialProof } from '@/components/landing/social-proof';
+import { ReportPreview } from '@/components/landing/report-preview';
 import { OrganizationLD, ProductLD, WebsiteLD } from '@/components/seo/json-ld';
 import { Faq } from '@/components/landing/faq';
 
@@ -57,6 +58,8 @@ export default async function LandingPage({
           </ul>
 
           <SocialProof />
+
+          <ReportPreview />
 
           <Faq />
         </div>

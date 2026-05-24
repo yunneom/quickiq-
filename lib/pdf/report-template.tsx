@@ -6,6 +6,10 @@ import {
   View,
   StyleSheet,
   Font,
+  Svg,
+  Path,
+  Circle,
+  Line,
 } from '@react-pdf/renderer';
 import type { ScoreResult, AnswerInput } from '@/lib/scoring';
 import type { Question, Category } from '@/lib/questions/types';
@@ -278,6 +282,17 @@ const styles = StyleSheet.create({
 
 const CATEGORY_ORDER: Category[] = ['verbal', 'numerical', 'spatial', 'logical'];
 
+/** Build a single polygon's SVG path string from 4 scores. */
+function radarPath(scores: { verbal: number; numerical: number; spatial: number; logical: number }, cx: number, cy: number, maxR: number): string {
+  const angles = [-Math.PI / 2, 0, Math.PI / 2, Math.PI];
+  const order: (keyof typeof scores)[] = ['verbal', 'numerical', 'spatial', 'logical'];
+  const pts = order.map((k, i) => {
+    const r = (scores[k] / 100) * maxR;
+    return [cx + r * Math.cos(angles[i]), cy + r * Math.sin(angles[i])];
+  });
+  return 'M ' + pts.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(' L ') + ' Z';
+}
+
 function pickInterpretation(i: CategoryInterpretation, score: number): string {
   if (score >= 75) return i.strong;
   if (score >= 40) return i.mid;
@@ -309,6 +324,38 @@ export function ReportPdf({
           <Text style={styles.scoreSub}>
             {t.topPercentile}: {result.topPercentile}%
           </Text>
+        </View>
+
+        {/* Mini radar — gives the PDF a hero visual instead of just bars. */}
+        <View style={{ alignItems: 'center', marginBottom: 8 }}>
+          <Svg width="180" height="180" viewBox="0 0 180 180">
+            {[0.25, 0.5, 0.75, 1].map((r) => (
+              <Circle key={r} cx={90} cy={90} r={r * 70} fill="none" stroke="#e5e7eb" strokeWidth={0.6} />
+            ))}
+            {[-Math.PI / 2, 0, Math.PI / 2, Math.PI].map((a, i) => (
+              <Line
+                key={i}
+                x1={90}
+                y1={90}
+                x2={90 + 70 * Math.cos(a)}
+                y2={90 + 70 * Math.sin(a)}
+                stroke="#e5e7eb"
+                strokeWidth={0.6}
+              />
+            ))}
+            <Path
+              d={radarPath({ verbal: 56, numerical: 52, spatial: 48, logical: 54 }, 90, 90, 70)}
+              fill="rgba(148, 163, 184, 0.2)"
+              stroke="#94a3b8"
+              strokeWidth={0.8}
+            />
+            <Path
+              d={radarPath(cs, 90, 90, 70)}
+              fill="rgba(37, 84, 230, 0.25)"
+              stroke="#2554e6"
+              strokeWidth={1.2}
+            />
+          </Svg>
         </View>
 
         <Text style={styles.sectionTitle}>{t.categoryTitle}</Text>

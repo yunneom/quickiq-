@@ -111,13 +111,22 @@ export function ShareButtons({ pct, locale, url, sessionId }: Props) {
       )}
 
       {sessionId && (
-        <a
-          href={`/${locale}/result/${sessionId}/opengraph-image`}
-          download={`iq-result-top-${pct}pct.png`}
-          className="mt-3 grid place-items-center rounded-xl border border-gray-200 bg-gray-50 py-3 text-xs font-semibold text-gray-700 hover:bg-gray-100"
-        >
-          {t('downloadImage')}
-        </a>
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          <a
+            href={`/${locale}/result/${sessionId}/opengraph-image`}
+            download={`iq-result-top-${pct}pct.png`}
+            className="grid place-items-center rounded-xl border border-gray-200 bg-gray-50 py-3 text-xs font-semibold text-gray-700 hover:bg-gray-100"
+          >
+            {t('downloadImage')}
+          </a>
+          <a
+            href={`/${locale}/result/${sessionId}/story-image`}
+            download={`iq-story-top-${pct}pct.png`}
+            className="grid place-items-center rounded-xl border border-amber-200 bg-amber-50 py-3 text-xs font-semibold text-amber-900 hover:bg-amber-100"
+          >
+            {t('downloadStory')}
+          </a>
+        </div>
       )}
     </div>
   );

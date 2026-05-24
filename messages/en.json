@@ -16,6 +16,8 @@
     "footerPrivacy": "Privacy Policy",
     "footerTerms": "Terms of Service",
     "socialProof": "{takers} people have taken it · Average estimated IQ {avgIq}",
+    "previewLabel": "What your report looks like (sample)",
+    "previewFooter": "The real PDF also includes a per-question breakdown and detailed domain analysis.",
     "variantB": {
       "headline": "Find your real IQ\nin 30 questions",
       "sub": "Free psychometric test.\nVerbal · numerical · spatial · logical strengths — in 7 minutes.",
@@ -47,6 +49,11 @@
   },
   "test": {
     "loading": "Preparing your test...",
+    "introTitle": "Before you start",
+    "introBody1": "30 questions · 4 domains (verbal · numerical · spatial · logical)",
+    "introBody2": "60 seconds per question · about 7 minutes total",
+    "introBody3": "One question at a time. You can't go back to previous questions.",
+    "introCta": "Start",
     "progress": "{current}/{total}",
     "timeLeft": "Time left",
     "seconds": "{n}s",
@@ -79,6 +86,7 @@
     "shareCopied": "Copied!",
     "shareKakaoFallback": "Text copied — paste it into KakaoTalk",
     "downloadImage": "Save result image",
+    "downloadStory": "IG story image (1080×1920)",
     "downloadPdf": "Download PDF report",
     "radarTitle": "Four domains at a glance",
     "timingTitle": "Average response time by domain",
