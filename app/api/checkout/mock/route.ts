@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { waitUntil } from '@vercel/functions';
 import { getSession, updateSession } from '@/lib/session-store';
 import { sendReport } from '@/lib/email/send-report';
+import { priceKRW } from '@/lib/pricing';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -23,7 +24,12 @@ export async function GET(req: Request) {
   if (!session) {
     return NextResponse.json({ error: 'session_not_found' }, { status: 404 });
   }
-  updateSession(sessionId, { email, is_paid: true, paid_at: Date.now() });
+  updateSession(sessionId, {
+    email,
+    is_paid: true,
+    paid_at: Date.now(),
+    price_krw: priceKRW(),
+  });
 
   // Email send is fire-and-forget — same pattern as the LS webhook handler.
   waitUntil(

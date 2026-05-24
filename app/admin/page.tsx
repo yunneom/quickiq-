@@ -36,6 +36,13 @@ interface Stats {
     completed: number;
     paid: number;
   }>;
+  by_price?: Array<{
+    price_krw: number;
+    sessions: number;
+    paid: number;
+    revenue: number;
+    conversion_pct: number;
+  }>;
   funnel?: Record<string, { total: number; last24h: number; last1h: number }>;
   note: string;
 }
@@ -248,6 +255,38 @@ export default function AdminPage() {
                   <td>{row.completed}</td>
                   <td>{row.paid}</td>
                   <td>{row.conversion_pct}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </>
+      )}
+
+      {stats.by_price && stats.by_price.length > 0 && (
+        <>
+          <h2 className="mt-10 text-sm font-semibold uppercase tracking-wider text-gray-500">
+            By price (A/B)
+          </h2>
+          <table className="mt-2 w-full text-xs">
+            <thead className="border-b border-gray-200 text-left text-[10px] uppercase text-gray-400">
+              <tr>
+                <th className="py-2">price</th>
+                <th>sessions</th>
+                <th>paid</th>
+                <th>conv %</th>
+                <th>revenue (₩)</th>
+              </tr>
+            </thead>
+            <tbody>
+              {stats.by_price.map((row) => (
+                <tr key={row.price_krw} className="border-b border-gray-100">
+                  <td className="py-2 font-medium">
+                    {row.price_krw.toLocaleString('ko-KR')}원
+                  </td>
+                  <td>{row.sessions}</td>
+                  <td>{row.paid}</td>
+                  <td>{row.conversion_pct}</td>
+                  <td>{row.revenue.toLocaleString('ko-KR')}</td>
                 </tr>
               ))}
             </tbody>

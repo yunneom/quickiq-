@@ -12,6 +12,7 @@ interface StoredSession {
   completed_at?: number;
   is_paid?: boolean;
   paid_at?: number;
+  price_krw?: number;
   email?: string;
   utm?: Record<string, string>;
   result?: {
@@ -129,6 +130,29 @@ export const GET = withErrorHandling('admin/stats', async (req: Request) => {
     });
   }
 
+  // ── Price A/B segment (by NEXT_PUBLIC_PRICE_KRW captured at checkout) ──
+  const priceAgg = new Map<number, { sessions: number; paid: number; revenue: number }>();
+  for (const s of sessions) {
+    if (!s.price_krw) continue; // pre-checkout sessions have no price
+    const cur = priceAgg.get(s.price_krw) ?? { sessions: 0, paid: 0, revenue: 0 };
+    cur.sessions += 1;
+    if (s.is_paid) {
+      cur.paid += 1;
+      cur.revenue += s.price_krw;
+    }
+    priceAgg.set(s.price_krw, cur);
+  }
+  const byPrice = Array.from(priceAgg.entries())
+    .map(([price, agg]) => ({
+      price_krw: price,
+      ...agg,
+      conversion_pct:
+        agg.sessions === 0
+          ? 0
+          : Math.round((agg.paid / agg.sessions) * 1000) / 10,
+    }))
+    .sort((a, b) => a.price_krw - b.price_krw);
+
   // ── Funnel drop-off (in-memory counters, mirrors what the client
   //    sends via /api/funnel/track and what Meta sees as trackCustom). ──
   const funnel = readFunnelCounts();
@@ -154,6 +178,7 @@ export const GET = withErrorHandling('admin/stats', async (req: Request) => {
       by_campaign: byCampaign,
       by_locale: byLocale,
       by_day: byDay,
+      by_price: byPrice,
       funnel,
       recent_paid: paid
         .sort((a, b) => (b.paid_at ?? 0) - (a.paid_at ?? 0))

@@ -18,6 +18,10 @@ export interface StoredSession {
   locale: 'ko' | 'en';
   /** Ad-campaign attribution captured from URL params on first hit. */
   utm?: Record<string, string>;
+  /** Price (KRW won) the user was charged. Captured at checkout so
+   * the admin dashboard can compare conversion across price A/B
+   * cohorts even after we change the live `NEXT_PUBLIC_PRICE_KRW`. */
+  price_krw?: number;
   started_at: number;
   completed_at?: number;
   answers?: AnswerInput[];
