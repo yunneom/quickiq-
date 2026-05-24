@@ -244,6 +244,7 @@
     "rateLimited": "Please try again later.",
     "pageError": "Something went wrong",
     "pageErrorBody": "Please try again. Contact us if the issue persists.",
+    "pageErrorTip": "Tip: if a test session got stuck, tap \"Go home\" and start fresh.",
     "retry": "Try again",
     "goHome": "Go home",
     "notFoundTitle": "Page not found",

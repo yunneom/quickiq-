@@ -25,6 +25,9 @@ export default function LocaleError({
       <p className="text-6xl">⚠️</p>
       <h1 className="mt-6 text-2xl font-bold text-gray-900">{t('pageError')}</h1>
       <p className="mt-2 text-sm text-gray-600">{t('pageErrorBody')}</p>
+      <p className="mt-3 rounded-lg bg-gray-50 px-3 py-2 text-xs text-gray-600">
+        💡 {t('pageErrorTip')}
+      </p>
       {error.digest && (
         <p className="mt-3 font-mono text-xs text-gray-400">id: {error.digest}</p>
       )}
