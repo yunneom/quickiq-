@@ -19,13 +19,19 @@ export function priceKRW(): number {
   return Number.isFinite(n) && n > 0 ? n : 9900;
 }
 
-/** USD equivalent for the EN audience. Rounded to the nearest dime. */
+const DEFAULT_USD_KRW_PEG = 1320;
+
+/** USD equivalent for the EN audience. Rounded to the nearest dime.
+ *  Peg is informational only — Lemon Squeezy MoR handles the actual
+ *  FX at charge time. Operator can override via NEXT_PUBLIC_USD_KRW_PEG
+ *  when KRW drifts >5% vs the default. */
 export function priceUSD(): number {
-  // Fixed FX peg — Lemon Squeezy bills KRW via MoR FX, so the displayed
-  // USD is informational, not transactional. Updated when KRW drifts
-  // >10% vs the peg.
+  const rawPeg = process.env.NEXT_PUBLIC_USD_KRW_PEG;
+  const parsed = rawPeg ? Number(rawPeg) : NaN;
+  const peg =
+    Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_USD_KRW_PEG;
   const krw = priceKRW();
-  return Math.round((krw / 1320) * 10) / 10; // ≈ 1 USD per 1,320 KRW
+  return Math.round((krw / peg) * 10) / 10;
 }
 
 /**

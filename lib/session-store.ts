@@ -117,6 +117,20 @@ export function recordFunnelEvent(eventName: string): void {
   funnelStore.set(eventName, fresh);
 }
 
+/**
+ * Operator-only nuclear option — wipes all funnel counters. Returns
+ * the number of events cleared so the caller can confirm the reset
+ * landed. Used by /api/admin/funnel/reset when an operator wants to
+ * start a clean measurement window (e.g. before a fresh ad-creative
+ * launch) without restarting the Vercel function.
+ */
+export function resetFunnelCounts(): number {
+  let total = 0;
+  for (const ts of funnelStore.values()) total += ts.length;
+  funnelStore.clear();
+  return total;
+}
+
 export function readFunnelCounts(): Record<string, { total: number; last24h: number; last1h: number }> {
   const now = Date.now();
   const out: Record<string, { total: number; last24h: number; last1h: number }> = {};
