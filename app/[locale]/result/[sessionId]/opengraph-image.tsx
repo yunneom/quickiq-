@@ -215,6 +215,10 @@ export default async function Image({ params }: Params) {
         { name: 'NotoSansKR', data: regular, weight: 400, style: 'normal' },
         { name: 'NotoSansKR', data: bold, weight: 700, style: 'normal' },
       ],
+      // Per-session URL is unique; result is immutable. 24h cache cuts
+      // edge cold-renders dramatically when social platforms repeatedly
+      // re-fetch the same share link's OG preview.
+      headers: { 'Cache-Control': 'public, max-age=86400, immutable' },
     },
   );
 }

@@ -46,7 +46,21 @@ export const GET = withErrorHandling('admin/sessions.csv', async (req: Request) 
   }
 
   const g = globalThis as unknown as { __iqSessions?: Map<string, StoredSession> };
-  const sessions = g.__iqSessions ? Array.from(g.__iqSessions.values()) : [];
+  let sessions = g.__iqSessions ? Array.from(g.__iqSessions.values()) : [];
+
+  // Optional ?domain=gmail.com filter — case-insensitive substring
+  // match on the email's domain part. Useful for ops like "all gmail
+  // buyers from this week" without dumping the whole table.
+  const url = new URL(req.url);
+  const domainFilter = url.searchParams.get('domain')?.trim().toLowerCase();
+  if (domainFilter) {
+    sessions = sessions.filter((s) => {
+      if (!s.email) return false;
+      const at = s.email.indexOf('@');
+      if (at < 0) return false;
+      return s.email.slice(at + 1).toLowerCase().includes(domainFilter);
+    });
+  }
 
   const headers = [
     'id_prefix',

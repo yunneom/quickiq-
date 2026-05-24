@@ -149,7 +149,10 @@ export async function GET(_req: Request, { params }: Params) {
       headers: {
         'Content-Type': 'image/png',
         'Content-Disposition': `inline; filename="iq-story-${params.sessionId}.png"`,
-        'Cache-Control': 'public, max-age=300',
+        // Per-session URL — result is immutable once computed, so a
+        // long cache is safe + dramatically improves IG-share repeat
+        // hits when a user re-opens the same story link.
+        'Cache-Control': 'public, max-age=86400, immutable',
       },
       fonts: [
         { name: 'NotoSansKR', data: regular, weight: 400, style: 'normal' },
