@@ -137,6 +137,19 @@ export function TestRunner({ locale }: Props) {
     };
   }, [locale, router]);
 
+  // ─── Dynamic document.title so a backgrounded tab shows progress ───
+  // Tabs like "12/30 · IQ Test" make it easy to find the right tab in a
+  // crowded browser bar, and the count gives a subtle "you're almost
+  // there" reminder. Restored to "IQ Test" on unmount.
+  useEffect(() => {
+    if (phase !== 'running' || questions.length === 0) return;
+    const original = document.title;
+    document.title = `${index + 1}/${questions.length} · IQ Test`;
+    return () => {
+      document.title = original;
+    };
+  }, [phase, index, questions.length]);
+
   // ─── Warn (but don't trap) on tab close / hard reload during the test ───
   // The previous version intercepted popstate with a confirm() prompt and
   // pushed a dummy history entry, which created an inescapable trap for any

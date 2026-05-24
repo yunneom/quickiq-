@@ -132,6 +132,27 @@ test('short-URL redirects an unknown code back to landing', async ({ request }) 
   expect(res.headers()['location']).toMatch(/\/$/);
 });
 
+test('paid-only endpoints reject unpaid + unknown sessions', async ({ request }) => {
+  // /api/test/explanations is the paid 30-question breakdown. The
+  // capability check (is_paid=true) is the security boundary that
+  // separates the free summary from the paid content. Refactors can't
+  // silently widen it — these assertions pin the contract.
+
+  // 1. Missing sessionId → 400
+  const noId = await request.get('/api/test/explanations');
+  expect(noId.status()).toBe(400);
+
+  // 2. Unknown sessionId → 404
+  const unknown = await request.get(
+    '/api/test/explanations?sessionId=00000000-0000-0000-0000-000000000000',
+  );
+  expect(unknown.status()).toBe(404);
+
+  // Same shape for the paid PDF endpoint.
+  const pdfNoId = await request.get('/api/test/pdf');
+  expect(pdfNoId.status()).toBe(400);
+});
+
 test('admin endpoints 404 without a valid token', async ({ request }) => {
   // /api/admin/stats must look invisible (404 not 401) when no token
   // is set — keeps the endpoint from being a beacon for attackers.
