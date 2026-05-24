@@ -47,3 +47,25 @@ textarea {
     transform: translateY(0);
   }
 }
+
+/* Keyboard-only focus ring. Tailwind defaults to outline:none on many
+   utility variants, which kills focus visibility for keyboard users.
+   `:focus-visible` selectively re-enables the ring only when the user
+   navigated here via keyboard — mouse clicks stay clean. */
+:focus-visible {
+  outline: 2px solid #2554e6; /* brand-600 */
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* Honor reduced motion: kill the entrance animation that re-runs on
+   every question advance during the test (vestibular safety). */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

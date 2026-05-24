@@ -6,6 +6,7 @@ import {
   unstable_setRequestLocale,
 } from 'next-intl/server';
 import { locales, type Locale } from '@/i18n';
+import { LocaleSwitcher } from '@/components/landing/locale-switcher';
 
 interface PageParams {
   params: { locale: string };
@@ -102,6 +103,7 @@ export default async function AboutPage({ params: { locale } }: PageParams) {
           ← {t('back')}
         </Link>
       </div>
+      <LocaleSwitcher />
     </article>
   );
 }

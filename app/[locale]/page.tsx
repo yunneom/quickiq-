@@ -16,6 +16,7 @@ import {
   WebsiteLD,
 } from '@/components/seo/json-ld';
 import { Faq } from '@/components/landing/faq';
+import { LocaleSwitcher } from '@/components/landing/locale-switcher';
 
 export default async function LandingPage({
   params: { locale },
@@ -90,6 +91,9 @@ export default async function LandingPage({
             {t('disclaimer')}
           </p>
           <div className="mt-2 flex justify-center gap-4 text-xs text-gray-400">
+            <Link href={`/${locale}/about`} className="underline-offset-2 hover:underline">
+              About
+            </Link>
             <Link href={`/${locale}/privacy`} className="underline-offset-2 hover:underline">
               {t('footerPrivacy')}
             </Link>
@@ -97,6 +101,7 @@ export default async function LandingPage({
               {t('footerTerms')}
             </Link>
           </div>
+          <LocaleSwitcher />
         </div>
       </div>
     </>
