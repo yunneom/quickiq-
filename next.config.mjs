@@ -22,7 +22,7 @@ const CSP_DIRECTIVES = [
   // 'unsafe-inline' for Next.js script chunks. The Meta Pixel snippet is
   // also inline; tightening with nonces is a future improvement.
   "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://connect.facebook.net https://va.vercel-scripts.com",
-  "connect-src 'self' https://*.ingest.sentry.io https://*.ingest.us.sentry.io https://*.supabase.co wss://*.supabase.co https://api.lemonsqueezy.com https://www.facebook.com https://va.vercel-scripts.com https://vitals.vercel-insights.com",
+  "connect-src 'self' https://*.ingest.sentry.io https://*.ingest.us.sentry.io https://*.supabase.co wss://*.supabase.co https://api.lemonsqueezy.com https://www.facebook.com https://va.vercel-scripts.com https://vitals.vercel-insights.com https://api.qrserver.com",
   "frame-src 'self' https://app.lemonsqueezy.com",
   "frame-ancestors 'none'",
   "object-src 'none'",

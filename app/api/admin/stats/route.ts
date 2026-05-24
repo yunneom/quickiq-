@@ -12,6 +12,7 @@ interface StoredSession {
   is_paid?: boolean;
   paid_at?: number;
   email?: string;
+  utm?: Record<string, string>;
   result?: {
     rawScore: number;
     estimatedIq: number;
@@ -64,6 +65,30 @@ export const GET = withErrorHandling('admin/stats', async (req: Request) => {
       ? null
       : Math.round(iqValues.reduce((a, b) => a + b, 0) / iqValues.length);
 
+  // Aggregate by utm_campaign (or utm_source if campaign absent).
+  const campaignAgg = new Map<
+    string,
+    { sessions: number; completed: number; paid: number }
+  >();
+  for (const s of sessions) {
+    const campaign = s.utm?.utm_campaign ?? s.utm?.utm_source ?? '(direct)';
+    const cur = campaignAgg.get(campaign) ?? { sessions: 0, completed: 0, paid: 0 };
+    cur.sessions += 1;
+    if (s.completed_at) cur.completed += 1;
+    if (s.is_paid) cur.paid += 1;
+    campaignAgg.set(campaign, cur);
+  }
+  const byCampaign = Array.from(campaignAgg.entries())
+    .map(([name, agg]) => ({
+      name,
+      ...agg,
+      conversion_pct:
+        agg.completed === 0
+          ? 0
+          : Math.round((agg.paid / agg.completed) * 1000) / 10,
+    }))
+    .sort((a, b) => b.sessions - a.sessions);
+
   return NextResponse.json(
     {
       generatedAt: new Date().toISOString(),
@@ -82,6 +107,7 @@ export const GET = withErrorHandling('admin/stats', async (req: Request) => {
       recent_sessions_1h: sinceHour.length,
       recent_sessions_24h: sinceDay.length,
       // Last 10 paid orders (most recent first), email masked.
+      by_campaign: byCampaign,
       recent_paid: paid
         .sort((a, b) => (b.paid_at ?? 0) - (a.paid_at ?? 0))
         .slice(0, 10)

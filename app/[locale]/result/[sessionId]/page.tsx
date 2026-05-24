@@ -4,7 +4,9 @@ import { getTranslations, unstable_setRequestLocale } from 'next-intl/server';
 import { headers } from 'next/headers';
 import { Button } from '@/components/ui/button';
 import { CategoryBars } from '@/components/test/category-bars';
+import { CategoryRadar } from '@/components/test/category-radar';
 import { CompareCard } from '@/components/test/compare-card';
+import { ResultQr } from '@/components/test/result-qr';
 import { IqDistribution } from '@/components/test/iq-distribution';
 import { TimingBars } from '@/components/test/timing-bars';
 import { ShareButtons } from '@/components/test/share-buttons';
@@ -12,6 +14,7 @@ import { PaidActions } from '@/components/test/paid-actions';
 import { locales, type Locale } from '@/i18n';
 import type { ScoreResult } from '@/lib/scoring';
 import {
+  AVERAGE_CATEGORY_SCORES,
   classifyIq,
   strengthsAndWeaknesses,
   summaryHookKey,
@@ -148,6 +151,27 @@ export default async function ResultPage({
         </div>
       </section>
 
+      {/* Radar overview — 4 domains at a glance */}
+      <section className="mt-6">
+        <h2 className="text-base font-semibold text-gray-900">{t('radarTitle')}</h2>
+        <div className="mt-3 rounded-2xl border border-gray-200 bg-white p-4">
+          <CategoryRadar
+            scores={result.categoryScores}
+            compareTo={AVERAGE_CATEGORY_SCORES}
+          />
+          <div className="mt-2 flex items-center justify-center gap-4 text-[10px] text-gray-500">
+            <span className="flex items-center gap-1">
+              <span className="inline-block h-2 w-2 rounded-sm bg-brand-600" />
+              {t('youLabel')}
+            </span>
+            <span className="flex items-center gap-1">
+              <span className="inline-block h-2 w-2 rounded-sm bg-slate-400" />
+              {t('avgLabel')}
+            </span>
+          </div>
+        </div>
+      </section>
+
       {/* Category bars */}
       <section className="mt-6">
         <h2 className="flex items-center justify-between text-base font-semibold text-gray-900">
@@ -214,6 +238,11 @@ export default async function ResultPage({
       {/* Compare with a friend */}
       <div className="mt-4">
         <CompareCard sessionId={sessionId} locale={locale as Locale} />
+      </div>
+
+      {/* QR for in-person share */}
+      <div className="mt-4">
+        <ResultQr url={`/${locale}/result/${sessionId}`} />
       </div>
 
       <p className="mt-8 text-center text-xs text-gray-400">{t('disclaimer')}</p>

@@ -54,6 +54,7 @@ const T = {
     estimatedIq: '추정 IQ',
     topPercentile: '상위 백분위',
     categoryTitle: '영역별 점수',
+    timingTitle: '영역별 평균 응답 시간',
     verbal: '언어 추론',
     numerical: '수리 추론',
     spatial: '공간 추론',
@@ -111,6 +112,7 @@ const T = {
     estimatedIq: 'Estimated IQ',
     topPercentile: 'Top percentile',
     categoryTitle: 'Score by category',
+    timingTitle: 'Average response time by domain',
     verbal: 'Verbal Reasoning',
     numerical: 'Numerical Reasoning',
     spatial: 'Spatial Reasoning',
@@ -328,6 +330,45 @@ export function ReportPdf({
             </View>
           </View>
         ))}
+
+        {result.categoryTiming && (
+          <>
+            <Text style={styles.sectionTitle}>{t.timingTitle}</Text>
+            {(
+              [
+                ['verbal', result.categoryTiming.verbal],
+                ['numerical', result.categoryTiming.numerical],
+                ['spatial', result.categoryTiming.spatial],
+                ['logical', result.categoryTiming.logical],
+              ] as const
+            ).map(([key, ms]) => {
+              const sec = (ms / 1000).toFixed(1);
+              const maxMs = Math.max(
+                result.categoryTiming!.verbal,
+                result.categoryTiming!.numerical,
+                result.categoryTiming!.spatial,
+                result.categoryTiming!.logical,
+              );
+              const pct = maxMs > 0 ? (ms / maxMs) * 100 : 0;
+              return (
+                <View key={key}>
+                  <View style={styles.catRow}>
+                    <Text>{t[key]}</Text>
+                    <Text>{sec}s</Text>
+                  </View>
+                  <View style={styles.catBarOuter}>
+                    <View
+                      style={[
+                        styles.catBarInner,
+                        { width: `${pct}%`, backgroundColor: '#8b5cf6' },
+                      ]}
+                    />
+                  </View>
+                </View>
+              );
+            })}
+          </>
+        )}
 
         <Text style={styles.sectionTitle}>{t.interpretationTitle}</Text>
         <Text style={styles.para}>

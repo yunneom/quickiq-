@@ -9,6 +9,7 @@ import { trackEvent } from '@/components/analytics/meta-pixel';
 import type { Question, OptionId, Category } from '@/lib/questions/types';
 import type { AnswerInput } from '@/lib/scoring';
 import { Figure } from '@/components/figures/figure';
+import { readUtm } from '@/components/analytics/utm-capture';
 
 const PER_QUESTION_SECONDS = 60;
 const AUTO_ADVANCE_DELAY_MS = 350;
@@ -115,7 +116,7 @@ export function TestRunner({ locale }: Props) {
         const res = await fetch('/api/test/start', {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ locale }),
+          body: JSON.stringify({ locale, utm: readUtm() }),
         });
         if (!res.ok) throw new Error('start_failed');
         const data: StartResponse = await res.json();
@@ -337,6 +338,28 @@ export function TestRunner({ locale }: Props) {
         </span>
       </div>
       <Progress value={progress} className="mt-2" />
+      {/* Per-question dot grid — shows which questions are answered (filled),
+          current (ring), and remaining (faint). 30 dots wrap on small screens. */}
+      <div className="mt-2 flex flex-wrap items-center gap-1">
+        {questions.map((q, i) => {
+          const answered = i < index;
+          const isCurrent = i === index;
+          return (
+            <span
+              key={q.id}
+              className={
+                'h-1.5 w-1.5 rounded-full ' +
+                (isCurrent
+                  ? 'h-2 w-2 bg-brand-600 ring-2 ring-brand-200'
+                  : answered
+                    ? 'bg-brand-600'
+                    : 'bg-gray-200')
+              }
+              aria-hidden="true"
+            />
+          );
+        })}
+      </div>
 
       <div
         key={current.id}

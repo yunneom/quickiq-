@@ -13,6 +13,7 @@ export const runtime = 'nodejs';
 
 interface StartBody {
   locale?: string;
+  utm?: Record<string, string>;
 }
 
 export const POST = withErrorHandling('test/start', async (req: Request) => {
@@ -60,6 +61,13 @@ export const POST = withErrorHandling('test/start', async (req: Request) => {
   }
 
   const session = createSession(locale);
+  // Persist UTM attribution captured by the client (admin uses this for
+  // per-campaign conversion reporting). We trust the client value here
+  // since it's only for analytics, not auth or pricing.
+  if (body.utm && typeof body.utm === 'object') {
+    const { updateSession } = await import('@/lib/session-store');
+    updateSession(session.id, { utm: body.utm });
+  }
   return NextResponse.json({
     sessionId: session.id,
     questions: getQuestions(locale),

@@ -2,6 +2,8 @@ import Link from 'next/link';
 import { getTranslations, unstable_setRequestLocale } from 'next-intl/server';
 import { Button } from '@/components/ui/button';
 import { MetaPixel } from '@/components/analytics/meta-pixel';
+import { UtmCapture } from '@/components/analytics/utm-capture';
+import { SocialProof } from '@/components/landing/social-proof';
 import { OrganizationLD, ProductLD, WebsiteLD } from '@/components/seo/json-ld';
 import { Faq } from '@/components/landing/faq';
 
@@ -34,6 +36,7 @@ export default async function LandingPage({
         locale={loc}
       />
       <MetaPixel />
+      <UtmCapture />
       <div className="mx-auto flex min-h-screen max-w-md flex-col px-5 pb-10 pt-12">
         <header className="text-sm font-semibold tracking-wide text-brand-600">
           IQ TEST
@@ -52,6 +55,8 @@ export default async function LandingPage({
             <Trust>{t('trustTwo')}</Trust>
             <Trust>{t('trustThree')}</Trust>
           </ul>
+
+          <SocialProof />
 
           <Faq />
         </div>

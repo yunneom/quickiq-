@@ -16,6 +16,8 @@ import type { AnswerInput } from '@/lib/scoring';
 export interface StoredSession {
   id: string;
   locale: 'ko' | 'en';
+  /** Ad-campaign attribution captured from URL params on first hit. */
+  utm?: Record<string, string>;
   started_at: number;
   completed_at?: number;
   answers?: AnswerInput[];
