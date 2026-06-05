@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { trackEvent } from '@/components/analytics/meta-pixel';
 import { suggestEmailFix } from '@/lib/email-typo';
+import { priceKRW } from '@/lib/pricing';
 
 interface Props {
   sessionId: string;
@@ -33,7 +34,7 @@ export function CheckoutForm({ sessionId, locale }: Props) {
       return;
     }
     setBusy(true);
-    trackEvent('InitiateCheckout', { value: 9900, currency: 'KRW' });
+    trackEvent('InitiateCheckout', { value: priceKRW(), currency: 'KRW' });
     try {
       const res = await fetch('/api/checkout', {
         method: 'POST',

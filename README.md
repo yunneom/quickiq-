@@ -1,12 +1,12 @@
 # IQ Test MVP
 
-인스타 광고 유입 → 무료 IQ 테스트 → 9,900원 상세 리포트(PDF 이메일) 자동화 서비스.
+인스타 광고 유입 → 무료 IQ 테스트 → 4,900원 상세 리포트(PDF 이메일) 자동화 서비스.
 PRD: [docs/PRD.md](docs/PRD.md) · 컨벤션: [CLAUDE.md](CLAUDE.md)
 
 ## Product Summary (for review)
 
 - **What it is**: A self-administered, web-based cognitive assessment. Users answer 30 multiple-choice reasoning questions and receive an **estimated** percentile + per-domain (verbal / numerical / spatial / logical) breakdown.
-- **What's sold**: A single, one-time PDF report (≈10–15 pages) emailed to the buyer immediately after payment. **Price: ₩9,900 (~USD $7.50).** No subscriptions, no recurring charges.
+- **What's sold**: A single, one-time PDF report (≈10–15 pages) emailed to the buyer immediately after payment. **Price: ₩4,900 (~USD $3.70).** No subscriptions, no recurring charges.
 - **Who it's for**: Adults (18+) curious about their cognitive profile, primarily reached via Instagram ads in KR/EN markets.
 - **Content ownership**: Questions, scoring algorithm, copy, and PDF templates are all proprietary — built in-house. No third-party licensed content.
 - **Not a medical product**: Results are clearly labeled "Estimated score · Not a clinical/medical diagnosis" on the landing page, result page, FAQ, terms, and PDF. Not a substitute for clinical assessment (e.g. WAIS-IV).
@@ -95,7 +95,7 @@ Vercel 대시보드에서 "Project Settings → Domains → Edit"으로 1초 안
 
 3. **Supabase 가입** → SQL Editor에서 `supabase/migrations/` 4개 차례로 실행 → 3개 키 Vercel에 등록 → `npm run seed`로 문항 시딩.
 
-4. **Lemon Squeezy 가입** → 상품(Detailed IQ Report, 9,900원) 등록 → API key/Store ID/Variant ID/Webhook Secret 4개 Vercel에 등록 → Webhook URL `https://YOUR_DOMAIN/api/webhooks/lemon-squeezy`.
+4. **Lemon Squeezy 가입** → 상품(Detailed IQ Report, 4,900원) 등록 → API key/Store ID/Variant ID/Webhook Secret 4개 Vercel에 등록 → Webhook URL `https://YOUR_DOMAIN/api/webhooks/lemon-squeezy`.
 
 5. **Resend 가입** → 발신 도메인 인증 → API Key + `RESEND_FROM_EMAIL` Vercel에 등록.
 
@@ -126,7 +126,7 @@ npm run dev
 - **이메일**: 콘솔에 발송 로그 출력 (PDF 바이트 수 표시)
 - **Meta Pixel/CAPI**: 발사하지 않음
 
-전체 흐름을 한 번에 보려면: 랜딩 → "지금 무료로 테스트" → 30문항(또는 1문항씩 자동/수동 응답) → 결과 페이지 → "9,900원으로 상세 리포트 받기" → 결제하기(mock) → 감사 페이지.
+전체 흐름을 한 번에 보려면: 랜딩 → "지금 무료로 테스트" → 30문항(또는 1문항씩 자동/수동 응답) → 결과 페이지 → "4,900원으로 상세 리포트 받기" → 결제하기(mock) → 감사 페이지.
 
 ## 프로덕션 모드로 가는 단계
 
@@ -179,7 +179,7 @@ docs/                PRD.md, db-schema.md, questions.md, claude-code-prompts.md
 
 - Meta Pixel ID `.env.local` 에 입력했는가?
 - Conversion API access token 있는가?
-- Lemon Squeezy 상품 가격이 한국에서 9,900원으로 보이는가?
+- Lemon Squeezy 상품 가격이 한국에서 4,900원으로 보이는가?
 - Resend 발신 도메인이 인증되었는가?
 - `vercel.json` (선택) — 환경변수 별도 등록
 - `robots.txt` / `sitemap.xml` ✅ — `/robots.txt`, `/sitemap.xml` 자동 생성됨

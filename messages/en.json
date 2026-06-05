@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "7-Minute IQ Test — Your Estimated IQ + Domain Strengths",
-    "description": "30 psychometric-grade questions to estimate your IQ and analyze strengths across verbal, numerical, spatial, and logical reasoning. Free instant result, $7.50 for detailed PDF.",
+    "description": "30 psychometric-grade questions to estimate your IQ and analyze strengths across verbal, numerical, spatial, and logical reasoning. Free instant result, $3.70 for detailed PDF.",
     "ogTitle": "What percentile is your IQ?",
     "ogDescription": "30 questions · 7 minutes · Free"
   },
@@ -11,7 +11,7 @@
     "cta": "Start free · 7 minutes",
     "trustOne": "30 psychometric questions · 4-domain analysis",
     "trustTwo": "Instant result on submission",
-    "trustThree": "$7.50 PDF report — includes all 30 explanations",
+    "trustThree": "$3.70 PDF report — includes all 30 explanations",
     "trustFour": "No sign-up — anonymous session",
     "inlineDisclaimer": "Estimated score · Not a clinical diagnosis",
     "disclaimer": "Estimated score, not a clinical diagnosis.",
@@ -29,7 +29,7 @@
     "faqs": [
       {
         "q": "Is it really free?",
-        "a": "Yes. Taking the 30 questions, getting your estimated IQ and top percentile — all free. Only the detailed PDF report (per-category scores, age-group comparison, all 30 explanations) is paid at $7.50."
+        "a": "Yes. Taking the 30 questions, getting your estimated IQ and top percentile — all free. Only the detailed PDF report (per-category scores, age-group comparison, all 30 explanations) is paid at $3.70."
       },
       {
         "q": "How accurate is the score?",
@@ -101,8 +101,8 @@
     "estimatedNotice": "Estimated score · Not a medical diagnosis",
     "categoryTitle": "Score by category",
     "lockNotice": "Per-category scores, age-group comparison, and 30-question explanations — all in your PDF report.",
-    "buyCta": "$7.50 · Get the full report (PDF · all 30 explained)",
-    "buyCtaUrgent": "$7.50 now · 30 explanations + domain scores",
+    "buyCta": "$3.70 · Get the full report (PDF · all 30 explained)",
+    "buyCtaUrgent": "$3.70 now · 30 explanations + domain scores",
     "shareTitle": "Share your result",
     "shareText": "I just scored top {pct}% — care to try? (7 min)",
     "shareKakao": "KakaoTalk",
@@ -179,7 +179,7 @@
     "exitIntentEyebrow": "Wait —",
     "exitIntentTitle": "Leaving without the 30-question breakdown?",
     "exitIntentBody": "The PDF includes per-category scores and explanations for every question. Your result page stays unlocked permanently after purchase.",
-    "exitIntentCta": "$7.50 · Get the full report",
+    "exitIntentCta": "$3.70 · Get the full report",
     "exitIntentDismiss": "Maybe later",
     "bonusTitle": "🎁 Share bonus insight",
     "bonusBody": "Your answer pattern matches the 'depth-first thinker' profile often seen in the top {pct}% — accuracy-prioritized over speed.",
@@ -198,7 +198,7 @@
     "emailPlaceholder": "you@example.com",
     "emailInvalid": "Please enter a valid email.",
     "emailSuggest": "Did you mean {suggestion}? Tap to fix.",
-    "priceLabel": "$7.50 (USD)",
+    "priceLabel": "$3.70 (USD)",
     "payButton": "Pay now",
     "refundPolicy": "Digital content — no refunds after delivery.",
     "refundTitle": "Refund policy",

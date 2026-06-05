@@ -129,5 +129,5 @@ test('mock checkout unlocks the result page', async ({ request, page }) => {
   await expect(page.getByTestId('result-percentile')).toBeVisible();
 
   // Paid state: no purchase CTA should be present
-  await expect(page.getByRole('link', { name: /9,900원/ })).toHaveCount(0);
+  await expect(page.getByRole('link', { name: /\d{1,3}(?:,\d{3})*원 ·/ })).toHaveCount(0);
 });
