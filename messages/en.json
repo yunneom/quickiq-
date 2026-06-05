@@ -13,6 +13,7 @@
     "trustTwo": "Instant result on submission",
     "trustThree": "$7.50 PDF report — includes all 30 explanations",
     "trustFour": "No sign-up — anonymous session",
+    "inlineDisclaimer": "Estimated score · Not a clinical diagnosis",
     "disclaimer": "Estimated score, not a clinical diagnosis.",
     "footerPrivacy": "Privacy Policy",
     "footerTerms": "Terms of Service",
@@ -20,7 +21,7 @@
     "previewLabel": "What your report looks like (sample)",
     "previewFooter": "The real PDF also includes a per-question breakdown and detailed domain analysis.",
     "variantB": {
-      "headline": "Find your real IQ\nin 30 questions",
+      "headline": "Estimate your IQ\nin 30 questions",
       "sub": "Free psychometric test.\nVerbal · numerical · spatial · logical strengths — in 7 minutes.",
       "cta": "Take the test · Free"
     },
@@ -97,6 +98,7 @@
     "topPercentile": "Top {pct}%",
     "estimatedIq": "Estimated IQ {iq}",
     "estimatedIqLabel": "Estimated IQ",
+    "estimatedNotice": "Estimated score · Not a medical diagnosis",
     "categoryTitle": "Score by category",
     "lockNotice": "Per-category scores, age-group comparison, and 30-question explanations — all in your PDF report.",
     "buyCta": "$7.50 · Get the full report (PDF · all 30 explained)",

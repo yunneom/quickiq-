@@ -3,6 +3,15 @@
 인스타 광고 유입 → 무료 IQ 테스트 → 9,900원 상세 리포트(PDF 이메일) 자동화 서비스.
 PRD: [docs/PRD.md](docs/PRD.md) · 컨벤션: [CLAUDE.md](CLAUDE.md)
 
+## Product Summary (for review)
+
+- **What it is**: A self-administered, web-based cognitive assessment. Users answer 30 multiple-choice reasoning questions and receive an **estimated** percentile + per-domain (verbal / numerical / spatial / logical) breakdown.
+- **What's sold**: A single, one-time PDF report (≈10–15 pages) emailed to the buyer immediately after payment. **Price: ₩9,900 (~USD $7.50).** No subscriptions, no recurring charges.
+- **Who it's for**: Adults (18+) curious about their cognitive profile, primarily reached via Instagram ads in KR/EN markets.
+- **Content ownership**: Questions, scoring algorithm, copy, and PDF templates are all proprietary — built in-house. No third-party licensed content.
+- **Not a medical product**: Results are clearly labeled "Estimated score · Not a clinical/medical diagnosis" on the landing page, result page, FAQ, terms, and PDF. Not a substitute for clinical assessment (e.g. WAIS-IV).
+- **Delivery**: Fully automated. Payment via Lemon Squeezy → webhook → PDF render (@react-pdf/renderer) → email via Resend. No manual fulfillment.
+
 ## 도메인 전략 (무료/자동화/빠르게)
 
 운영 비용 0원 컨셉을 유지하려면 **Vercel 기본 도메인 `xxx.vercel.app`** 을 그대로 쓰는 것이 정답입니다. 자동 SSL · 자동 배포 · 무제한 대역폭(취미 한도) · 글로벌 CDN 모두 무료.

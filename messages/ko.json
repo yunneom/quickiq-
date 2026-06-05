@@ -13,6 +13,7 @@
     "trustTwo": "응시 후 결과 즉시 확인",
     "trustThree": "9,900원 PDF 리포트 — 30문항 해설 포함",
     "trustFour": "응시·로그인 정보 입력 없이 익명으로 진행",
+    "inlineDisclaimer": "추정 점수입니다 · 임상 진단이 아닙니다",
     "disclaimer": "본 결과는 추정치이며 임상적 진단이 아닙니다.",
     "footerPrivacy": "개인정보처리방침",
     "footerTerms": "이용약관",
@@ -20,7 +21,7 @@
     "previewLabel": "이런 리포트를 받습니다 (예시)",
     "previewFooter": "실제 PDF에는 30문항별 해설과 영역별 상세 분석이 함께 들어갑니다.",
     "variantB": {
-      "headline": "30문항만에\n진짜 IQ를 확인하는 법",
+      "headline": "30문항으로 확인하는\n나의 추정 IQ",
       "sub": "심리측정학 기반 무료 테스트.\n언어 · 수리 · 공간 · 논리 영역별 강점을 7분 안에.",
       "cta": "지금 응시하기 · 무료"
     },
@@ -97,6 +98,7 @@
     "topPercentile": "상위 {pct}%",
     "estimatedIq": "추정 IQ {iq}",
     "estimatedIqLabel": "추정 IQ",
+    "estimatedNotice": "추정 점수 · 의학적 진단 아님",
     "categoryTitle": "영역별 점수",
     "lockNotice": "영역별 점수·동연령대 비교·30문항 정오답 해설을 PDF로 받아보세요.",
     "buyCta": "9,900원 · 상세 리포트 받기 (PDF · 30문항 해설 포함)",

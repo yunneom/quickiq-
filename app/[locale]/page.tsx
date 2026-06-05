@@ -76,6 +76,13 @@ export default async function LandingPage({
             <Trust>{t('trustFour')}</Trust>
           </ul>
 
+          <p
+            className="mt-5 inline-block rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-800"
+            role="note"
+          >
+            ⚠ {t('inlineDisclaimer')}
+          </p>
+
           <SocialProof />
 
           <ReportPreview />
