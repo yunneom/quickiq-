@@ -1,14 +1,16 @@
 import { ImageResponse } from 'next/og';
+import type { NextRequest } from 'next/server';
 
 export const runtime = 'edge';
 
-async function fontData(weight: 400 | 700 | 900): Promise<ArrayBuffer> {
-  // fontsource ships 400/700 — reuse 700 for 900 display weight.
-  const w = weight === 900 ? 700 : weight;
-  const file = `noto-sans-kr-korean-${w}-normal.woff`;
-  const res = await fetch(
-    `https://cdn.jsdelivr.net/npm/@fontsource/noto-sans-kr@5.2.8/files/${file}`,
-  );
+async function fontData(
+  origin: string,
+  weight: 400 | 700,
+): Promise<ArrayBuffer> {
+  // Serve fonts from public/ on the same origin so we don't take a
+  // jsDelivr round-trip on every render (and so the route still
+  // works in sandboxed/preview environments that block CDN egress).
+  const res = await fetch(`${origin}/fonts/noto-sans-kr-korean-${weight}.woff`);
   return res.arrayBuffer();
 }
 
@@ -19,8 +21,12 @@ async function fontData(weight: 400 | 700 | 900): Promise<ArrayBuffer> {
  * be opened on a phone, long-pressed → "save image" → uploaded to
  * Instagram by the operator. No interactive UI, no analytics.
  */
-export async function GET() {
-  const [regular, bold] = await Promise.all([fontData(400), fontData(700)]);
+export async function GET(req: NextRequest) {
+  const origin = req.nextUrl.origin;
+  const [regular, bold] = await Promise.all([
+    fontData(origin, 400),
+    fontData(origin, 700),
+  ]);
 
   return new ImageResponse(
     (

@@ -1,13 +1,14 @@
 import { ImageResponse } from 'next/og';
+import type { NextRequest } from 'next/server';
 
 export const runtime = 'edge';
 
-async function fontData(weight: 400 | 700 | 900): Promise<ArrayBuffer> {
-  const w = weight === 900 ? 700 : weight;
-  const file = `noto-sans-kr-korean-${w}-normal.woff`;
-  const res = await fetch(
-    `https://cdn.jsdelivr.net/npm/@fontsource/noto-sans-kr@5.2.8/files/${file}`,
-  );
+async function fontData(
+  origin: string,
+  weight: 400 | 700,
+): Promise<ArrayBuffer> {
+  // Same-origin fetch — see teaser-1 for rationale.
+  const res = await fetch(`${origin}/fonts/noto-sans-kr-korean-${weight}.woff`);
   return res.arrayBuffer();
 }
 
@@ -17,8 +18,12 @@ async function fontData(weight: 400 | 700 | 900): Promise<ArrayBuffer> {
  * with teaser-1 (navy "Coming Soon") so the operator can post both
  * back-to-back without visual repetition.
  */
-export async function GET() {
-  const [regular, bold] = await Promise.all([fontData(400), fontData(700)]);
+export async function GET(req: NextRequest) {
+  const origin = req.nextUrl.origin;
+  const [regular, bold] = await Promise.all([
+    fontData(origin, 400),
+    fontData(origin, 700),
+  ]);
 
   return new ImageResponse(
     (
