@@ -190,7 +190,8 @@ test('health endpoint reports integration status', async ({ request }) => {
 });
 
 test('FAQ section appears and accordions expand', async ({ page }) => {
-  await page.goto('/ko');
+  // FAQ lives on the IQ landing (moved to /iq after the hub split).
+  await page.goto('/ko/iq');
   const faq = page.getByText('자주 묻는 질문');
   await expect(faq).toBeVisible();
   // First question

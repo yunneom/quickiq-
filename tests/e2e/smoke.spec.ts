@@ -16,10 +16,11 @@ test.use({ extraHTTPHeaders: BYPASS_HEADERS });
  * second test below.
  */
 test('full flow: landing → 30 questions → result page', async ({ page }) => {
-  // Go directly to /ko — next-intl middleware otherwise picks the locale
-  // from the browser's Accept-Language header (Chromium defaults to en-US).
-  await page.goto('/ko');
-  await expect(page).toHaveURL(/\/ko$/);
+  // Go directly to /ko/iq — the IQ landing now lives under /iq since the
+  // root is a hub of 6 tests. next-intl middleware would otherwise pick
+  // the locale from Accept-Language (Chromium defaults to en-US).
+  await page.goto('/ko/iq');
+  await expect(page).toHaveURL(/\/ko\/iq$/);
 
   // Landing CTA
   const cta = page.getByTestId('cta-start');

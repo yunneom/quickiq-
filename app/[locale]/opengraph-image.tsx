@@ -16,22 +16,30 @@ async function fontData(
 }
 
 /**
- * Bare-root OG image — same hub layout as /[locale]/opengraph-image.tsx
- * but rendered without a locale param (the bare domain "/" gets redirected
- * to /ko or /en by middleware, but crawlers that snapshot the original
- * URL still ask for this image). Defaults to Korean copy since the bulk
- * of traffic is KR.
+ * Hub OG image — shown when the locale root (/ko, /en) is shared. Layout
+ * differs from the per-test OG: the 6 tests are tiled as colored chips on
+ * the right so the preview communicates "this is a suite, not a single
+ * test" at thumbnail size. Per-test OGs (one per slug) take over once the
+ * user is on an individual test page.
  */
-export default async function HubOgImageRoot() {
+export default async function HubOgImage({
+  params: { locale },
+}: {
+  params: { locale: string };
+}) {
   const h = headers();
   const host = h.get('host') ?? 'localhost:3000';
   const proto = h.get('x-forwarded-proto') ?? 'https';
   const origin = `${proto}://${host}`;
+  const loc = (locale === 'en' ? 'en' : 'ko') as 'ko' | 'en';
 
   const [regular, bold] = await Promise.all([
     fontData(origin, 400),
     fontData(origin, 700),
   ]);
+
+  const headline = loc === 'ko' ? '당신을 알아가는\n6가지 테스트' : '6 tests to\nknow yourself';
+  const sub = loc === 'ko' ? '무료 · 익명 · 즉시 결과' : 'Free · Anonymous · Instant';
 
   return new ImageResponse(
     (
@@ -46,6 +54,7 @@ export default async function HubOgImageRoot() {
           position: 'relative',
         }}
       >
+        {/* soft ring */}
         <div
           style={{
             position: 'absolute',
@@ -60,6 +69,7 @@ export default async function HubOgImageRoot() {
           }}
         />
 
+        {/* Left: brand + headline + sub */}
         <div
           style={{
             display: 'flex',
@@ -70,7 +80,14 @@ export default async function HubOgImageRoot() {
             position: 'relative',
           }}
         >
-          <div style={{ fontSize: 22, letterSpacing: 12, opacity: 0.9, display: 'flex' }}>
+          <div
+            style={{
+              fontSize: 22,
+              letterSpacing: 12,
+              opacity: 0.9,
+              display: 'flex',
+            }}
+          >
             QUICKIQ
           </div>
 
@@ -85,7 +102,7 @@ export default async function HubOgImageRoot() {
                 display: 'flex',
               }}
             >
-              {'당신을 알아가는\n6가지 테스트'}
+              {headline}
             </div>
             <div
               style={{
@@ -96,7 +113,7 @@ export default async function HubOgImageRoot() {
                 display: 'flex',
               }}
             >
-              무료 · 익명 · 즉시 결과
+              {sub}
             </div>
           </div>
 
@@ -117,6 +134,7 @@ export default async function HubOgImageRoot() {
           </div>
         </div>
 
+        {/* Right: 6 test chips tiled */}
         <div
           style={{
             display: 'flex',
@@ -160,7 +178,7 @@ export default async function HubOgImageRoot() {
                   {t.eyebrow}
                 </div>
                 <div style={{ fontSize: 22, fontWeight: 700, marginTop: 2, display: 'flex' }}>
-                  {t.title.ko}
+                  {t.title[loc]}
                 </div>
               </div>
             </div>

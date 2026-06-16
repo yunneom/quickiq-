@@ -14,6 +14,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const paths: Array<{ path: string; priority: number }> = [
     { path: '', priority: 1 },
     { path: '/about', priority: 0.8 },
+    { path: '/iq', priority: 0.9 },
+    { path: '/mbti', priority: 0.9 },
+    { path: '/teto-egen', priority: 0.9 },
+    { path: '/attachment', priority: 0.9 },
+    { path: '/love-lang', priority: 0.9 },
+    { path: '/enneagram', priority: 0.9 },
     { path: '/test', priority: 0.6 },
     { path: '/privacy', priority: 0.4 },
     { path: '/terms', priority: 0.4 },
