@@ -79,6 +79,8 @@ export default async function MbtiResultPage({
       bars={bars}
       compat={compat}
       retakeHref={`/${locale}/mbti`}
+      slug="mbti"
+      profileId={profile.id}
     />
   );
 }

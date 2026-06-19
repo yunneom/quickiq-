@@ -60,6 +60,8 @@ export default async function AttachmentResultPage({
       bars={bars}
       compat={compat}
       retakeHref={`/${locale}/attachment`}
+      slug="attachment"
+      profileId={profile.id}
     />
   );
 }

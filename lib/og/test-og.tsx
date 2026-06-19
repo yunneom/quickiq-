@@ -1,5 +1,6 @@
 import { ImageResponse } from 'next/og';
 import type { TestCatalogEntry } from '@/lib/tests/catalog';
+import type { PersonalityProfile } from '@/lib/personality/types';
 
 export const OG_SIZE = { width: 1200, height: 630 };
 export const OG_CONTENT_TYPE = 'image/png';
@@ -15,6 +16,113 @@ async function fontData(
 ): Promise<ArrayBuffer> {
   const res = await fetch(`${origin}/fonts/noto-sans-kr-korean-${weight}.woff`);
   return res.arrayBuffer();
+}
+
+interface ProfileOgArgs {
+  origin: string;
+  entry: TestCatalogEntry;
+  profile: PersonalityProfile;
+  locale: 'ko' | 'en';
+}
+
+/**
+ * Per-type share card (1200×630). The "custom result imagery per
+ * archetype" lever every virality benchmark cites — a screenshot-clean
+ * card with the type name baked in so shares carry the identity, not a
+ * generic logo. Rendered by each types/[type]/opengraph-image route.
+ */
+export async function renderProfileOg({
+  origin,
+  entry,
+  profile,
+  locale,
+}: ProfileOgArgs) {
+  const [regular, bold] = await Promise.all([
+    fontData(origin, 400),
+    fontData(origin, 700),
+  ]);
+
+  return new ImageResponse(
+    (
+      <div
+        style={{
+          width: '100%',
+          height: '100%',
+          background: `linear-gradient(135deg, ${entry.gradient.from} 0%, ${entry.gradient.to} 100%)`,
+          color: 'white',
+          fontFamily: 'NotoSansKR',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'space-between',
+          padding: 72,
+          position: 'relative',
+        }}
+      >
+        <div
+          style={{
+            position: 'absolute',
+            right: -220,
+            top: -220,
+            width: 700,
+            height: 700,
+            borderRadius: 9999,
+            background:
+              'radial-gradient(circle, rgba(255,255,255,0.14) 0%, rgba(255,255,255,0) 60%)',
+            display: 'flex',
+          }}
+        />
+        <div style={{ fontSize: 24, letterSpacing: 8, opacity: 0.9, display: 'flex' }}>
+          {entry.eyebrow}
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <div
+            style={{
+              fontSize: 84,
+              fontWeight: 800,
+              lineHeight: 1.05,
+              letterSpacing: -2,
+              display: 'flex',
+            }}
+          >
+            {profile.name}
+          </div>
+          <div
+            style={{
+              marginTop: 16,
+              fontSize: 34,
+              fontWeight: 500,
+              opacity: 0.92,
+              lineHeight: 1.3,
+              maxWidth: 1000,
+              display: 'flex',
+            }}
+          >
+            {profile.tagline}
+          </div>
+        </div>
+
+        <div
+          style={{
+            fontSize: 24,
+            fontWeight: 700,
+            opacity: 0.85,
+            letterSpacing: 4,
+            display: 'flex',
+          }}
+        >
+          {locale === 'ko' ? 'QUICKIQ · 무료 테스트' : 'QUICKIQ · Free test'}
+        </div>
+      </div>
+    ),
+    {
+      ...OG_SIZE,
+      fonts: [
+        { name: 'NotoSansKR', data: regular, weight: 400, style: 'normal' },
+        { name: 'NotoSansKR', data: bold, weight: 700, style: 'normal' },
+      ],
+    },
+  );
 }
 
 interface RenderArgs {

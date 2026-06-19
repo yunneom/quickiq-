@@ -54,6 +54,8 @@ export default async function EnneagramResultPage({
       profile={profile}
       bars={bars}
       retakeHref={`/${locale}/enneagram`}
+      slug="enneagram"
+      profileId={profile.id}
     />
   );
 }

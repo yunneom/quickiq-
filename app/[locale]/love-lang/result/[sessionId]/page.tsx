@@ -53,6 +53,8 @@ export default async function LoveLangResultPage({
       profile={profile}
       bars={bars}
       retakeHref={`/${locale}/love-lang`}
+      slug="love-lang"
+      profileId={profile.id}
     />
   );
 }

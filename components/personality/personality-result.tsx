@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import type { PersonalityProfile } from '@/lib/personality/types';
+import { TEST_CATALOG } from '@/lib/tests/catalog';
+import { PersonalityShare } from '@/components/personality/personality-share';
 
 export interface ResultBar {
   /** Left-side label (e.g. "외향 E", "인정의 말"). */
@@ -24,6 +26,9 @@ interface ResultCopy {
   compatibilityTitle: string;
   retake: string;
   disclaimer: string;
+  detailLink: string;
+  otherTests: string;
+  shareText: (name: string) => string;
 }
 
 const COPY: Record<'ko' | 'en', ResultCopy> = {
@@ -35,6 +40,9 @@ const COPY: Record<'ko' | 'en', ResultCopy> = {
     compatibilityTitle: '궁합',
     retake: '다시 응시',
     disclaimer: '재미용 테스트 · 과학적 진단이 아닙니다.',
+    detailLink: '내 유형 자세히 보기 →',
+    otherTests: '다른 테스트도 해보기',
+    shareText: (name) => `내 결과는 "${name}" 나왔어! 너도 해볼래?`,
   },
   en: {
     title: 'Your type',
@@ -44,6 +52,9 @@ const COPY: Record<'ko' | 'en', ResultCopy> = {
     compatibilityTitle: 'Compatibility',
     retake: 'Retake',
     disclaimer: 'For entertainment · Not a scientific assessment.',
+    detailLink: 'See your type in detail →',
+    otherTests: 'Try another test',
+    shareText: (name) => `I got "${name}"! What about you?`,
   },
 };
 
@@ -57,6 +68,10 @@ interface Props {
   /** Optional compatibility list (relationship-style tests). */
   compat?: CompatEntry[];
   retakeHref: string;
+  /** Test slug (e.g. 'mbti') — enables the canonical type-page link + share. */
+  slug: string;
+  /** Resolved profile id (e.g. 'infp') for the type-page deep link. */
+  profileId: string;
 }
 
 /**
@@ -72,8 +87,13 @@ export function PersonalityResult({
   bars,
   compat,
   retakeHref,
+  slug,
+  profileId,
 }: Props) {
   const c = COPY[locale] ?? COPY.ko;
+  const typeHref = `/${locale}/${slug}/types/${profileId}`;
+  // Cross-promote up to 3 other tests for the exploration loop.
+  const crossTests = TEST_CATALOG.filter((t) => t.slug !== slug).slice(0, 3);
 
   return (
     <div className="mx-auto flex min-h-screen max-w-md flex-col px-5 pb-10 pt-8">
@@ -170,6 +190,54 @@ export function PersonalityResult({
           </div>
         </section>
       )}
+
+      {/* Canonical type-page deep link (rich SEO content + share target) */}
+      <Link
+        href={typeHref}
+        prefetch
+        className="mt-6 block rounded-2xl border border-gray-200 bg-white px-4 py-3 text-center text-sm font-semibold text-brand-700 hover:border-brand-300"
+      >
+        {c.detailLink}
+      </Link>
+
+      {/* Share — pre-filled archetype copy + tag-a-friend */}
+      <PersonalityShare
+        locale={locale}
+        shareUrl={typeHref}
+        shareText={c.shareText(profile.name)}
+      />
+
+      {/* Cross-test exploration loop */}
+      <section className="mt-8">
+        <h2 className="text-sm font-semibold text-gray-900">{c.otherTests}</h2>
+        <div className="mt-3 space-y-2">
+          {crossTests.map((t) => (
+            <Link
+              key={t.slug}
+              href={`/${locale}/${t.slug}`}
+              prefetch
+              className="flex items-center gap-3 rounded-2xl border border-gray-200 bg-white px-4 py-3 hover:border-gray-300"
+            >
+              <span
+                className={`grid h-9 w-9 flex-shrink-0 place-items-center rounded-lg text-lg ${t.accentBg}`}
+              >
+                {t.emoji}
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-bold text-gray-900">
+                  {t.title[locale]}
+                </span>
+                <span className="block truncate text-xs text-gray-500">
+                  {t.tagline[locale]}
+                </span>
+              </span>
+              <span aria-hidden className="text-gray-300">
+                →
+              </span>
+            </Link>
+          ))}
+        </div>
+      </section>
 
       {/* Retake */}
       <div className="mt-8">
