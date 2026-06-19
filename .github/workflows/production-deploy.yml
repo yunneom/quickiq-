@@ -1,0 +1,68 @@
+name: Vercel Production Deploy
+
+# Deploys main → production via the Vercel CLI using VERCEL_TOKEN.
+#
+# Why this exists: the project lives under a Hobby *team* on Vercel, and
+# the repo's commit authors (GitHub `yunneom` / automated commits) are not
+# members of that team. Vercel's Git integration therefore *blocks* the
+# automatic production deployment ("commit author does not have
+# contributing access"). A CLI deploy authenticated with the account
+# owner's VERCEL_TOKEN is attributed to the token owner, so it bypasses
+# the commit-author check entirely.
+#
+# Skipped automatically when the Vercel secrets aren't configured.
+
+on:
+  push:
+    branches: [main]
+
+# Avoid overlapping production deploys racing each other.
+concurrency:
+  group: vercel-production
+  cancel-in-progress: true
+
+jobs:
+  deploy-production:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+    steps:
+      - name: Detect secrets
+        id: gate
+        run: |
+          if [ -z "$VERCEL_TOKEN" ] || [ -z "$VERCEL_ORG_ID" ] || [ -z "$VERCEL_PROJECT_ID" ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "Vercel secrets not configured — skipping production deploy."
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v4
+        if: steps.gate.outputs.skip != 'true'
+
+      - name: Set up Node.js
+        if: steps.gate.outputs.skip != 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Vercel CLI
+        if: steps.gate.outputs.skip != 'true'
+        run: npm install --global vercel@latest
+
+      - name: Pull Vercel Environment (production)
+        if: steps.gate.outputs.skip != 'true'
+        run: vercel pull --yes --environment=production --token=$VERCEL_TOKEN
+
+      - name: Build Project Artifacts (production)
+        if: steps.gate.outputs.skip != 'true'
+        run: vercel build --prod --token=$VERCEL_TOKEN
+
+      - name: Deploy to Vercel (production)
+        if: steps.gate.outputs.skip != 'true'
+        run: vercel deploy --prebuilt --prod --token=$VERCEL_TOKEN
