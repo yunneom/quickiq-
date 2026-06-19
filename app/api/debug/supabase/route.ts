@@ -31,6 +31,24 @@ export const GET = withErrorHandling('debug/supabase', async () => {
     }
   })();
 
+  // Surface common copy-paste issues with the URL value: trailing slash,
+  // whitespace, embedded newline, or accidentally pasted "https://"
+  // twice. All cause the supabase-js URL builder to emit malformed paths.
+  const urlHealth = (() => {
+    const raw = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
+    const trimmed = raw.trim();
+    return {
+      length: raw.length,
+      trimmedLength: trimmed.length,
+      hasLeadingOrTrailingWhitespace: raw !== trimmed,
+      hasTrailingSlash: trimmed.endsWith('/'),
+      hasNewline: /[\r\n]/.test(raw),
+      startsWithHttps: trimmed.startsWith('https://'),
+      doubleHttps: (trimmed.match(/https?:\/\//g) ?? []).length > 1,
+      lastChar: raw.length > 0 ? raw.charCodeAt(raw.length - 1) : null,
+    };
+  })();
+
   let dbCheck:
     | { ok: true; tablesReachable: boolean; testSessionsCount: number | null }
     | { ok: false; error: string } = {
@@ -69,7 +87,23 @@ export const GET = withErrorHandling('debug/supabase', async () => {
         .select('id')
         .single();
       if (insertRes.error) {
-        insertCheck = { ok: false, error: insertRes.error.message };
+        const e = insertRes.error as unknown as {
+          message?: string;
+          details?: string;
+          hint?: string;
+          code?: string;
+        };
+        insertCheck = {
+          ok: false,
+          error: [
+            e.message && `msg: ${e.message}`,
+            e.code && `code: ${e.code}`,
+            e.details && `details: ${e.details}`,
+            e.hint && `hint: ${e.hint}`,
+          ]
+            .filter(Boolean)
+            .join(' | '),
+        };
       } else {
         insertCheck = { ok: true, insertedId: insertRes.data.id };
         // best-effort cleanup
@@ -91,6 +125,7 @@ export const GET = withErrorHandling('debug/supabase', async () => {
     },
     isSupabaseConfigured: configured,
     urlFingerprint,
+    urlHealth,
     dbCheck,
     insertCheck,
     runtime: process.env.VERCEL_ENV ?? 'local',
