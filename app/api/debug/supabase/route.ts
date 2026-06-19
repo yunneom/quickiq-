@@ -37,6 +37,12 @@ export const GET = withErrorHandling('debug/supabase', async () => {
     ok: false,
     error: 'not-attempted',
   };
+  let insertCheck:
+    | { ok: true; insertedId: string }
+    | { ok: false; error: string } = {
+    ok: false,
+    error: 'not-attempted',
+  };
   if (configured && hasService) {
     try {
       const admin = createSupabaseAdmin();
@@ -51,6 +57,23 @@ export const GET = withErrorHandling('debug/supabase', async () => {
           tablesReachable: true,
           testSessionsCount: count ?? 0,
         };
+      }
+
+      // Mirror the personality start-route insert so we can see the
+      // *exact* error if the schema is missing a column or RLS is
+      // misconfigured. Insert then immediately delete so the table stays
+      // clean — debug calls don't pollute the data.
+      const insertRes = await admin
+        .from('test_sessions')
+        .insert({ locale: 'ko', test_type: 'mbti' })
+        .select('id')
+        .single();
+      if (insertRes.error) {
+        insertCheck = { ok: false, error: insertRes.error.message };
+      } else {
+        insertCheck = { ok: true, insertedId: insertRes.data.id };
+        // best-effort cleanup
+        await admin.from('test_sessions').delete().eq('id', insertRes.data.id);
       }
     } catch (err) {
       dbCheck = {
@@ -69,6 +92,7 @@ export const GET = withErrorHandling('debug/supabase', async () => {
     isSupabaseConfigured: configured,
     urlFingerprint,
     dbCheck,
+    insertCheck,
     runtime: process.env.VERCEL_ENV ?? 'local',
     deploymentUrl: process.env.VERCEL_URL ?? null,
   });
