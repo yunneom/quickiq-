@@ -327,3 +327,4 @@ npm run verify:sql
 - **성능**: IntersectionObserver-deferred mounts (QR + InstallPrompt + Retake + Explanations)
 - **운영**: PWA install prompt + shortcuts, 24h retake CTA, 난이도 별표 (★), FAQ 10개, /admin funnel/locale/7-day 차트 + by-price + experiments, `/api/admin/sessions/[id]` lookup, `/api/admin/sessions.csv` export, `/api/admin/funnel/reset`
 - **콘텐츠**: speed percentile (`fast/normal/slow`), duration percentile (faster-than-X%), paid 30-question accordion (PDF 대기 시간 흡수)
+ 
