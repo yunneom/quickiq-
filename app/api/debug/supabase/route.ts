@@ -117,6 +117,56 @@ export const GET = withErrorHandling('debug/supabase', async () => {
     }
   }
 
+  // Raw REST probe — bypass supabase-js entirely to see the exact HTTP
+  // request path + PostgREST response. SELECT working while INSERT fails
+  // through the SDK means the SDK (or its URL handling), not the DB, is
+  // the suspect. This isolates it.
+  let rawProbe:
+    | {
+        sanitizedUrl: string;
+        getStatus: number;
+        getBody: string;
+        postStatus: number;
+        postBody: string;
+      }
+    | { error: string } = { error: 'not-attempted' };
+  if (hasUrl && hasService) {
+    try {
+      const sanitized = (process.env.NEXT_PUBLIC_SUPABASE_URL ?? '')
+        .trim()
+        .replace(/\/+$/, '');
+      const key = (process.env.SUPABASE_SERVICE_ROLE_KEY ?? '').trim();
+      const headers = {
+        apikey: key,
+        Authorization: `Bearer ${key}`,
+        'Content-Type': 'application/json',
+      };
+      const getRes = await fetch(
+        `${sanitized}/rest/v1/test_sessions?select=id&limit=1`,
+        { headers, cache: 'no-store' },
+      );
+      const getBody = (await getRes.text()).slice(0, 300);
+
+      const postRes = await fetch(`${sanitized}/rest/v1/test_sessions`, {
+        method: 'POST',
+        headers: { ...headers, Prefer: 'return=representation' },
+        body: JSON.stringify({ locale: 'ko', test_type: 'mbti' }),
+        cache: 'no-store',
+      });
+      const postBody = (await postRes.text()).slice(0, 300);
+
+      rawProbe = {
+        sanitizedUrl: `${sanitized.slice(0, 24)}…`,
+        getStatus: getRes.status,
+        getBody,
+        postStatus: postRes.status,
+        postBody,
+      };
+    } catch (err) {
+      rawProbe = { error: err instanceof Error ? err.message : String(err) };
+    }
+  }
+
   return NextResponse.json({
     env: {
       NEXT_PUBLIC_SUPABASE_URL: hasUrl,
@@ -128,6 +178,7 @@ export const GET = withErrorHandling('debug/supabase', async () => {
     urlHealth,
     dbCheck,
     insertCheck,
+    rawProbe,
     runtime: process.env.VERCEL_ENV ?? 'local',
     deploymentUrl: process.env.VERCEL_URL ?? null,
   });
