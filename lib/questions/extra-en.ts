@@ -135,7 +135,7 @@ export const extraEnQuestions: Question[] = [
     id: 'en-108',
     order_index: 108,
     category: 'verbal',
-    difficulty: 2,
+    difficulty: 3,
     locale: 'en',
     question_text: 'Which pair has a relationship different from the others?',
     options: [
