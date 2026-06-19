@@ -3,6 +3,8 @@ import { notFound } from 'next/navigation';
 import { unstable_setRequestLocale } from 'next-intl/server';
 import { Button } from '@/components/ui/button';
 import { locales, type Locale } from '@/i18n';
+import { TestFaq } from '@/components/personality/test-faq';
+import { getTestEntry } from '@/lib/tests/catalog';
 
 const COPY = {
   ko: {
@@ -40,10 +42,24 @@ export default function LoveLangLanding({
 }) {
   if (!locales.includes(locale as Locale)) notFound();
   unstable_setRequestLocale(locale);
-  const t = COPY[locale as 'ko' | 'en'] ?? COPY.ko;
-
+  const loc = (locale === 'en' ? 'en' : 'ko') as 'ko' | 'en';
+  const t = COPY[loc] ?? COPY.ko;
+  const entry = getTestEntry('love-lang');
+  const faqs = entry.faqs?.[loc] ?? [];
+  const faqJsonLd = faqs.length > 0 ? {
+    '@context': 'https://schema.org', '@type': 'FAQPage',
+    mainEntity: faqs.map((f) => ({ '@type': 'Question', name: f.q,
+      acceptedAnswer: { '@type': 'Answer', text: f.a } })),
+  } : null;
   return (
     <div className="mx-auto flex min-h-screen max-w-md flex-col px-5 pb-10 pt-12">
+      {faqJsonLd && (
+        <script
+          type="application/ld+json"
+          // eslint-disable-next-line react/no-danger
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+        />
+      )}
       <header className="text-xs font-semibold uppercase tracking-widest text-red-500">
         {t.eyebrow}
       </header>
@@ -81,6 +97,8 @@ export default function LoveLangLanding({
         >
           ⚠ {t.disclaimer}
         </p>
+
+        {faqs.length > 0 && <TestFaq locale={loc} faqs={faqs} />}
       </div>
 
       <div className="sticky bottom-0 mt-10 bg-gradient-to-t from-[#fafafa] via-[#fafafa] to-transparent pb-2 pt-6">

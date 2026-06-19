@@ -8,6 +8,8 @@ interface Props {
   shareUrl: string;
   /** Pre-filled share text with the archetype baked in. */
   shareText: string;
+  /** Optional 1080×1920 IG-story card URL — adds a third "stories" button. */
+  storyCardUrl?: string;
 }
 
 const COPY = {
@@ -17,6 +19,8 @@ const COPY = {
     share: '공유하기',
     copy: '링크 복사',
     copied: '복사됨!',
+    story: '📱 스토리용 이미지 저장',
+    storyHint: '인스타·틱톡 스토리에 그대로 올릴 수 있어요',
   },
   en: {
     title: 'Share your result',
@@ -24,6 +28,8 @@ const COPY = {
     share: 'Share',
     copy: 'Copy link',
     copied: 'Copied!',
+    story: '📱 Save story image',
+    storyHint: 'Long-press to save, then upload to Instagram/TikTok story',
   },
 } as const;
 
@@ -34,7 +40,12 @@ const COPY = {
  * falls back to clipboard. The shared URL is the canonical per-type page so
  * the share also feeds SEO.
  */
-export function PersonalityShare({ locale, shareUrl, shareText }: Props) {
+export function PersonalityShare({
+  locale,
+  shareUrl,
+  shareText,
+  storyCardUrl,
+}: Props) {
   const c = COPY[locale];
   const [copied, setCopied] = useState(false);
 
@@ -86,6 +97,19 @@ export function PersonalityShare({ locale, shareUrl, shareText }: Props) {
           {copied ? c.copied : c.copy}
         </button>
       </div>
+      {storyCardUrl && (
+        <a
+          href={storyCardUrl}
+          target="_blank"
+          rel="noopener"
+          className="mt-3 block rounded-2xl border border-gray-200 bg-white px-4 py-3 text-center text-sm font-semibold text-gray-700 transition hover:border-gray-300"
+        >
+          {c.story}
+          <span className="mt-0.5 block text-[11px] font-normal text-gray-500">
+            {c.storyHint}
+          </span>
+        </a>
+      )}
     </section>
   );
 }

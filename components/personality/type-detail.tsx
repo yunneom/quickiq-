@@ -66,10 +66,11 @@ export function TypeDetail({
       }))
     : [];
 
-  // Article JSON-LD — same schema family the benchmark sites use on every
-  // type page to earn rich results for "<type> strengths and weaknesses".
+  // Article + BreadcrumbList JSON-LD — same schema family the benchmark
+  // sites use on every type page to earn rich results for
+  // "<type> strengths and weaknesses" plus the SERP breadcrumb display.
   const base = process.env.NEXT_PUBLIC_APP_URL ?? 'https://7iq.vercel.app';
-  const jsonLd = {
+  const articleLd = {
     '@context': 'https://schema.org',
     '@type': 'Article',
     headline: `${profile.name} — ${entry.title[locale]}`,
@@ -79,18 +80,56 @@ export function TypeDetail({
     url: `${base}/${locale}/${slug}/types/${profile.id}`,
     publisher: { '@type': 'Organization', name: 'QuickIQ' },
   };
+  const breadcrumbLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: locale === 'ko' ? '전체 테스트' : 'All tests',
+        item: `${base}/${locale}`,
+      },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: entry.title[locale],
+        item: `${base}/${locale}/${slug}`,
+      },
+      {
+        '@type': 'ListItem',
+        position: 3,
+        name: profile.name,
+        item: `${base}/${locale}/${slug}/types/${profile.id}`,
+      },
+    ],
+  };
 
   return (
     <article className="mx-auto max-w-md px-5 pb-12 pt-10">
       <script
         type="application/ld+json"
         // eslint-disable-next-line react/no-danger
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleLd) }}
+      />
+      <script
+        type="application/ld+json"
+        // eslint-disable-next-line react/no-danger
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }}
       />
 
+      <nav aria-label="breadcrumb" className="text-[11px] text-gray-500">
+        <Link href={`/${locale}`} className="hover:underline">
+          {locale === 'ko' ? '전체 테스트' : 'All tests'}
+        </Link>
+        <span className="mx-1.5 text-gray-300">/</span>
+        <Link href={`/${locale}/${slug}`} className="hover:underline">
+          {entry.title[locale]}
+        </Link>
+      </nav>
       <Link
         href={`/${locale}/${slug}`}
-        className={`text-xs font-semibold uppercase tracking-widest ${entry.accentText}`}
+        className={`mt-2 inline-block text-xs font-semibold uppercase tracking-widest ${entry.accentText}`}
       >
         {entry.eyebrow}
       </Link>
@@ -166,6 +205,16 @@ export function TypeDetail({
             {c.cta}
           </Button>
         </Link>
+        <a
+          href={`/${locale}/${slug}/types/${profile.id}/story-card`}
+          target="_blank"
+          rel="noopener"
+          className="mt-3 block text-xs font-medium text-gray-500 underline-offset-2 hover:underline"
+        >
+          {locale === 'ko'
+            ? '📱 인스타 스토리용 이미지 받기'
+            : '📱 Get the Instagram-story image'}
+        </a>
       </section>
 
       {/* Other types in this test */}

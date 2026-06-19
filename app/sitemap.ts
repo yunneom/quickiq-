@@ -21,6 +21,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   const staticPaths: Array<{ path: string; priority: number }> = [
     { path: '', priority: 1 },
+    { path: '/tests', priority: 0.95 },
     { path: '/about', priority: 0.8 },
     { path: '/iq', priority: 0.9 },
     { path: '/mbti', priority: 0.9 },

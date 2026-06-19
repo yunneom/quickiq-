@@ -92,6 +92,7 @@ export function PersonalityResult({
 }: Props) {
   const c = COPY[locale] ?? COPY.ko;
   const typeHref = `/${locale}/${slug}/types/${profileId}`;
+  const storyCardUrl = `/${locale}/${slug}/types/${profileId}/story-card`;
   // Cross-promote up to 3 other tests for the exploration loop.
   const crossTests = TEST_CATALOG.filter((t) => t.slug !== slug).slice(0, 3);
 
@@ -205,6 +206,7 @@ export function PersonalityResult({
         locale={locale}
         shareUrl={typeHref}
         shareText={c.shareText(profile.name)}
+        storyCardUrl={storyCardUrl}
       />
 
       {/* Cross-test exploration loop */}

@@ -136,6 +136,9 @@ export default function HubPage({
             {c.disclaimer}
           </p>
           <div className="mt-3 flex justify-center gap-4 text-xs text-gray-400">
+            <Link href={`/${locale}/tests`} className="underline-offset-2 hover:underline">
+              {locale === 'en' ? 'All tests' : '전체 테스트'}
+            </Link>
             <Link href={`/${locale}/about`} className="underline-offset-2 hover:underline">
               {c.footerAbout}
             </Link>
