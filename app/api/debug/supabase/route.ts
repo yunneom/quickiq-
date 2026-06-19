@@ -128,6 +128,8 @@ export const GET = withErrorHandling('debug/supabase', async () => {
         getBody: string;
         postStatus: number;
         postBody: string;
+        restBaseStatus: number;
+        authHealthStatus: number;
       }
     | { error: string } = { error: 'not-attempted' };
   if (hasUrl && hasService) {
@@ -155,12 +157,35 @@ export const GET = withErrorHandling('debug/supabase', async () => {
       });
       const postBody = (await postRes.text()).slice(0, 300);
 
+      // The REST base + auth health endpoints tell us whether the host is
+      // even a valid Supabase API origin (404 on /rest/v1/ with a working
+      // auth health = wrong/garbled REST host or a non-PostgREST URL).
+      let restBaseStatus = -1;
+      let authHealthStatus = -1;
+      try {
+        restBaseStatus = (
+          await fetch(`${sanitized}/rest/v1/`, { headers, cache: 'no-store' })
+        ).status;
+      } catch {
+        /* ignore */
+      }
+      try {
+        authHealthStatus = (
+          await fetch(`${sanitized}/auth/v1/health`, { cache: 'no-store' })
+        ).status;
+      } catch {
+        /* ignore */
+      }
+
       rawProbe = {
-        sanitizedUrl: `${sanitized.slice(0, 24)}…`,
+        // Full host is the public anon URL — safe to display, never a key.
+        sanitizedUrl: sanitized,
         getStatus: getRes.status,
         getBody,
         postStatus: postRes.status,
         postBody,
+        restBaseStatus,
+        authHealthStatus,
       };
     } catch (err) {
       rawProbe = { error: err instanceof Error ? err.message : String(err) };
