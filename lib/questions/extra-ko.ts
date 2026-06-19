@@ -138,7 +138,7 @@ export const extraKoQuestions: Question[] = [
     id: 'ko-108',
     order_index: 108,
     category: 'verbal',
-    difficulty: 2,
+    difficulty: 3,
     locale: 'ko',
     question_text: '다음 중 나머지와 관계가 다른 것은?',
     options: [

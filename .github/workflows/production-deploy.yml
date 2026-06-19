@@ -1,22 +1,27 @@
 name: Vercel Production Deploy
 
-# Deploys main → production via the Vercel CLI using VERCEL_TOKEN.
+# Deploys main → production by POSTing a Vercel Deploy Hook.
 #
-# Why this exists: the project lives under a Hobby *team* on Vercel, and
-# the repo's commit authors (GitHub `yunneom` / automated commits) are not
-# members of that team. Vercel's Git integration therefore *blocks* the
-# automatic production deployment ("commit author does not have
-# contributing access"). A CLI deploy authenticated with the account
-# owner's VERCEL_TOKEN is attributed to the token owner, so it bypasses
-# the commit-author check entirely.
+# Why a deploy hook (not the Git integration): the project lives under a
+# Hobby *team* on Vercel whose members don't include the repo's commit
+# authors, so Vercel's automatic Git deploy is blocked with "commit author
+# does not have contributing access". A Deploy Hook is triggered by the
+# hook itself (the project owner), not the commit author, so it bypasses
+# that check entirely. One secret, no token/CLI juggling.
 #
-# Skipped automatically when the Vercel secrets aren't configured.
+# Setup (one time, by the project owner):
+#   1. Vercel → project → Settings → Git → Deploy Hooks
+#      → create a hook for branch `main`, copy the URL.
+#   2. GitHub → repo → Settings → Secrets and variables → Actions
+#      → New repository secret: VERCEL_DEPLOY_HOOK_URL = <that URL>
+# After that, every push to main auto-triggers a production build.
+#
+# Skips cleanly (no failure) until the secret is configured.
 
 on:
   push:
     branches: [main]
 
-# Avoid overlapping production deploys racing each other.
 concurrency:
   group: vercel-production
   cancel-in-progress: true
@@ -24,45 +29,24 @@ concurrency:
 jobs:
   deploy-production:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 5
     env:
-      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-
+      DEPLOY_HOOK_URL: ${{ secrets.VERCEL_DEPLOY_HOOK_URL }}
     steps:
-      - name: Detect secrets
-        id: gate
+      - name: Trigger Vercel production deploy
         run: |
-          if [ -z "$VERCEL_TOKEN" ] || [ -z "$VERCEL_ORG_ID" ] || [ -z "$VERCEL_PROJECT_ID" ]; then
-            echo "skip=true" >> "$GITHUB_OUTPUT"
-            echo "Vercel secrets not configured — skipping production deploy."
-          else
-            echo "skip=false" >> "$GITHUB_OUTPUT"
+          if [ -z "$DEPLOY_HOOK_URL" ]; then
+            echo "VERCEL_DEPLOY_HOOK_URL secret not set — skipping."
+            echo "Add it under repo Settings → Secrets → Actions to enable auto-deploy."
+            exit 0
           fi
-
-      - uses: actions/checkout@v4
-        if: steps.gate.outputs.skip != 'true'
-
-      - name: Set up Node.js
-        if: steps.gate.outputs.skip != 'true'
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-
-      - name: Install Vercel CLI
-        if: steps.gate.outputs.skip != 'true'
-        run: npm install --global vercel@latest
-
-      - name: Pull Vercel Environment (production)
-        if: steps.gate.outputs.skip != 'true'
-        run: vercel pull --yes --environment=production --token=$VERCEL_TOKEN
-
-      - name: Build Project Artifacts (production)
-        if: steps.gate.outputs.skip != 'true'
-        run: vercel build --prod --token=$VERCEL_TOKEN
-
-      - name: Deploy to Vercel (production)
-        if: steps.gate.outputs.skip != 'true'
-        run: vercel deploy --prebuilt --prod --token=$VERCEL_TOKEN
+          echo "Triggering Vercel production deploy hook…"
+          status=$(curl -sS -o /tmp/hook_resp.json -w '%{http_code}' -X POST "$DEPLOY_HOOK_URL")
+          echo "HTTP $status"
+          cat /tmp/hook_resp.json || true
+          echo ""
+          # 2xx = accepted. Anything else fails the job so it's visible.
+          case "$status" in
+            2*) echo "✅ Deploy hook accepted — Vercel is building production." ;;
+            *)  echo "❌ Deploy hook returned $status"; exit 1 ;;
+          esac
