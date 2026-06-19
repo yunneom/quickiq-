@@ -1,6 +1,7 @@
 import type { MetadataRoute } from 'next';
 import { locales } from '@/i18n';
 import { PERSONALITY_REGISTRY } from '@/lib/personality/registry';
+import { getSiteUrl } from '@/lib/site-url';
 
 /**
  * Sitemap with hreflang alternates so Google serves the right locale.
@@ -16,7 +17,7 @@ import { PERSONALITY_REGISTRY } from '@/lib/personality/registry';
  * without new hand-written pages.
  */
 export default function sitemap(): MetadataRoute.Sitemap {
-  const base = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
+  const base = getSiteUrl();
   const now = new Date();
 
   const staticPaths: Array<{ path: string; priority: number }> = [
