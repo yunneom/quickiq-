@@ -1,22 +1,11 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { cookies } from 'next/headers';
+import { sanitizeSupabaseUrl } from './sanitize-url';
 
 interface CookieToSet {
   name: string;
   value: string;
   options?: CookieOptions;
-}
-
-/**
- * Strip trailing slashes + whitespace from the project URL. The Supabase
- * dashboard "Copy" button sometimes appends a slash, and pasted values
- * occasionally carry surrounding whitespace. Either one makes supabase-js
- * build paths like `/rest/v1//test_sessions`, which PostgREST rejects
- * with PGRST125 "Invalid path specified in request URL".
- */
-function sanitizeSupabaseUrl(raw: string | undefined): string | undefined {
-  if (!raw) return raw;
-  return raw.trim().replace(/\/+$/, '');
 }
 
 const URL = sanitizeSupabaseUrl(process.env.NEXT_PUBLIC_SUPABASE_URL);
