@@ -115,7 +115,9 @@ test('locale switcher swaps between /ko and /en in place', async ({ page }) => {
 });
 
 test('faq JSON-LD is emitted on the landing page', async ({ request }) => {
-  const res = await request.get('/ko');
+  // FAQ schema lives on the IQ landing (moved to /iq after the hub split);
+  // the new hub doesn't carry FAQ.
+  const res = await request.get('/ko/iq');
   const html = await res.text();
   // Look for the FAQPage schema marker — exact JSON shape is fragile,
   // but the @type is stable.
@@ -190,7 +192,8 @@ test('health endpoint reports integration status', async ({ request }) => {
 });
 
 test('FAQ section appears and accordions expand', async ({ page }) => {
-  await page.goto('/ko');
+  // FAQ lives on the IQ landing (moved to /iq after the hub split).
+  await page.goto('/ko/iq');
   const faq = page.getByText('자주 묻는 질문');
   await expect(faq).toBeVisible();
   // First question

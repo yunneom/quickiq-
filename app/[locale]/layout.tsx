@@ -53,6 +53,13 @@ export async function generateMetadata({
     formatDetection: {
       telephone: false,
     },
+    // Google Search Console — HTML-tag verification for the preview URL
+    // property. Survives middleware redirects from bare "/" to /ko or /en
+    // because both locale layouts emit the same tag. Safe to keep in
+    // production: it just proves ownership, no analytics or tracking.
+    verification: {
+      google: '0QJZai3TbosSlkFY-Qf3_TdyJe7ZPf7bF7jDR6pgXd0',
+    },
   };
 }
 

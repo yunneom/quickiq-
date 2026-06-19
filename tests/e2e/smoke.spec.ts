@@ -16,10 +16,11 @@ test.use({ extraHTTPHeaders: BYPASS_HEADERS });
  * second test below.
  */
 test('full flow: landing → 30 questions → result page', async ({ page }) => {
-  // Go directly to /ko — next-intl middleware otherwise picks the locale
-  // from the browser's Accept-Language header (Chromium defaults to en-US).
-  await page.goto('/ko');
-  await expect(page).toHaveURL(/\/ko$/);
+  // Go directly to /ko/iq — the IQ landing now lives under /iq since the
+  // root is a hub of 6 tests. next-intl middleware would otherwise pick
+  // the locale from Accept-Language (Chromium defaults to en-US).
+  await page.goto('/ko/iq');
+  await expect(page).toHaveURL(/\/ko\/iq$/);
 
   // Landing CTA
   const cta = page.getByTestId('cta-start');
@@ -129,5 +130,5 @@ test('mock checkout unlocks the result page', async ({ request, page }) => {
   await expect(page.getByTestId('result-percentile')).toBeVisible();
 
   // Paid state: no purchase CTA should be present
-  await expect(page.getByRole('link', { name: /9,900원/ })).toHaveCount(0);
+  await expect(page.getByRole('link', { name: /\d{1,3}(?:,\d{3})*원 ·/ })).toHaveCount(0);
 });

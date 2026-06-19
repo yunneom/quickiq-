@@ -1,4 +1,5 @@
 import type { MetadataRoute } from 'next';
+import { getSiteUrl } from '@/lib/site-url';
 
 /**
  * robots.txt — defense in depth. Conversion paths and admin surfaces
@@ -11,7 +12,7 @@ import type { MetadataRoute } from 'next';
  * trailing-slash-less prefix matchers.
  */
 export default function robots(): MetadataRoute.Robots {
-  const base = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
+  const base = getSiteUrl();
   return {
     rules: [
       {

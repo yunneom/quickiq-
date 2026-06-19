@@ -53,6 +53,12 @@ export function ResultHero({
             </span>
           )}
         </div>
+        <p
+          className="mt-4 text-[11px] font-medium opacity-90"
+          data-testid="result-hero-disclaimer"
+        >
+          ⓘ {t('estimatedNotice')}
+        </p>
       </div>
     </div>
   );

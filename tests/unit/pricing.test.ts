@@ -22,9 +22,9 @@ describe('pricing helpers', () => {
     }
   });
 
-  it('defaults to 9900 when env unset', async () => {
+  it('defaults to 4900 when env unset', async () => {
     const { priceKRW } = await load();
-    assert.equal(priceKRW(), 9900);
+    assert.equal(priceKRW(), 4900);
   });
 
   it('reads env when set to valid number', async () => {
@@ -36,15 +36,15 @@ describe('pricing helpers', () => {
   it('falls back when env is malformed', async () => {
     process.env.NEXT_PUBLIC_PRICE_KRW = 'not-a-number';
     const { priceKRW } = await load();
-    assert.equal(priceKRW(), 9900);
+    assert.equal(priceKRW(), 4900);
   });
 
   it('rejects zero and negative prices', async () => {
     process.env.NEXT_PUBLIC_PRICE_KRW = '0';
     const { priceKRW } = await load();
-    assert.equal(priceKRW(), 9900);
+    assert.equal(priceKRW(), 4900);
     process.env.NEXT_PUBLIC_PRICE_KRW = '-500';
-    assert.equal((await load()).priceKRW(), 9900);
+    assert.equal((await load()).priceKRW(), 4900);
   });
 
   it('formats KO price with 원 suffix and thousands sep', async () => {
@@ -54,10 +54,10 @@ describe('pricing helpers', () => {
   });
 
   it('formats EN price as USD with two decimals', async () => {
-    process.env.NEXT_PUBLIC_PRICE_KRW = '9900';
+    process.env.NEXT_PUBLIC_PRICE_KRW = '4900';
     const { priceLabel } = await load();
     const en = priceLabel('en');
-    // 9900 / 1320 ≈ 7.5, rounded to one dime → "$7.50"
+    // 4900 / 1320 ≈ 3.71, rounded to one dime → "$3.70"
     assert.match(en, /^\$\d+\.\d{2}$/);
   });
 });

@@ -19,7 +19,7 @@
 [채점 + 결과 페이지 /result/{sessionId}]
    - 무료 결과: "당신의 추정 IQ는 상위 N%입니다"
    - 영역별 점수 4개 항목 흐릿하게 보여줌 (블러 처리)
-   - CTA "9,900원으로 상세 리포트 받기"
+   - CTA "4,900원으로 상세 리포트 받기"
        ↓ CTA 클릭
 [체크아웃 /checkout/{sessionId}]
    - 이메일 입력 (1개 필드)
@@ -74,12 +74,12 @@
   - 종합 추정 IQ 백분위 ("상위 N%")
   - 영역별 점수 4개 (블러 처리, 클릭하면 결제 유도)
   - 평균 점수 비교 그래프 (블러)
-- **CTA**: "전체 리포트 9,900원으로 받기"
+- **CTA**: "전체 리포트 4,900원으로 받기"
 - **공유 버튼**: 카카오톡/X/Facebook 공유 (바이럴 유도, "나는 상위 N%였어요")
   - 공유 시 본인 점수는 노출, 다른 사람은 자기 테스트로 유도
 
 ### 2.5 결제 (Lemon Squeezy)
-- **단일 상품**: "Detailed IQ Report" — $7.50 / 9,900원
+- **단일 상품**: "Detailed IQ Report" — $3.70 / 4,900원
 - **결제 흐름**:
   1. 사용자 이메일 입력
   2. 서버에서 Lemon Squeezy Checkout URL 생성 (custom_data에 sessionId 포함)
@@ -141,8 +141,8 @@
 | StartTest | 테스트 첫 문항 진입 | - |
 | CompleteTest | 30문항 모두 응답 | - |
 | ViewContent | 결과 페이지 진입 | - |
-| InitiateCheckout | 결제 페이지 진입 | value: 9900 |
-| Purchase | Webhook 결제 확인 | value: 9900, currency: KRW |
+| InitiateCheckout | 결제 페이지 진입 | value: 4900 |
+| Purchase | Webhook 결제 확인 | value: 4900, currency: KRW |
 
 CAPI는 서버에서 직접 호출 (iOS14 픽셀 차단 우회).
 
@@ -162,5 +162,5 @@ CAPI는 서버에서 직접 호출 (iOS14 픽셀 차단 우회).
 - 랜딩 → 테스트 시작 전환율 (목표 40%+)
 - 테스트 시작 → 완료율 (목표 70%+)
 - 결과 → 결제 전환율 (목표 3%+)
-- CPA (광고 비용 / 결제 건수) — 9,900원 이하면 흑자
+- CPA (광고 비용 / 결제 건수) — 4,900원 이하면 흑자
 - 평균 테스트 소요 시간 (10분 이내가 이상적)

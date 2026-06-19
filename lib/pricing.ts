@@ -5,7 +5,7 @@
  * A/B prices without a code change.
  *
  * Why server-only formatting:
- *   - the locale-appropriate currency label ("9,900원" vs "$7.50") must
+ *   - the locale-appropriate currency label ("4,900원" vs "$3.70") must
  *     stay consistent across SSR/CSR, and Intl.NumberFormat on the
  *     client gives slightly different output on some Android WebViews.
  *   - we never let the client tell the server what price to charge —
@@ -16,7 +16,7 @@
 export function priceKRW(): number {
   const raw = process.env.NEXT_PUBLIC_PRICE_KRW;
   const n = raw ? Number(raw) : NaN;
-  return Number.isFinite(n) && n > 0 ? n : 9900;
+  return Number.isFinite(n) && n > 0 ? n : 4900;
 }
 
 const DEFAULT_USD_KRW_PEG = 1320;
@@ -36,8 +36,8 @@ export function priceUSD(): number {
 
 /**
  * Formatted price label for a given locale. Returns:
- *   KO: "9,900원"
- *   EN: "$7.50"
+ *   KO: "4,900원"
+ *   EN: "$3.70"
  */
 export function priceLabel(locale: 'ko' | 'en'): string {
   if (locale === 'en') {

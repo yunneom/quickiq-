@@ -68,7 +68,7 @@ create table payments (
   ls_order_id         text not null,
   ls_customer_id      text,
   email               text not null,
-  amount_cents        int not null,              -- 990 (USD) or 990000 (KRW)
+  amount_cents        int not null,              -- 370 (USD) or 490000 (KRW)
   currency            text not null,             -- 'USD' | 'KRW'
   status              text not null,             -- 'paid' | 'refunded' | 'failed'
   pdf_sent_at         timestamptz,

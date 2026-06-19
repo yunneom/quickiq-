@@ -1,5 +1,6 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { cookies } from 'next/headers';
+import { sanitizeSupabaseUrl } from './sanitize-url';
 
 interface CookieToSet {
   name: string;
@@ -7,9 +8,9 @@ interface CookieToSet {
   options?: CookieOptions;
 }
 
-const URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-const SERVICE = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const URL = sanitizeSupabaseUrl(process.env.NEXT_PUBLIC_SUPABASE_URL);
+const ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();
+const SERVICE = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
 
 export function isSupabaseConfigured(): boolean {
   return Boolean(URL && ANON);
