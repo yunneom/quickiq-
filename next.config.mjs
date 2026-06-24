@@ -9,11 +9,12 @@ const withNextIntl = createNextIntlPlugin('./i18n.ts');
 //   Sentry        → ingest.sentry.io for error reporting
 //   Meta          → connect.facebook.net + www.facebook.com (Pixel)
 //   Lemon Squeezy → app.lemonsqueezy.com (hosted checkout iframe)
+//   Toss Payments → js.tosspayments.com (SDK) + *.tosspayments.com (pay UI)
 //   data:         → inline OG and icon images
 const CSP_DIRECTIVES = [
   "default-src 'self'",
   "base-uri 'self'",
-  "form-action 'self' https://app.lemonsqueezy.com",
+  "form-action 'self' https://app.lemonsqueezy.com https://*.tosspayments.com",
   "img-src 'self' data: https: blob:",
   "font-src 'self' data:",
   // 'unsafe-inline' is needed for Next.js inline styles and the Tailwind
@@ -21,9 +22,9 @@ const CSP_DIRECTIVES = [
   "style-src 'self' 'unsafe-inline'",
   // 'unsafe-inline' for Next.js script chunks. The Meta Pixel snippet is
   // also inline; tightening with nonces is a future improvement.
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://connect.facebook.net https://va.vercel-scripts.com",
-  "connect-src 'self' https://*.ingest.sentry.io https://*.ingest.us.sentry.io https://*.supabase.co wss://*.supabase.co https://api.lemonsqueezy.com https://www.facebook.com https://va.vercel-scripts.com https://vitals.vercel-insights.com https://api.qrserver.com",
-  "frame-src 'self' https://app.lemonsqueezy.com",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://connect.facebook.net https://va.vercel-scripts.com https://js.tosspayments.com",
+  "connect-src 'self' https://*.ingest.sentry.io https://*.ingest.us.sentry.io https://*.supabase.co wss://*.supabase.co https://api.lemonsqueezy.com https://*.tosspayments.com https://www.facebook.com https://va.vercel-scripts.com https://vitals.vercel-insights.com https://api.qrserver.com",
+  "frame-src 'self' https://app.lemonsqueezy.com https://*.tosspayments.com",
   "frame-ancestors 'none'",
   "object-src 'none'",
   "upgrade-insecure-requests",
