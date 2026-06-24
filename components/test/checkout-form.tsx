@@ -14,6 +14,57 @@ interface Props {
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+interface TossCheckout {
+  mode: 'toss';
+  clientKey: string;
+  orderId: string;
+  amount: number;
+  orderName: string;
+  customerEmail: string;
+  successUrl: string;
+  failUrl: string;
+}
+
+// Minimal shape of the Toss SDK we use (loaded via <script>).
+interface TossPaymentsSDK {
+  requestPayment: (
+    method: string,
+    opts: {
+      amount: number;
+      orderId: string;
+      orderName: string;
+      customerEmail?: string;
+      successUrl: string;
+      failUrl: string;
+    },
+  ) => Promise<void>;
+}
+declare global {
+  interface Window {
+    TossPayments?: (clientKey: string) => TossPaymentsSDK;
+  }
+}
+
+/** Load the Toss SDK once, on demand. */
+function loadTossSdk(): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (typeof window === 'undefined') return reject(new Error('no window'));
+    if (window.TossPayments) return resolve();
+    const existing = document.querySelector<HTMLScriptElement>('script[data-toss]');
+    if (existing) {
+      existing.addEventListener('load', () => resolve());
+      existing.addEventListener('error', () => reject(new Error('toss sdk load failed')));
+      return;
+    }
+    const s = document.createElement('script');
+    s.src = 'https://js.tosspayments.com/v1/payment';
+    s.dataset.toss = '1';
+    s.onload = () => resolve();
+    s.onerror = () => reject(new Error('toss sdk load failed'));
+    document.head.appendChild(s);
+  });
+}
+
 export function CheckoutForm({ sessionId, locale }: Props) {
   const t = useTranslations('checkout');
   const [email, setEmail] = useState('');
@@ -42,7 +93,27 @@ export function CheckoutForm({ sessionId, locale }: Props) {
         body: JSON.stringify({ sessionId, email, locale }),
       });
       const data = await res.json();
-      if (!res.ok || !data.url) throw new Error(data.error ?? 'checkout_failed');
+      if (!res.ok) throw new Error(data.error ?? 'checkout_failed');
+
+      // Toss Payments path: load the SDK and open the hosted payment UI.
+      if (data.mode === 'toss') {
+        const d = data as TossCheckout;
+        await loadTossSdk();
+        if (!window.TossPayments) throw new Error('toss sdk unavailable');
+        const toss = window.TossPayments(d.clientKey);
+        await toss.requestPayment('카드', {
+          amount: d.amount,
+          orderId: d.orderId,
+          orderName: d.orderName,
+          customerEmail: d.customerEmail,
+          successUrl: d.successUrl,
+          failUrl: d.failUrl,
+        });
+        return; // Toss redirects away; if it resolves without redirect, leave busy.
+      }
+
+      // Redirect path: Lemon Squeezy / mock checkout.
+      if (!data.url) throw new Error('checkout_failed');
       window.location.href = data.url;
     } catch (err) {
       console.error(err);

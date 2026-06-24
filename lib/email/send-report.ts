@@ -134,25 +134,71 @@ function htmlBody(locale: 'ko' | 'en', sessionId: string, result?: ScoreResult):
 </html>`;
 }
 
+/**
+ * Resolve the score result + answers for a session. The in-memory store is
+ * empty in production (sessions live in Supabase), so the LS/Toss paid
+ * handlers can't pass a `result` — without this fetch, every production
+ * report email would be skipped. Falls back through: provided → memory → DB.
+ */
+async function resolveReportData(
+  sessionId: string,
+  provided?: ScoreResult,
+): Promise<{ result?: ScoreResult; answers?: AnswerInput[] }> {
+  const mem = getSession(sessionId);
+  let result = provided ?? mem?.result;
+  let answers: AnswerInput[] | undefined = mem?.answers;
+
+  if ((!result || !answers) && isSupabaseConfigured()) {
+    try {
+      const admin = createSupabaseAdmin();
+      const { data } = await admin
+        .from('test_sessions')
+        .select('raw_score, estimated_iq, percentile, category_scores, answers')
+        .eq('id', sessionId)
+        .single();
+      if (data && data.estimated_iq != null) {
+        if (!result) {
+          result = {
+            rawScore: data.raw_score ?? 0,
+            total: 30,
+            estimatedIq: data.estimated_iq,
+            topPercentile: data.percentile,
+            categoryScores: data.category_scores,
+          };
+        }
+        if (!answers && Array.isArray(data.answers)) {
+          answers = data.answers as AnswerInput[];
+        }
+      }
+    } catch (err) {
+      console.error('[email] Supabase result fetch failed:', err);
+    }
+  }
+  return { result, answers };
+}
+
 export async function sendReport(input: SendInput): Promise<void> {
-  if (!input.result) {
+  // Resolve result + answers (memory in dev, Supabase in prod).
+  const resolved = await resolveReportData(input.sessionId, input.result);
+  if (!resolved.result) {
     console.warn('[email] no result for session', input.sessionId, '— skipping');
     return;
   }
+  // Narrowed non-optional result (guard above guarantees it's present).
+  const result = resolved.result;
 
   // Pull the original questions + the buyer's answers so we can embed a
   // per-question breakdown in the PDF. Falls back to the summary-only PDF
-  // if the session is gone (e.g. memory cleared by a restart).
-  const session = getSession(input.sessionId);
+  // if answers are unavailable.
   const questions = getQuestions(input.locale);
-  const answers: AnswerInput[] | undefined = session?.answers;
+  const answers: AnswerInput[] | undefined = resolved.answers;
 
   let pdfBuffer: Buffer | null = null;
   try {
     pdfBuffer = await renderReportPdf({
       sessionId: input.sessionId,
       locale: input.locale,
-      result: input.result,
+      result,
       questions: answers ? questions : undefined,
       answers,
     });
@@ -174,8 +220,8 @@ export async function sendReport(input: SendInput): Promise<void> {
       from: FROM,
       to: input.email,
       subject: subject(input.locale),
-      text: textBody(input.locale, input.sessionId, input.result),
-      html: htmlBody(input.locale, input.sessionId, input.result),
+      text: textBody(input.locale, input.sessionId, result),
+      html: htmlBody(input.locale, input.sessionId, result),
       attachments: pdfBuffer
         ? [
             {
