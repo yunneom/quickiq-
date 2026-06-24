@@ -10,11 +10,13 @@ const withNextIntl = createNextIntlPlugin('./i18n.ts');
 //   Meta          → connect.facebook.net + www.facebook.com (Pixel)
 //   Lemon Squeezy → app.lemonsqueezy.com (hosted checkout iframe)
 //   Toss Payments → js.tosspayments.com (SDK) + *.tosspayments.com (pay UI)
+//   Kakao Pay     → *.kakao.com / *.kakaopay.com (the /ready response sends
+//                   buyers to mobile.kakaopay.com or online-pay.kakao.com)
 //   data:         → inline OG and icon images
 const CSP_DIRECTIVES = [
   "default-src 'self'",
   "base-uri 'self'",
-  "form-action 'self' https://app.lemonsqueezy.com https://*.tosspayments.com",
+  "form-action 'self' https://app.lemonsqueezy.com https://*.tosspayments.com https://*.kakao.com https://*.kakaopay.com",
   "img-src 'self' data: https: blob:",
   "font-src 'self' data:",
   // 'unsafe-inline' is needed for Next.js inline styles and the Tailwind
@@ -24,7 +26,7 @@ const CSP_DIRECTIVES = [
   // also inline; tightening with nonces is a future improvement.
   "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://connect.facebook.net https://va.vercel-scripts.com https://js.tosspayments.com",
   "connect-src 'self' https://*.ingest.sentry.io https://*.ingest.us.sentry.io https://*.supabase.co wss://*.supabase.co https://api.lemonsqueezy.com https://*.tosspayments.com https://www.facebook.com https://va.vercel-scripts.com https://vitals.vercel-insights.com https://api.qrserver.com",
-  "frame-src 'self' https://app.lemonsqueezy.com https://*.tosspayments.com",
+  "frame-src 'self' https://app.lemonsqueezy.com https://*.tosspayments.com https://*.kakao.com https://*.kakaopay.com",
   "frame-ancestors 'none'",
   "object-src 'none'",
   "upgrade-insecure-requests",

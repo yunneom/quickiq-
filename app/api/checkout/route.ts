@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createCheckoutUrl } from '@/lib/payments/lemon-squeezy';
 import { isTossConfigured, tossClientKey } from '@/lib/payments/toss';
+import { isKakaopayConfigured, kakaopayReady } from '@/lib/payments/kakaopay';
 import { updateSession } from '@/lib/session-store';
 import { isSupabaseConfigured, createSupabaseAdmin } from '@/lib/supabase/server';
 import { withErrorHandling } from '@/lib/api/with-error-handling';
@@ -73,7 +74,38 @@ export const POST = withErrorHandling('checkout', async (req: Request) => {
 
   const origin = new URL(req.url).origin;
 
-  // Preferred path: Toss Payments (KR). The client loads the Toss SDK and
+  // Preferred path #1: Kakao Pay (KR). Two-step: ready → buyer pays in
+  // KakaoTalk → approve. We persist the returned tid so /approve can
+  // look it up by sessionId. Client just opens mobileUrl.
+  if (isKakaopayConfigured()) {
+    const ready = await kakaopayReady({
+      sessionId: body.sessionId,
+      email: body.email,
+      amount,
+      locale: body.locale,
+      approvalUrl: `${origin}/api/payments/kakaopay/approve?sessionId=${body.sessionId}&locale=${body.locale}`,
+      failUrl: `${origin}/${body.locale}/checkout/${body.sessionId}?error=payment_failed`,
+      cancelUrl: `${origin}/${body.locale}/checkout/${body.sessionId}?error=cancelled`,
+    });
+    if (!ready.ok) {
+      return NextResponse.json({ error: 'kakaopay_ready_failed', reason: ready.reason }, { status: 502 });
+    }
+    if (isSupabaseConfigured()) {
+      try {
+        const admin = createSupabaseAdmin();
+        await admin
+          .from('test_sessions')
+          .update({ kakao_tid: ready.tid })
+          .eq('id', body.sessionId);
+      } catch (err) {
+        console.error('[checkout] failed to persist kakao_tid:', err);
+      }
+    }
+    updateSession(body.sessionId, { kakao_tid: ready.tid });
+    return NextResponse.json({ mode: 'kakaopay', mobileUrl: ready.mobileUrl, pcUrl: ready.pcUrl });
+  }
+
+  // Preferred path #2: Toss Payments (KR). The client loads the Toss SDK and
   // calls requestPayment with these fields; Toss redirects to the confirm
   // route on success.
   if (isTossConfigured()) {
