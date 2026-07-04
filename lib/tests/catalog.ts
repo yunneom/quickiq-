@@ -6,7 +6,7 @@
 
 export interface TestCatalogEntry {
   /** URL slug, e.g. 'iq', 'mbti'. Matches the route folder name. */
-  slug: 'iq' | 'mbti' | 'attachment' | 'love-lang' | 'enneagram' | 'teto-egen';
+  slug: 'iq' | 'mbti' | 'attachment' | 'love-lang' | 'enneagram' | 'teto-egen' | 'tf' | 'dopamine';
   /** Eyebrow / brand label shown in cards and OG images. */
   eyebrow: string;
   /** Display title in cards. */
@@ -332,6 +332,128 @@ export const TEST_CATALOG: TestCatalogEntry[] = [
         {
           q: 'Do people with the same type get along?',
           a: 'Not always — Enneagram dynamics can be reinforcing or balancing. Click your type on the result page for details.',
+        },
+      ],
+    },
+  },
+  {
+    slug: 'tf',
+    eyebrow: 'T or F',
+    title: { ko: '너 T야? 테스트', en: 'Are You a T?' },
+    tagline: {
+      ko: '"너 T야?" 소리 들어봤다면 필수',
+      en: 'How T are you, really?',
+    },
+    questions: 15,
+    minutes: 2,
+    accentBg: 'bg-sky-100',
+    accentText: 'text-sky-700',
+    gradient: { from: '#0ea5e9', to: '#6366f1' },
+    emoji: '🤖',
+    faqs: {
+      ko: [
+        {
+          q: '"너 T야?"가 무슨 뜻이에요?',
+          a: 'MBTI의 T(사고형)에서 나온 밈으로, 공감 대신 팩트·해결책부터 내놓는 사람에게 던지는 말이에요. 이 테스트는 15개 상황 문항으로 당신의 팩폭력(T)과 공감력(F)을 측정해 4가지 유형으로 알려줍니다.',
+        },
+        {
+          q: 'MBTI 검사와 같은 건가요?',
+          a: '아니요. MBTI의 T/F 개념을 빌린 재미용 상황 반응 테스트입니다. 16유형 전체가 궁금하면 같은 사이트의 16 성격 유형 테스트를 응시해 보세요.',
+        },
+        {
+          q: 'T면 공감 능력이 없는 건가요?',
+          a: '전혀요. T는 해결책 제시가 곷 애정 표현인 사람들이에요. 표현 방식이 다를 뿐, 위하는 마음의 크기는 같습니다.',
+        },
+        {
+          q: '몇 분이면 끝나요?',
+          a: '15문항, 약 2분이면 충분해요. 결과 공유 카드까지 바로 만들 수 있습니다.',
+        },
+        {
+          q: '연인/친구와 비교할 수 있나요?',
+          a: '결과 페이지의 공유 버튼으로 링크를 보내고 서로의 유형과 궁합 코멘트를 비교해 보세요. T×F 조합이 제일 재밌게 나옵니다.',
+        },
+      ],
+      en: [
+        {
+          q: 'What does "you\'re such a T" mean?',
+          a: 'A meme from MBTI\'s T (Thinking) type — thrown at people who lead with facts and solutions instead of empathy. This test measures your fact-power (T) vs empathy-power (F) across 15 scenarios and maps you to 4 types.',
+        },
+        {
+          q: 'Is this the same as an MBTI test?',
+          a: 'No. It borrows the T/F concept for an entertainment-grade scenario test. For all 16 types, try the 16 Personalities test on this site.',
+        },
+        {
+          q: 'Does being a T mean I lack empathy?',
+          a: 'Not at all. For Ts, offering solutions IS the love language. The care is equal — only the delivery differs.',
+        },
+        {
+          q: 'How long does it take?',
+          a: '15 questions, about 2 minutes. Share cards are generated instantly.',
+        },
+        {
+          q: 'Can I compare with my partner or friends?',
+          a: 'Use the share button to send your result link and compare types and compatibility notes. T×F pairs are the most fun.',
+        },
+      ],
+    },
+  },
+  {
+    slug: 'dopamine',
+    eyebrow: 'DOPAMINE',
+    title: { ko: '도파민 중독 테스트', en: 'Dopamine Addiction Test' },
+    tagline: {
+      ko: '숏폼 끈기 가능? 내 도파민 레벨 확인',
+      en: 'Could you quit short-form? Check your level',
+    },
+    questions: 15,
+    minutes: 2,
+    accentBg: 'bg-orange-100',
+    accentText: 'text-orange-700',
+    gradient: { from: '#f97316', to: '#ef4444' },
+    emoji: '⚡',
+    faqs: {
+      ko: [
+        {
+          q: '도파민 중독이 진짜 있는 병인가요?',
+          a: '"도파민 중독"은 의학적 진단명이 아니라, 숏폼·SNS·자극적 콘텐츠에 과의존하는 생활 패턴을 가리키는 유행어예요. 이 테스트는 재미로 점검하는 용도이며 의학적 진단이 아닙니다.',
+        },
+        {
+          q: '점수는 어떻게 계산되나요?',
+          a: '문항마다 0~3점, 총 0~45점. 구간에 따라 도파민 수도승 → 밸런스 장인 → 도파민 헌터 → 도파민 노예 4단계로 나뉩니다.',
+        },
+        {
+          q: '도파민 노예가 나왔어요. 어떡하죠?',
+          a: '결과 페이지에 단계별 현실적인 개선 팁이 있어요. 시작은 딱 하나 — 오늘 밤 폰을 침실 밖에 두는 것부터. 첫 3일이 고비입니다.',
+        },
+        {
+          q: '몇 분이면 끝나요?',
+          a: '15문항 · 약 2분. 스크린타임 확인하는 것보다 덜 무서워요.',
+        },
+        {
+          q: '친구와 비교할 수 있나요?',
+          a: '결과 공유 버튼으로 링크를 보내 보세요. 단톡방에서 서로의 등급을 공개하는 순간이 이 테스트의 하이라이트입니다.',
+        },
+      ],
+      en: [
+        {
+          q: 'Is dopamine addiction a real medical condition?',
+          a: '"Dopamine addiction" is a pop term for over-reliance on short-form video, social media, and hyper-stimulation — not a medical diagnosis. This test playfully audits your habits; it is not a medical assessment.',
+        },
+        {
+          q: 'How is the score calculated?',
+          a: '0–3 points per question, 0–45 total, banded into 4 levels: Dopamine Monk → Balance Artisan → Dopamine Hunter → Dopamine Goblin.',
+        },
+        {
+          q: 'I got Dopamine Goblin. Now what?',
+          a: 'The result page has realistic per-level tips. Start with exactly one change: tonight, your phone sleeps outside the bedroom. The first three days are the hard part.',
+        },
+        {
+          q: 'How long does it take?',
+          a: '15 questions, about 2 minutes. Less scary than opening your screen-time report.',
+        },
+        {
+          q: 'Can I compare with friends?',
+          a: 'Send your result link with the share button. The moment everyone reveals their level in the group chat is the highlight of this test.',
         },
       ],
     },

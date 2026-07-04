@@ -24,6 +24,12 @@ import {
   getTetoEgenProfile,
   getAllTetoEgenProfiles,
 } from './teto-egen';
+import { TF_TEST_TYPE, getTfProfile, getAllTfProfiles } from './tf';
+import {
+  DOPAMINE_TEST_TYPE,
+  getDopamineProfile,
+  getAllDopamineProfiles,
+} from './dopamine';
 
 /**
  * Slug → personality-test accessors. Lets the programmatic type pages
@@ -62,6 +68,16 @@ export const PERSONALITY_REGISTRY: Record<string, PersonalityRegistryEntry> = {
     testType: TETO_EGEN_TEST_TYPE,
     getProfile: getTetoEgenProfile,
     getAll: getAllTetoEgenProfiles,
+  },
+  tf: {
+    testType: TF_TEST_TYPE,
+    getProfile: getTfProfile,
+    getAll: getAllTfProfiles,
+  },
+  dopamine: {
+    testType: DOPAMINE_TEST_TYPE,
+    getProfile: getDopamineProfile,
+    getAll: getAllDopamineProfiles,
   },
 };
 
