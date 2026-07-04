@@ -5,6 +5,7 @@ import { locales, type Locale } from '@/i18n';
 import { notFound } from 'next/navigation';
 import { CookieBanner } from '@/components/consent/cookie-banner';
 import { GatedAnalytics } from '@/components/consent/gated-analytics';
+import { AdsenseScript } from '@/components/ads/adsense-script';
 
 export function generateStaticParams() {
   return locales.map((locale) => ({ locale }));
@@ -112,6 +113,7 @@ export default async function LocaleLayout({
           <CookieBanner />
         </NextIntlClientProvider>
         <GatedAnalytics />
+        <AdsenseScript />
       </body>
     </html>
   );
