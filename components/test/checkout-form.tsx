@@ -95,6 +95,17 @@ export function CheckoutForm({ sessionId, locale }: Props) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'checkout_failed');
 
+      // Kakao Pay path: server already opened the payment session and
+      // returned the Kakao-hosted redirect URL. Just send the buyer there;
+      // Kakao bounces back to /api/payments/kakaopay/approve on success.
+      if (data.mode === 'kakaopay') {
+        const url = (data as { mobileUrl?: string; pcUrl?: string }).mobileUrl
+          ?? (data as { pcUrl?: string }).pcUrl;
+        if (!url) throw new Error('kakaopay_no_url');
+        window.location.href = url;
+        return;
+      }
+
       // Toss Payments path: load the SDK and open the hosted payment UI.
       if (data.mode === 'toss') {
         const d = data as TossCheckout;
