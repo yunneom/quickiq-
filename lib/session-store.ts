@@ -34,6 +34,8 @@ export interface StoredSession {
   email?: string;
   is_paid?: boolean;
   paid_at?: number;
+  /** Kakao Pay transaction id from /ready, required for /approve. */
+  kakao_tid?: string;
 }
 
 // `global` so the Map survives hot-reload in dev.
