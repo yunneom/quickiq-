@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import type { PersonalityProfile } from '@/lib/personality/types';
 import { TEST_CATALOG } from '@/lib/tests/catalog';
 import { PersonalityShare } from '@/components/personality/personality-share';
+import { ResultAd } from '@/components/ads/result-ad';
 
 export interface ResultBar {
   /** Left-side label (e.g. "외향 E", "인정의 말"). */
@@ -240,6 +241,9 @@ export function PersonalityResult({
           ))}
         </div>
       </section>
+
+      {/* Ad — free result pages only; gated off until AdSense env vars exist */}
+      <ResultAd />
 
       {/* Retake */}
       <div className="mt-8">

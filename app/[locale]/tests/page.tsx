@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import { unstable_setRequestLocale } from 'next-intl/server';
 import { locales, type Locale } from '@/i18n';
 import { TEST_CATALOG } from '@/lib/tests/catalog';
+import { ResultAd } from '@/components/ads/result-ad';
 
 const COPY = {
   ko: {
@@ -179,6 +180,7 @@ export default function AllTestsPage({
           {c.disclaimerBody}
         </p>
       </section>
+      <ResultAd />
     </article>
   );
 }

@@ -11,6 +11,7 @@ import {
   TETO_EGEN_TEST_TYPE,
 } from '@/lib/personality/teto-egen';
 import { isSupabaseConfigured, createSupabaseAdmin } from '@/lib/supabase/server';
+import { ResultAd } from '@/components/ads/result-ad';
 
 export const metadata: Metadata = {
   robots: { index: false, follow: true },
@@ -173,6 +174,9 @@ export default async function TetoEgenResultPage({
           </div>
         </section>
       )}
+
+      {/* Ad — free result page only */}
+      <ResultAd />
 
       {/* Retake */}
       <div className="mt-8">

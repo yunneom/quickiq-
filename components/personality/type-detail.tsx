@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import type { PersonalityProfile } from '@/lib/personality/types';
 import type { TestCatalogEntry } from '@/lib/tests/catalog';
+import { ResultAd } from '@/components/ads/result-ad';
 
 interface Props {
   locale: 'ko' | 'en';
@@ -268,6 +269,7 @@ export function TypeDetail({
       </section>
 
       <p className="mt-8 text-center text-[11px] text-gray-400">⚠ {c.disclaimer}</p>
+      <ResultAd />
     </article>
   );
 }
