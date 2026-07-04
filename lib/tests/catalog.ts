@@ -6,7 +6,7 @@
 
 export interface TestCatalogEntry {
   /** URL slug, e.g. 'iq', 'mbti'. Matches the route folder name. */
-  slug: 'iq' | 'mbti' | 'attachment' | 'love-lang' | 'enneagram' | 'teto-egen' | 'tf' | 'dopamine';
+  slug: 'iq' | 'mbti' | 'attachment' | 'love-lang' | 'enneagram' | 'teto-egen' | 'tf' | 'dopamine' | 'slang' | 'ajae';
   /** Eyebrow / brand label shown in cards and OG images. */
   eyebrow: string;
   /** Display title in cards. */
@@ -454,6 +454,128 @@ export const TEST_CATALOG: TestCatalogEntry[] = [
         {
           q: 'Can I compare with friends?',
           a: 'Send your result link with the share button. The moment everyone reveals their level in the group chat is the highlight of this test.',
+        },
+      ],
+    },
+  },
+  {
+    slug: 'slang',
+    eyebrow: 'SLANG QUIZ',
+    title: { ko: '신조어 능력고사', en: 'K-Slang Quiz' },
+    tagline: {
+      ko: '틀리면 70대 할배 판정. 자신 있어?',
+      en: 'Fail and get certified as a grandpa',
+    },
+    questions: 15,
+    minutes: 2,
+    accentBg: 'bg-lime-100',
+    accentText: 'text-lime-700',
+    gradient: { from: '#84cc16', to: '#10b981' },
+    emoji: '🗣️',
+    faqs: {
+      ko: [
+        {
+          q: '신조어 능력고사는 어떤 테스트인가요?',
+          a: 'Z세대·알파세대 유행어, 줄임말, 은어 15개의 뜻을 맞추는 퀴즈입니다. 맞춘 개수에 따라 언어 나이를 판정해 드려요 — 다 틀리면 70대 할배 판정이 나올 수 있으니 각오하고 응시하세요.',
+        },
+        {
+          q: '결과 등급은 어떻게 나뉘나요?',
+          a: '0~4개 70대 할배 👴 / 5~8개 아재 확정 🧔 / 9~12개 무늬만 어른 😎 / 13~15개 알파세대 만렙 🔥 — 4단계입니다.',
+        },
+        {
+          q: '신조어는 언제 기준인가요?',
+          a: '최근 몇 년간 널리 쓰인 검증된 신조어 위주로 출제했어요. 이미 아는 말이 많다면 당신의 알고리즘이 젊다는 뜻입니다.',
+        },
+        {
+          q: '몇 분이면 끝나요?',
+          a: '15문항 · 약 2분. 정답을 고민할수록 언어 나이가 올라가는 기분이 들 수 있습니다.',
+        },
+        {
+          q: '친구·가족과 비교할 수 있나요?',
+          a: '결과 공유 버튼으로 링크를 보내세요. 부모님께 보내드리는 순간이 이 테스트의 진짜 재미입니다.',
+        },
+      ],
+      en: [
+        {
+          q: 'What is the K-Slang Quiz?',
+          a: 'A 15-question quiz on Korean Gen Z/Alpha slang, abbreviations, and internet speak. Your correct count determines your "language age" — miss them all and you may be certified as a 70-year-old grandpa. You have been warned.',
+        },
+        {
+          q: 'How are the ranks divided?',
+          a: '0–4 correct: Certified 70-Year-Old 👴 / 5–8: Boomer-in-Training 🧔 / 9–12: Adult on Paper Only 😎 / 13–15: Gen Alpha Max Level 🔥.',
+        },
+        {
+          q: 'How current is the slang?',
+          a: 'Focused on widely-verified slang from recent years. Knowing most of it means your algorithm is young.',
+        },
+        {
+          q: 'How long does it take?',
+          a: '15 questions, about 2 minutes. The longer you hesitate, the older your language age feels.',
+        },
+        {
+          q: 'Can I compare with friends and family?',
+          a: 'Send the result link with the share button. Sending it to your parents is the true endgame of this quiz.',
+        },
+      ],
+    },
+  },
+  {
+    slug: 'ajae',
+    eyebrow: 'AJAE POWER',
+    title: { ko: '아재력 테스트', en: 'Retro K-Culture Quiz' },
+    tagline: {
+      ko: '삐삐·PC통신·아도겐… 다 알면 아재',
+      en: 'Pagers, dial-up, arcades — how retro are you?',
+    },
+    questions: 15,
+    minutes: 2,
+    accentBg: 'bg-amber-100',
+    accentText: 'text-amber-700',
+    gradient: { from: '#f59e0b', to: '#b45309' },
+    emoji: '👔',
+    faqs: {
+      ko: [
+        {
+          q: '아재력 테스트는 어떤 테스트인가요?',
+          a: '80~00년대 한국 문화 — 삐삐 암호, PC통신, 오락실, 비디오 대여점 — 15문항을 맞추는 퀴즈입니다. 신조어 능력고사와 반대로, 많이 맞출수록 아재로 판정됩니다.',
+        },
+        {
+          q: '결과 등급은 어떻게 나뉘나요?',
+          a: '0~3개 청정 신세대 🍼 / 4~7개 아재 새싹 🌱 / 8~11개 중견 아재 👔 / 12~15개 레전드 아재 🏆 — 4단계입니다.',
+        },
+        {
+          q: '젊은데 점수가 높게 나왔어요.',
+          a: '축하합니다, 유튜브 레트로 알고리즘의 우등생이시군요. 몸의 나이와 별개로 문화 아재력이 만렙일 수 있습니다.',
+        },
+        {
+          q: '몇 분이면 끝나요?',
+          a: '15문항 · 약 2분. 문제 풀다가 추억에 잠기면 더 걸릴 수 있습니다.',
+        },
+        {
+          q: '신조어 능력고사와 같이 하면 좋나요?',
+          a: '네, 두 테스트를 같이 응시하면 나의 문화 나이 밸런스를 완성할 수 있어요. 단톡방에 두 결과를 같이 공유하는 게 국룰입니다.',
+        },
+      ],
+      en: [
+        {
+          q: 'What is the Retro K-Culture Quiz?',
+          a: 'A 15-question quiz on 80s–00s Korean culture — pager codes, dial-up chat services, arcades, video rental etiquette. The inverse of the slang quiz: the more you know, the more "ajae" (Korean boomer) you are.',
+        },
+        {
+          q: 'How are the ranks divided?',
+          a: '0–3 correct: Pure New Generation 🍼 / 4–7: Ajae Sprout 🌱 / 8–11: Mid-level Ajae 👔 / 12–15: Legendary Ajae 🏆.',
+        },
+        {
+          q: 'I am young but scored high.',
+          a: 'Congratulations — you are an honor student of the YouTube retro algorithm. Cultural ajae power is independent of body age.',
+        },
+        {
+          q: 'How long does it take?',
+          a: '15 questions, about 2 minutes. Longer if you sink into nostalgia mid-quiz.',
+        },
+        {
+          q: 'Should I take the slang quiz too?',
+          a: 'Yes — the two quizzes together complete your cultural-age balance sheet. Sharing both results in the group chat is the standard play.',
         },
       ],
     },

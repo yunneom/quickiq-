@@ -30,6 +30,8 @@ import {
   getDopamineProfile,
   getAllDopamineProfiles,
 } from './dopamine';
+import { SLANG_TEST_TYPE, getSlangProfile, getAllSlangProfiles } from './slang';
+import { AJAE_TEST_TYPE, getAjaeProfile, getAllAjaeProfiles } from './ajae';
 
 /**
  * Slug → personality-test accessors. Lets the programmatic type pages
@@ -78,6 +80,16 @@ export const PERSONALITY_REGISTRY: Record<string, PersonalityRegistryEntry> = {
     testType: DOPAMINE_TEST_TYPE,
     getProfile: getDopamineProfile,
     getAll: getAllDopamineProfiles,
+  },
+  slang: {
+    testType: SLANG_TEST_TYPE,
+    getProfile: getSlangProfile,
+    getAll: getAllSlangProfiles,
+  },
+  ajae: {
+    testType: AJAE_TEST_TYPE,
+    getProfile: getAjaeProfile,
+    getAll: getAllAjaeProfiles,
   },
 };
 
