@@ -6,6 +6,7 @@ import { notFound } from 'next/navigation';
 import { CookieBanner } from '@/components/consent/cookie-banner';
 import { GatedAnalytics } from '@/components/consent/gated-analytics';
 import { AdsenseScript } from '@/components/ads/adsense-script';
+import { BusinessFooter } from '@/components/legal/business-footer';
 
 export function generateStaticParams() {
   return locales.map((locale) => ({ locale }));
@@ -110,6 +111,9 @@ export default async function LocaleLayout({
           >
             {children}
           </main>
+          {/* 전자상거래법 제13조 사업자정보 — every page bottom. Renders
+              nothing until NEXT_PUBLIC_BIZ_* env vars are set. */}
+          <BusinessFooter locale={locale === 'en' ? 'en' : 'ko'} />
           <CookieBanner />
         </NextIntlClientProvider>
         <GatedAnalytics />
