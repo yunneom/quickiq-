@@ -14,9 +14,10 @@
  *   NEXT_PUBLIC_BIZ_EMAIL        고객문의 이메일
  *   NEXT_PUBLIC_BIZ_MAILORDER_NO 통신판매업 신고번호 (면제 시 "면제" 등)
  *
- * Until the six mandatory fields are set, getBusinessInfo() returns null
- * and the footer renders nothing — set them in Vercel before submitting
- * the KakaoPay merchant review.
+ * The committed DEFAULTS below are the registered seller details — this
+ * info is public by law (must be displayed on the site), so it's baked in
+ * so the footer works on merge+deploy with no env setup. Any NEXT_PUBLIC_BIZ_*
+ * env var overrides its corresponding default when set.
  */
 
 export interface BusinessInfo {
@@ -30,13 +31,24 @@ export interface BusinessInfo {
   mailOrderNo?: string;
 }
 
+/** Registered seller details (전자상거래법 제13조). Public-disclosure info. */
+const DEFAULTS = {
+  name: '비라이크구일',
+  ceo: '성스런',
+  regNo: '772-17-02514',
+  address: '경기도 수원시 장안구 만석로68번길 10, 598동 703호',
+  tel: '010-3176-8152',
+  email: 'nanobumi2@gmail.com',
+  mailOrderNo: '면제',
+} as const;
+
 export function getBusinessInfo(): BusinessInfo | null {
-  const name = process.env.NEXT_PUBLIC_BIZ_NAME?.trim();
-  const ceo = process.env.NEXT_PUBLIC_BIZ_CEO?.trim();
-  const regNo = process.env.NEXT_PUBLIC_BIZ_REG_NO?.trim();
-  const address = process.env.NEXT_PUBLIC_BIZ_ADDRESS?.trim();
-  const tel = process.env.NEXT_PUBLIC_BIZ_TEL?.trim();
-  const email = process.env.NEXT_PUBLIC_BIZ_EMAIL?.trim();
+  const name = process.env.NEXT_PUBLIC_BIZ_NAME?.trim() || DEFAULTS.name;
+  const ceo = process.env.NEXT_PUBLIC_BIZ_CEO?.trim() || DEFAULTS.ceo;
+  const regNo = process.env.NEXT_PUBLIC_BIZ_REG_NO?.trim() || DEFAULTS.regNo;
+  const address = process.env.NEXT_PUBLIC_BIZ_ADDRESS?.trim() || DEFAULTS.address;
+  const tel = process.env.NEXT_PUBLIC_BIZ_TEL?.trim() || DEFAULTS.tel;
+  const email = process.env.NEXT_PUBLIC_BIZ_EMAIL?.trim() || DEFAULTS.email;
 
   // All six 전자상거래법-mandated fields must be present, otherwise we
   // render nothing rather than a half-filled (non-compliant) block.
@@ -49,7 +61,8 @@ export function getBusinessInfo(): BusinessInfo | null {
     address,
     tel,
     email,
-    mailOrderNo: process.env.NEXT_PUBLIC_BIZ_MAILORDER_NO?.trim() || undefined,
+    mailOrderNo:
+      process.env.NEXT_PUBLIC_BIZ_MAILORDER_NO?.trim() || DEFAULTS.mailOrderNo,
   };
 }
 
