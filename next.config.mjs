@@ -12,6 +12,8 @@ const withNextIntl = createNextIntlPlugin('./i18n.ts');
 //   Toss Payments → js.tosspayments.com (SDK) + *.tosspayments.com (pay UI)
 //   Kakao Pay     → *.kakao.com / *.kakaopay.com (the /ready response sends
 //                   buyers to mobile.kakaopay.com or online-pay.kakao.com)
+//   Kakao Share   → t1.kakaocdn.net (JS SDK) + *.kakao.com (Share/Channel
+//                   dispatch) so the result-page KakaoTalk button works
 //   AdSense       → googlesyndication (loader/creatives), doubleclick +
 //                   adtrafficquality (ad frames/beacons), gstatic (assets)
 //   data:         → inline OG and icon images
@@ -26,8 +28,8 @@ const CSP_DIRECTIVES = [
   "style-src 'self' 'unsafe-inline'",
   // 'unsafe-inline' for Next.js script chunks. The Meta Pixel snippet is
   // also inline; tightening with nonces is a future improvement.
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://connect.facebook.net https://va.vercel-scripts.com https://js.tosspayments.com https://pagead2.googlesyndication.com https://*.adtrafficquality.google https://www.googletagservices.com",
-  "connect-src 'self' https://*.ingest.sentry.io https://*.ingest.us.sentry.io https://*.supabase.co wss://*.supabase.co https://api.lemonsqueezy.com https://*.tosspayments.com https://www.facebook.com https://va.vercel-scripts.com https://vitals.vercel-insights.com https://api.qrserver.com https://*.googlesyndication.com https://*.doubleclick.net https://*.adtrafficquality.google https://*.google.com",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://connect.facebook.net https://va.vercel-scripts.com https://js.tosspayments.com https://t1.kakaocdn.net https://pagead2.googlesyndication.com https://*.adtrafficquality.google https://www.googletagservices.com",
+  "connect-src 'self' https://*.ingest.sentry.io https://*.ingest.us.sentry.io https://*.supabase.co wss://*.supabase.co https://api.lemonsqueezy.com https://*.tosspayments.com https://*.kakao.com https://*.kakaocdn.net https://www.facebook.com https://va.vercel-scripts.com https://vitals.vercel-insights.com https://api.qrserver.com https://*.googlesyndication.com https://*.doubleclick.net https://*.adtrafficquality.google https://*.google.com",
   "frame-src 'self' https://app.lemonsqueezy.com https://*.tosspayments.com https://*.kakao.com https://*.kakaopay.com https://*.googlesyndication.com https://*.doubleclick.net https://*.adtrafficquality.google https://www.google.com",
   "frame-ancestors 'none'",
   "object-src 'none'",
