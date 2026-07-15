@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 // in beforeEach and stub global fetch to simulate Kakao's amount object
 // for the post-confirm amount-guard assertion. (We don't test the
 // unconfigured path here — Node caches the module on first import so the
-// `const ADMIN_KEY` capture would survive any later env reset.)
+// `const SECRET_KEY` capture would survive any later env reset.)
 async function load() {
   return import('../../lib/payments/kakaopay');
 }
@@ -58,7 +58,7 @@ describe('kakaopayApprove guards', () => {
     const r = await kakaopayApprove({
       tid: 'T1', sessionId: 'sid', email: 'a@b.c', pgToken: 'pg', expectedAmount: 4900,
     });
-    assert.ok(calledUrl.includes('kapi.kakao.com'));
+    assert.ok(calledUrl.includes('open-api.kakaopay.com'));
     assert.equal(r.ok, true);
     if (r.ok) {
       assert.equal(r.method, 'MONEY');

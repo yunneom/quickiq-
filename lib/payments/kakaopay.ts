@@ -1,30 +1,53 @@
 import * as Sentry from '@sentry/nextjs';
 
 /**
- * Kakao Pay (Single) integration — server-side helpers.
+ * Kakao Pay online single-payment integration — server-side helpers.
  *
- * Flow (two API calls, like all major KR PGs):
+ * Uses the CURRENT KakaoPay Developers API (open-api.kakaopay.com), NOT
+ * the legacy kapi.kakao.com admin-key API. Differences from legacy:
+ *   - Host:        kapi.kakao.com/v1/payment → open-api.kakaopay.com/online/v1/payment
+ *   - Auth header: `KakaoAK {admin_key}`     → `SECRET_KEY {secret_key}`
+ *   - Body:        form-urlencoded           → application/json
+ * The flow, body fields, and the nested `amount.total` in the approve
+ * response are otherwise the same.
+ *
+ * Flow (two API calls):
  *   1. /api/checkout → kakaopayReady() with amount + URLs.
  *      Kakao returns { tid, next_redirect_pc_url, next_redirect_mobile_url }.
- *      We persist `tid` on the session (needed for approve) and redirect
- *      the buyer to the mobile URL.
+ *      We persist `tid` on the session and redirect the buyer to the URL.
  *   2. Buyer pays in KakaoTalk → Kakao redirects to approvalUrl?pg_token=…
  *   3. /api/payments/kakaopay/approve calls kakaopayApprove() with
  *      tid + pg_token + the same partner_order_id + partner_user_id.
  *      Success → server-side amount re-check → mark paid → email PDF.
+ *
+ * Credentials (KakaoPay Developers → 애플리케이션 → 발급정보):
+ *   KAKAOPAY_SECRET_KEY  Secret Key (use the dev Secret Key for testing).
+ *                        Sent as `Authorization: SECRET_KEY {key}`.
+ *   KAKAOPAY_CID         Merchant CID (still required, separate from the
+ *                        Client ID). Test CID is TC0ONETIME.
+ *   KAKAOPAY_CLIENT_ID   Client ID (20-char). Identifies the merchant tied
+ *                        to the Secret Key; not sent per request, kept for
+ *                        reference/ops parity with the contract.
  *
  * The price is ALWAYS taken from the server (priceKRW()), never the
  * client, and approve re-validates the confirmed amount as defense in
  * depth against a tampered redirect.
  */
 
-const ADMIN_KEY = process.env.KAKAOPAY_SECRET_KEY?.trim();
+const SECRET_KEY = process.env.KAKAOPAY_SECRET_KEY?.trim();
 const CID = process.env.KAKAOPAY_CID?.trim() || 'TC0ONETIME'; // TC0ONETIME = official test CID
 
-const BASE = 'https://kapi.kakao.com/v1/payment';
+const BASE = 'https://open-api.kakaopay.com/online/v1/payment';
+
+function authHeaders(): Record<string, string> {
+  return {
+    Authorization: `SECRET_KEY ${SECRET_KEY}`,
+    'Content-Type': 'application/json',
+  };
+}
 
 export function isKakaopayConfigured(): boolean {
-  return Boolean(ADMIN_KEY);
+  return Boolean(SECRET_KEY);
 }
 
 interface ReadyInput {
@@ -54,13 +77,13 @@ export type ReadyResult =
   | { ok: false; reason: string; status?: number; raw?: unknown };
 
 /**
- * POST /v1/payment/ready — opens a payment session with Kakao. Returns
- * tid (transaction id) that we MUST keep for approve.
+ * POST /online/v1/payment/ready — opens a payment session with Kakao.
+ * Returns tid (transaction id) that we MUST keep for approve.
  */
 export async function kakaopayReady(input: ReadyInput): Promise<ReadyResult> {
-  if (!ADMIN_KEY) return { ok: false, reason: 'kakaopay_not_configured' };
+  if (!SECRET_KEY) return { ok: false, reason: 'kakaopay_not_configured' };
 
-  const body = new URLSearchParams({
+  const body = JSON.stringify({
     cid: CID,
     partner_order_id: input.sessionId,
     partner_user_id: input.email,
@@ -68,9 +91,9 @@ export async function kakaopayReady(input: ReadyInput): Promise<ReadyResult> {
       input.locale === 'en'
         ? 'IQ Test — Detailed Report'
         : 'IQ 테스트 상세 리포트',
-    quantity: '1',
-    total_amount: String(input.amount),
-    tax_free_amount: '0',
+    quantity: 1,
+    total_amount: input.amount,
+    tax_free_amount: 0,
     approval_url: input.approvalUrl,
     fail_url: input.failUrl,
     cancel_url: input.cancelUrl,
@@ -79,10 +102,7 @@ export async function kakaopayReady(input: ReadyInput): Promise<ReadyResult> {
   try {
     const res = await fetch(`${BASE}/ready`, {
       method: 'POST',
-      headers: {
-        Authorization: `KakaoAK ${ADMIN_KEY}`,
-        'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8',
-      },
+      headers: authHeaders(),
       body,
       cache: 'no-store',
     });
@@ -91,7 +111,9 @@ export async function kakaopayReady(input: ReadyInput): Promise<ReadyResult> {
       return {
         ok: false,
         reason:
-          (raw as { msg?: string; code?: number })?.msg ?? `http_${res.status}`,
+          (raw as { error_message?: string; msg?: string })?.error_message ??
+          (raw as { msg?: string })?.msg ??
+          `http_${res.status}`,
         status: res.status,
         raw,
       };
@@ -134,13 +156,13 @@ export type ApproveResult =
   | { ok: false; reason: string; status?: number; raw?: unknown };
 
 /**
- * POST /v1/payment/approve — the authoritative "did they really pay?"
- * call. Re-checks the confirmed amount against the server-trusted price.
+ * POST /online/v1/payment/approve — the authoritative "did they really
+ * pay?" call. Re-checks the confirmed amount against the server price.
  */
 export async function kakaopayApprove(input: ApproveInput): Promise<ApproveResult> {
-  if (!ADMIN_KEY) return { ok: false, reason: 'kakaopay_not_configured' };
+  if (!SECRET_KEY) return { ok: false, reason: 'kakaopay_not_configured' };
 
-  const body = new URLSearchParams({
+  const body = JSON.stringify({
     cid: CID,
     tid: input.tid,
     partner_order_id: input.sessionId,
@@ -151,10 +173,7 @@ export async function kakaopayApprove(input: ApproveInput): Promise<ApproveResul
   try {
     const res = await fetch(`${BASE}/approve`, {
       method: 'POST',
-      headers: {
-        Authorization: `KakaoAK ${ADMIN_KEY}`,
-        'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8',
-      },
+      headers: authHeaders(),
       body,
       cache: 'no-store',
     });
@@ -163,12 +182,14 @@ export async function kakaopayApprove(input: ApproveInput): Promise<ApproveResul
       return {
         ok: false,
         reason:
-          (raw as { msg?: string; code?: number })?.msg ?? `http_${res.status}`,
+          (raw as { error_message?: string; msg?: string })?.error_message ??
+          (raw as { msg?: string })?.msg ??
+          `http_${res.status}`,
         status: res.status,
         raw,
       };
     }
-    // Kakao's amount object: { total, tax_free, vat, point, discount, green_deposit }
+    // New API nests amounts: { total, tax_free, vat, point, discount, green_deposit }
     const data = raw as {
       amount?: { total?: number };
       payment_method_type?: string;
