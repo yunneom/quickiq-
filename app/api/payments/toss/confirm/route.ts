@@ -37,6 +37,32 @@ export async function GET(req: Request) {
   const amount = Number(amountStr);
   if (!Number.isFinite(amount)) return back('bad_amount');
 
+  // Idempotency BEFORE the PG call: on a refreshed success-redirect Toss
+  // returns ALREADY_PROCESSED_PAYMENT, which previously read as
+  // "payment_failed" to a customer who had just paid — and offered them
+  // the checkout form again. Paid session → straight to thank-you.
+  if (isSupabaseConfigured()) {
+    try {
+      const admin = createSupabaseAdmin();
+      const { data: row } = await admin
+        .from('test_sessions')
+        .select('is_paid')
+        .eq('id', sessionId)
+        .single();
+      if (row?.is_paid) {
+        return NextResponse.redirect(
+          new URL(`/${locale}/thank-you?sessionId=${sessionId}`, u.origin),
+        );
+      }
+    } catch {
+      // Lookup failure is non-fatal — confirm flow handles the rest.
+    }
+  } else if (getSession(sessionId)?.is_paid) {
+    return NextResponse.redirect(
+      new URL(`/${locale}/thank-you?sessionId=${sessionId}`, u.origin),
+    );
+  }
+
   // Authoritative confirm — re-checks amount against the server price.
   const confirm = await confirmTossPayment({
     paymentKey,
@@ -85,10 +111,26 @@ export async function GET(req: Request) {
           new URL(`/${locale}/thank-you?sessionId=${sessionId}`, u.origin),
         );
       }
-      await admin
+      if (dupErr) {
+        // Money captured but ledger insert failed — never silent: without
+        // this row, refunds/settlement can't be reconciled.
+        Sentry.captureMessage('toss paid but payments insert failed', {
+          level: 'error',
+          tags: { area: 'toss', step: 'ledger' },
+          extra: { sessionId, code: dupErr.code, message: dupErr.message },
+        });
+      }
+      const { error: updErr } = await admin
         .from('test_sessions')
         .update({ is_paid: true, paid_at: new Date().toISOString() })
         .eq('id', sessionId);
+      if (updErr) {
+        Sentry.captureMessage('toss paid but is_paid update failed', {
+          level: 'error',
+          tags: { area: 'toss', step: 'mark-paid' },
+          extra: { sessionId, message: updErr.message },
+        });
+      }
     } catch (err) {
       console.error('[toss/confirm] supabase write failed:', err);
       Sentry.captureException(err, { tags: { area: 'toss', step: 'supabase' }, extra: { sessionId } });
@@ -101,6 +143,17 @@ export async function GET(req: Request) {
       );
     }
     updateSession(sessionId, { is_paid: true, paid_at: Date.now() });
+  }
+
+  // Buyer paid but we have no email on file (checkout persist failed or
+  // session never reached the DB) — this used to skip the report SILENTLY.
+  // Loud alert so the operator can recover the buyer from the payments row.
+  if (!email) {
+    Sentry.captureMessage('toss paid but no email on file — report NOT sent', {
+      level: 'error',
+      tags: { area: 'toss', step: 'no-email' },
+      extra: { sessionId, paymentKey },
+    });
   }
 
   // Background: PDF + email + CAPI. send-report resolves the result/answers

@@ -79,7 +79,16 @@ export const POST = withErrorHandling('test/submit', async (req: Request) => {
 
       return NextResponse.json({ result });
     } catch (err) {
-      console.error('[test/submit] Supabase update failed, falling back to memory:', err);
+      // Do NOT fall back to memory here: in serverless prod the memory
+      // store is empty, so the fallback turned a transient DB blip into
+      // "session_not_found" for a user who just answered 30 questions —
+      // and produced half-sessions that broke the payment flow later.
+      // A 503 lets the client retry against the intact DB session.
+      console.error('[test/submit] Supabase update failed:', err);
+      return NextResponse.json(
+        { error: 'temporarily_unavailable' },
+        { status: 503, headers: { 'Retry-After': '5' } },
+      );
     }
   }
 

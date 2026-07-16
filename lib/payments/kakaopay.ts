@@ -153,7 +153,15 @@ interface ApproveInput {
 
 export type ApproveResult =
   | { ok: true; raw: unknown; method?: string; approvedAt?: string }
-  | { ok: false; reason: string; status?: number; raw?: unknown };
+  | {
+      ok: false;
+      reason: string;
+      status?: number;
+      raw?: unknown;
+      /** Set on confirmed_amount_mismatch — money WAS captured for this
+       * amount; caller must refund via kakaopayCancel. */
+      confirmedTotal?: number;
+    };
 
 /**
  * POST /online/v1/payment/approve — the authoritative "did they really
@@ -197,7 +205,7 @@ export async function kakaopayApprove(input: ApproveInput): Promise<ApproveResul
     };
     const confirmedTotal = data.amount?.total;
     if (typeof confirmedTotal === 'number' && confirmedTotal !== input.expectedAmount) {
-      return { ok: false, reason: 'confirmed_amount_mismatch', raw };
+      return { ok: false, reason: 'confirmed_amount_mismatch', raw, confirmedTotal };
     }
     return {
       ok: true,
@@ -207,6 +215,45 @@ export async function kakaopayApprove(input: ApproveInput): Promise<ApproveResul
     };
   } catch (err) {
     Sentry.captureException(err, { tags: { area: 'kakaopay', step: 'approve' } });
+    return { ok: false, reason: err instanceof Error ? err.message : 'fetch_failed' };
+  }
+}
+
+/**
+ * POST /online/v1/payment/cancel — refunds an approved payment. Used as
+ * the safety net when approve succeeded (money captured) but our own
+ * post-approve validation failed: without this, a mismatch left the buyer
+ * charged with no report and no automatic remediation.
+ */
+export async function kakaopayCancel(input: {
+  tid: string;
+  amount: number;
+}): Promise<{ ok: boolean; reason?: string; raw?: unknown }> {
+  if (!SECRET_KEY) return { ok: false, reason: 'kakaopay_not_configured' };
+  try {
+    const res = await fetch(`${BASE}/cancel`, {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify({
+        cid: CID,
+        tid: input.tid,
+        cancel_amount: input.amount,
+        cancel_tax_free_amount: 0,
+      }),
+      cache: 'no-store',
+    });
+    const raw: unknown = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      return {
+        ok: false,
+        reason:
+          (raw as { error_message?: string })?.error_message ?? `http_${res.status}`,
+        raw,
+      };
+    }
+    return { ok: true, raw };
+  } catch (err) {
+    Sentry.captureException(err, { tags: { area: 'kakaopay', step: 'cancel' } });
     return { ok: false, reason: err instanceof Error ? err.message : 'fetch_failed' };
   }
 }
