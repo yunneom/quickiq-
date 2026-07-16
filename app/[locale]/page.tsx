@@ -2,8 +2,6 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { unstable_setRequestLocale } from 'next-intl/server';
-import { MetaPixel } from '@/components/analytics/meta-pixel';
-import { UtmCapture } from '@/components/analytics/utm-capture';
 import { LocaleSwitcher } from '@/components/landing/locale-switcher';
 import { TEST_CATALOG } from '@/lib/tests/catalog';
 import { locales, type Locale } from '@/i18n';
@@ -11,7 +9,7 @@ import { locales, type Locale } from '@/i18n';
 const HUB_COPY = {
   ko: {
     brand: 'QUICKIQ',
-    headline: '당신을 알아가는\n6가지 테스트',
+    headline: '당신을 알아가는\n10가지 테스트',
     sub: '무료 응시 · 결과 즉시 확인\n로그인·이메일 입력 없이 익명으로 진행',
     timeLabel: (m: number) => `${m}분`,
     qLabel: (n: number) => `${n}문항`,
@@ -23,7 +21,7 @@ const HUB_COPY = {
   },
   en: {
     brand: 'QUICKIQ',
-    headline: '6 tests to\nknow yourself',
+    headline: '10 tests to\nknow yourself',
     sub: 'Free · Instant results\nAnonymous · no sign-up, no email',
     timeLabel: (m: number) => `${m} min`,
     qLabel: (n: number) => `${n} Q`,
@@ -43,8 +41,8 @@ export async function generateMetadata({
   const c = HUB_COPY[locale as 'ko' | 'en'] ?? HUB_COPY.ko;
   const title =
     locale === 'en'
-      ? 'QuickIQ — 6 personality & cognitive tests'
-      : 'QuickIQ — 6가지 성격·인지 테스트';
+      ? 'QuickIQ — 10 personality & cognitive tests'
+      : 'QuickIQ — 무료 심리테스트 10종';
   return {
     title,
     description: c.sub.replace(/\n/g, ' '),
@@ -72,8 +70,6 @@ export default function HubPage({
 
   return (
     <>
-      <MetaPixel />
-      <UtmCapture />
       <div className="mx-auto flex min-h-screen max-w-md flex-col px-5 pb-10 pt-12">
         <header className="text-xs font-semibold uppercase tracking-[0.3em] text-brand-600">
           {c.brand}

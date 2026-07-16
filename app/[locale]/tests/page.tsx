@@ -8,11 +8,11 @@ import { ResultAd } from '@/components/ads/result-ad';
 
 const COPY = {
   ko: {
-    title: '전체 테스트 — 무료 성격·인지 진단 6종 | QuickIQ',
+    title: '전체 테스트 — 무료 심리테스트·퀴즈 10종 | QuickIQ',
     description:
-      'MBTI 16유형 · 애착 유형 · 사랑의 5가지 언어 · 에니어그램 9유형 · 테토/에겐 · IQ 테스트까지 모두 무료. 응시·로그인 정보 없이 익명으로, 결과는 즉시. 친구·연인과 공유해 비교해 보세요.',
+      'MBTI 16유형 · 테토/에겐 · 애착유형 · 사랑의 5가지 언어 · 에니어그램 · 너 T야? · 도파민 중독 · 신조어 능력고사 · 아재력 · IQ 테스트까지 10종 모두 무료. 로그인 없이 익명으로, 결과는 즉시. 친구·연인과 공유해 비교해 보세요.',
     eyebrow: 'ALL TESTS',
-    h1: '무료 성격·인지 테스트 6종',
+    h1: '무료 심리테스트·퀴즈 10종',
     intro:
       '학술 도구를 단순화한 자기 보고식 추정 테스트 모음이에요. 임상 진단이 아니라 자기 탐구와 친구·연인과의 공감대 형성에 가깝습니다. 평균 3분 안에 끝나고, 결과 페이지는 친구 공유와 인스타 스토리에 그대로 올릴 수 있게 디자인됐어요.',
     timeLabel: (m: number) => `${m}분`,
@@ -27,11 +27,11 @@ const COPY = {
     back: '← 홈으로',
   },
   en: {
-    title: 'All Tests — 6 Free Personality & Cognitive Quizzes | QuickIQ',
+    title: 'All Tests — 10 Free Personality & Cognitive Quizzes | QuickIQ',
     description:
-      'MBTI 16 types · Attachment style · 5 love languages · Enneagram 9 types · Teto/Egen · IQ test — all free. Anonymous, no sign-up, instant results. Share with friends or partner and compare.',
+      'MBTI 16 types · Teto/Egen · Attachment style · 5 love languages · Enneagram · Are You a T? · Dopamine addiction · K-slang quiz · Retro culture quiz · IQ test — 10 free quizzes. Anonymous, instant results. Share and compare.',
     eyebrow: 'ALL TESTS',
-    h1: '6 free personality & cognitive tests',
+    h1: '10 free personality & cognitive tests',
     intro:
       'A curated set of self-report estimation quizzes inspired by well-known academic models. Closer to self-discovery and shared conversation than to clinical assessment. Each one takes about 3 minutes and the result pages are designed for friend shares and Instagram stories.',
     timeLabel: (m: number) => `${m} min`,

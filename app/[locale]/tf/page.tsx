@@ -5,6 +5,9 @@ import { Button } from '@/components/ui/button';
 import { locales, type Locale } from '@/i18n';
 import { TestFaq } from '@/components/personality/test-faq';
 import { getTestEntry } from '@/lib/tests/catalog';
+import { makeTestLandingMetadata } from '@/lib/tests/landing-metadata';
+
+export const generateMetadata = makeTestLandingMetadata('tf');
 
 const COPY = {
   ko: {

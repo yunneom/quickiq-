@@ -95,7 +95,18 @@ export function PersonalityResult({
   const typeHref = `/${locale}/${slug}/types/${profileId}`;
   const storyCardUrl = `/${locale}/${slug}/types/${profileId}/story-card`;
   // Cross-promote up to 3 other tests for the exploration loop.
-  const crossTests = TEST_CATALOG.filter((t) => t.slug !== slug).slice(0, 3);
+  // IQ (the only paid product) is LAST in the catalog, so the old
+  // `.slice(0, 3)` meant no free-test result page ever linked to it —
+  // the viral traffic → revenue funnel structurally didn't exist. Pin IQ
+  // first, then rotate the remaining two by slug so link equity spreads
+  // across the whole catalog instead of always the same pair.
+  const others = TEST_CATALOG.filter((t) => t.slug !== slug && t.slug !== 'iq');
+  const offset = slug.split('').reduce((a, c) => a + c.charCodeAt(0), 0) % others.length;
+  const crossTests = [
+    TEST_CATALOG.find((t) => t.slug === 'iq')!,
+    others[offset % others.length],
+    others[(offset + 1) % others.length],
+  ];
 
   return (
     <div className="mx-auto flex min-h-screen max-w-md flex-col px-5 pb-10 pt-8">

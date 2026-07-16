@@ -25,18 +25,17 @@ export default function robots(): MetadataRoute.Robots {
           '/checkout',
           '/checkout/',
           '/thank-you',
-          // Short-URL redirects → result pages. Already noindex
-          // downstream but tell crawlers up-front.
-          '/r/',
           // Per-locale conversion paths.
           '/ko/checkout/',
           '/en/checkout/',
           '/ko/thank-you',
           '/en/thank-you',
-          // Per-session result URLs — unique to each buyer; never
-          // useful to index.
-          '/ko/result/',
-          '/en/result/',
+          // NOTE: /r/ and /{locale}/result/ are deliberately NOT blocked.
+          // They are the share destinations — KakaoTalk/Twitter scrapers
+          // respect robots.txt, so blocking them stripped the OG preview
+          // card from every shared result link. The result pages carry
+          // `robots: { index: false }` metadata instead, which keeps them
+          // out of search while letting scrapers build the share card.
         ],
       },
     ],

@@ -75,11 +75,18 @@ export function ShareButtons({ pct, locale, url, sessionId }: Props) {
   // and showing a toast — the user can then paste it into KakaoTalk
   // manually, which still completes the referral loop.
   const handleKakao = async () => {
+    // Card image must be the real OG route — `${absoluteUrl}/opengraph-image`
+    // resolved to /r/{code}/opengraph-image, which doesn't exist (404), so
+    // KakaoTalk cards went out imageless.
+    const imageUrl =
+      sessionId && typeof window !== 'undefined'
+        ? `${window.location.origin}/${locale}/result/${sessionId}/opengraph-image`
+        : `${longUrl}/opengraph-image`;
     const ok = await shareToKakao({
       title: text,
       description:
         locale === 'ko' ? 'IQ 테스트 결과를 확인해보세요.' : 'Check out my IQ test result.',
-      imageUrl: `${absoluteUrl}/opengraph-image`,
+      imageUrl,
       linkUrl: absoluteUrl,
     });
     if (ok) markShareBonusUnlocked();

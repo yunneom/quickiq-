@@ -3,7 +3,7 @@ import { headers } from 'next/headers';
 import { TEST_CATALOG } from '@/lib/tests/catalog';
 
 export const runtime = 'edge';
-export const alt = 'QuickIQ — 6가지 성격·인지 테스트';
+export const alt = 'QuickIQ — 무료 심리테스트 10종';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 
@@ -38,7 +38,7 @@ export default async function HubOgImage({
     fontData(origin, 700),
   ]);
 
-  const headline = loc === 'ko' ? '당신을 알아가는\n6가지 테스트' : '6 tests to\nknow yourself';
+  const headline = loc === 'ko' ? '당신을 알아가는\n10가지 테스트' : '10 tests to\nknow yourself';
   const sub = loc === 'ko' ? '무료 · 익명 · 즉시 결과' : 'Free · Anonymous · Instant';
 
   return new ImageResponse(

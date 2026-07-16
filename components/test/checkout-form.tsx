@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { trackEvent } from '@/components/analytics/meta-pixel';
@@ -76,6 +76,17 @@ export function CheckoutForm({ sessionId, locale }: Props) {
     if (!email.includes('@')) return null;
     return suggestEmailFix(email);
   }, [email]);
+
+  // bfcache restore: navigating to the Kakao/Toss payment window and
+  // pressing BACK restores this page with busy=true frozen in — leaving
+  // the pay button permanently stuck on "결제창으로 이동 중...".
+  useEffect(() => {
+    const onPageShow = (e: PageTransitionEvent) => {
+      if (e.persisted) setBusy(false);
+    };
+    window.addEventListener('pageshow', onPageShow);
+    return () => window.removeEventListener('pageshow', onPageShow);
+  }, []);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -162,7 +173,7 @@ export function CheckoutForm({ sessionId, locale }: Props) {
       </div>
 
       <div className="flex items-center justify-between rounded-xl bg-gray-50 px-4 py-3">
-        <span className="text-sm text-gray-600">Detailed IQ Report</span>
+        <span className="text-sm text-gray-600">{t('productName')}</span>
         <span className="text-base font-bold text-gray-900">{t('priceLabel')}</span>
       </div>
 

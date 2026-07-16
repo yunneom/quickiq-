@@ -1,7 +1,11 @@
 import type { MetadataRoute } from 'next';
 import { locales } from '@/i18n';
 import { PERSONALITY_REGISTRY } from '@/lib/personality/registry';
+import { TEST_CATALOG } from '@/lib/tests/catalog';
 import { getSiteUrl } from '@/lib/site-url';
+
+// Evaluated once at build/deploy, not per request.
+const LASTMOD = new Date();
 
 /**
  * Sitemap with hreflang alternates so Google serves the right locale.
@@ -18,18 +22,19 @@ import { getSiteUrl } from '@/lib/site-url';
  */
 export default function sitemap(): MetadataRoute.Sitemap {
   const base = getSiteUrl();
-  const now = new Date();
+  // Stable lastmod (deploy time, evaluated once per build) — emitting the
+  // request time made every URL look "modified" on every fetch, which
+  // erodes crawler trust in the lastmod signal.
+  const now = LASTMOD;
 
   const staticPaths: Array<{ path: string; priority: number }> = [
     { path: '', priority: 1 },
     { path: '/tests', priority: 0.95 },
     { path: '/about', priority: 0.8 },
-    { path: '/iq', priority: 0.9 },
-    { path: '/mbti', priority: 0.9 },
-    { path: '/teto-egen', priority: 0.9 },
-    { path: '/attachment', priority: 0.9 },
-    { path: '/love-lang', priority: 0.9 },
-    { path: '/enneagram', priority: 0.9 },
+    // Test landings derive from the catalog so a newly added test can
+    // never be missing from the sitemap again (the hand-written list
+    // silently dropped 4 of the 10).
+    ...TEST_CATALOG.map((t) => ({ path: `/${t.slug}`, priority: 0.9 })),
     { path: '/test', priority: 0.6 },
     { path: '/privacy', priority: 0.4 },
     { path: '/terms', priority: 0.4 },

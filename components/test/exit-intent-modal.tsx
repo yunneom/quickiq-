@@ -31,10 +31,10 @@ export function ExitIntentModal({ locale, sessionId }: Props) {
     if (typeof window === 'undefined') return;
     if (window.localStorage.getItem(DISMISS_KEY) === '1') return;
 
-    let armed = true;
-    // Give the user a couple seconds to read the result before we even
-    // start watching for exit intent — otherwise the modal feels like a
-    // landmine on instant tab close.
+    // Start DISARMED — the 2.5s timer arms the watcher. (This was `true`,
+    // which fired the paywall the instant the page loaded on mobile —
+    // including while the user was mid-share in another app.)
+    let armed = false;
     const armTimer = window.setTimeout(() => {
       armed = true;
     }, 2500);

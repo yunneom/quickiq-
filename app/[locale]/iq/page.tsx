@@ -5,8 +5,6 @@ import {
   unstable_setRequestLocale,
 } from 'next-intl/server';
 import { Button } from '@/components/ui/button';
-import { MetaPixel } from '@/components/analytics/meta-pixel';
-import { UtmCapture } from '@/components/analytics/utm-capture';
 import { SocialProof } from '@/components/landing/social-proof';
 import { ReportPreview } from '@/components/landing/report-preview';
 import {
@@ -18,6 +16,9 @@ import {
 import { priceKRW } from '@/lib/pricing';
 import { Faq } from '@/components/landing/faq';
 import { LocaleSwitcher } from '@/components/landing/locale-switcher';
+import { makeTestLandingMetadata } from '@/lib/tests/landing-metadata';
+
+export const generateMetadata = makeTestLandingMetadata('iq');
 
 /**
  * IQ test landing — originally lived at `/[locale]`, moved here when the
@@ -56,8 +57,6 @@ export default async function IqLandingPage({
         locale={loc}
       />
       {faqs.length > 0 && <FaqLD faqs={faqs} />}
-      <MetaPixel />
-      <UtmCapture />
       <div className="mx-auto flex min-h-screen max-w-md flex-col px-5 pb-10 pt-12">
         <header className="text-sm font-semibold tracking-wide text-brand-600">
           IQ TEST

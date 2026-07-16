@@ -124,7 +124,7 @@
     "downloadStory": "IG story image (1080×1920)",
     "downloadPdf": "Download PDF report",
     "radarTitle": "Four domains at a glance",
-    "timingTitle": "Average response time by domain",
+    "timingTitle": "Response speed by category",
     "timingHint": "Shorter time = more intuitive answer for you.",
     "compareTitleAB": "{a} vs {b} — Compare",
     "compareYou": "You",
@@ -161,7 +161,6 @@
     "avgLabel": "Average",
     "durationLabel": "Time taken",
     "durationFormat": "{min}m {sec}s",
-    "timingTitle": "Response speed by category",
     "timingFast": "Fast",
     "timingSlow": "Slow",
     "speedTitle": "Answer speed",
@@ -212,7 +211,10 @@
     "refundContact": "Payment & refund inquiries: {email}",
     "secureNote": "Payments are processed securely.",
     "processing": "Redirecting to checkout...",
-    "errorGeneric": "Something went wrong. Please try again."
+    "errorGeneric": "Something went wrong. Please try again.",
+    "errorPaymentFailed": "The payment didn't complete. Try again to pick up where you left off.",
+    "errorCancelled": "Payment was cancelled. Try again whenever you are ready.",
+    "errorSessionLost": "We could not find your session. Refresh and retry — if it persists, contact us via the email below."
   },
   "thankYou": {
     "title": "Payment complete!",

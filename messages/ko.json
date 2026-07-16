@@ -124,7 +124,7 @@
     "downloadStory": "인스타 스토리용 이미지 (1080×1920)",
     "downloadPdf": "PDF 리포트 다운로드",
     "radarTitle": "4영역 한눈에 보기",
-    "timingTitle": "영역별 평균 응답 시간",
+    "timingTitle": "영역별 응답 속도",
     "timingHint": "짧을수록 직관적으로 답한 영역입니다.",
     "compareTitleAB": "{a} vs {b} — 결과 비교",
     "compareYou": "나",
@@ -161,7 +161,6 @@
     "avgLabel": "평균",
     "durationLabel": "소요 시간",
     "durationFormat": "{min}분 {sec}초",
-    "timingTitle": "영역별 응답 속도",
     "timingFast": "빠름",
     "timingSlow": "느림",
     "speedTitle": "응답 속도",
@@ -212,7 +211,10 @@
     "refundContact": "결제·환불 문의: {email}",
     "secureNote": "결제는 안전하게 처리됩니다.",
     "processing": "결제창으로 이동 중...",
-    "errorGeneric": "결제 시작 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요."
+    "errorGeneric": "결제 시작 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.",
+    "errorPaymentFailed": "결제가 완료되지 않았어요. 다시 시도하면 이어서 진행됩니다.",
+    "errorCancelled": "결제를 취소하셨어요. 준비되면 다시 시도해 주세요.",
+    "errorSessionLost": "세션 정보를 찾지 못했어요. 새로고침 후 다시 시도하거나, 문제가 계속되면 하단 이메일로 문의해 주세요."
   },
   "thankYou": {
     "title": "결제가 완료되었어요!",
