@@ -116,3 +116,19 @@ supabase/migrations/
 ```bash
 npm run seed
 ```
+
+## 0009 — 측정 인프라 (utm/ab 영속화 + funnel_events)
+
+`test_sessions` 확장:
+- `utm jsonb` — 클라이언트가 캡처한 utm_source/medium/campaign/term/content. 광고 캠페인별 전환 귀속용.
+- `ab jsonb` — 세션 시작 시 스탬프되는 A/B 변형 맵.
+
+`funnel_events` (신규): 서버리스 인메모리 카운터가 인스턴스별로 증발하는 문제를 대체하는 영속 퍼널 이벤트 로그.
+- `id bigint identity PK`
+- `event text not null` — IQ_*/PT_* 이벤트명 (서버 allowlist 검증)
+- `test_type text` — iq/mbti/... (PT_* 이벤트의 필수 차원)
+- `locale text`
+- `session_id uuid` — nullable (중복 제거·유니크 퍼널 계산용)
+- `utm jsonb`
+- `created_at timestamptz default now()`
+- 인덱스: (event, created_at). RLS enable + 정책 없음(service role 전용).

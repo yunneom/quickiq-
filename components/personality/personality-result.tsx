@@ -4,6 +4,7 @@ import type { PersonalityProfile } from '@/lib/personality/types';
 import { TEST_CATALOG } from '@/lib/tests/catalog';
 import { PersonalityShare } from '@/components/personality/personality-share';
 import { ResultAd } from '@/components/ads/result-ad';
+import { FunnelBeacon } from '@/components/analytics/funnel-beacon';
 
 export interface ResultBar {
   /** Left-side label (e.g. "외향 E", "인정의 말"). */
@@ -110,6 +111,7 @@ export function PersonalityResult({
 
   return (
     <div className="mx-auto flex min-h-screen max-w-md flex-col px-5 pb-10 pt-8">
+      <FunnelBeacon event="PT_ResultViewed" params={{ testType: slug, locale }} />
       {/* Hero */}
       <div
         className={`relative overflow-hidden rounded-3xl bg-gradient-to-br ${gradientClass} px-6 py-8 text-white shadow-lg`}

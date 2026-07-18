@@ -12,6 +12,8 @@ export const runtime = 'nodejs';
 
 interface StartBody {
   locale?: string;
+  /** Ad-attribution map captured client-side (analytics only). */
+  utm?: Record<string, string>;
 }
 
 export const POST = withErrorHandling('personality/mbti/start', async (req: Request) => {
@@ -47,7 +49,14 @@ export const POST = withErrorHandling('personality/mbti/start', async (req: Requ
   const admin = createSupabaseAdmin();
   const { data, error } = await admin
     .from('test_sessions')
-    .insert({ locale, test_type: MBTI_TEST_TYPE })
+    .insert({
+      locale,
+      test_type: MBTI_TEST_TYPE,
+      utm:
+        body.utm && typeof body.utm === 'object' && !Array.isArray(body.utm)
+          ? body.utm
+          : null,
+    })
     .select('id')
     .single();
   if (error) {

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { shareToKakao } from '@/lib/share/kakao';
+import { trackFunnel } from '@/components/analytics/meta-pixel';
 
 interface Props {
   locale: 'ko' | 'en';
@@ -60,6 +61,10 @@ export function PersonalityShare({
   storyCardUrl,
 }: Props) {
   const c = COPY[locale];
+  // shareUrl shape: /{locale}/{slug}/types/{id} — slug is the test type.
+  const testType = shareUrl.split('/')[2] ?? 'unknown';
+  const share = (channel: string) =>
+    trackFunnel('PT_Shared', { testType, locale, channel });
   const [copied, setCopied] = useState(false);
 
   const absoluteUrl =
@@ -76,6 +81,7 @@ export function PersonalityShare({
       if (showToast) {
         setCopied(true);
         setTimeout(() => setCopied(false), 1800);
+        share('copy');
       }
       return true;
     } catch {
@@ -90,12 +96,14 @@ export function PersonalityShare({
     }
     try {
       await navigator.share({ title: shareText, text: shareText, url: absoluteUrl });
+      share('native');
     } catch {
       // user dismissed or share blocked — silent (explicit buttons remain)
     }
   }
 
   async function onKakao() {
+    share('kakao');
     const ok = await shareToKakao({
       title: shareText,
       description: c.kakaoDesc,

@@ -46,9 +46,13 @@ export const POST = withErrorHandling('test/start', async (req: Request) => {
   if (isSupabaseConfigured()) {
     try {
       const admin = createSupabaseAdmin();
+      const utm =
+        body.utm && typeof body.utm === 'object' && !Array.isArray(body.utm)
+          ? body.utm
+          : null;
       const { data, error } = await admin
         .from('test_sessions')
-        .insert({ locale })
+        .insert({ locale, utm })
         .select('id')
         .single();
       if (error) throw error;
