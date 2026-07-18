@@ -14,19 +14,42 @@ export const metadata: Metadata = {
 
 export default async function CheckoutPage({
   params: { locale, sessionId },
+  searchParams,
 }: {
   params: { locale: string; sessionId: string };
+  searchParams?: { error?: string };
 }) {
   if (!locales.includes(locale as Locale)) notFound();
   unstable_setRequestLocale(locale);
   const t = await getTranslations('checkout');
   const biz = getBusinessInfo();
 
+  // Payment handlers bounce failures back here as ?error=…. Highest-intent
+  // users land on this page mid-purchase — an unexplained empty form was
+  // silently killing their retry.
+  const errorKey =
+    searchParams?.error === 'payment_failed' || searchParams?.error === 'missing_params' || searchParams?.error === 'bad_amount'
+      ? 'errorPaymentFailed'
+      : searchParams?.error === 'cancelled'
+        ? 'errorCancelled'
+        : searchParams?.error === 'session_lost'
+          ? 'errorSessionLost'
+          : null;
+
   return (
     <div className="mx-auto flex min-h-screen max-w-md flex-col px-5 pb-10 pt-10">
       <FunnelBeacon event="IQ_CheckoutViewed" />
       <h1 className="text-2xl font-bold text-gray-900">{t('title')}</h1>
       <p className="mt-2 text-sm text-gray-600">{t('subtitle')}</p>
+
+      {errorKey && (
+        <div
+          role="alert"
+          className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-relaxed text-amber-900"
+        >
+          {t(errorKey)}
+        </div>
+      )}
 
       <div className="mt-6 rounded-2xl border border-gray-200 bg-white p-5">
         <CheckoutForm sessionId={sessionId} locale={locale as Locale} />

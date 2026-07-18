@@ -7,6 +7,8 @@ import { CookieBanner } from '@/components/consent/cookie-banner';
 import { GatedAnalytics } from '@/components/consent/gated-analytics';
 import { AdsenseScript } from '@/components/ads/adsense-script';
 import { BusinessFooter } from '@/components/legal/business-footer';
+import { MetaPixel } from '@/components/analytics/meta-pixel';
+import { UtmCapture } from '@/components/analytics/utm-capture';
 
 export function generateStaticParams() {
   return locales.map((locale) => ({ locale }));
@@ -118,6 +120,11 @@ export default async function LocaleLayout({
         </NextIntlClientProvider>
         <GatedAnalytics />
         <AdsenseScript />
+        {/* Pixel + UTM capture were mounted on only 2 landing pages, so ads
+            landing on /mbti etc. and the post-payment /thank-you hard load
+            sent nothing to Meta. Layout mount = every page measured. */}
+        <MetaPixel />
+        <UtmCapture />
       </body>
     </html>
   );

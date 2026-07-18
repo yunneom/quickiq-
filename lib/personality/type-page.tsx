@@ -66,8 +66,15 @@ export function makeTypePage(slug: string) {
 
     const entry = getTestEntry(slug as never);
     const siblings = reg.getAll(loc);
-    // Cross-promote up to 3 other tests, IQ included, this test excluded.
-    const crossTests = TEST_CATALOG.filter((t) => t.slug !== slug).slice(0, 3);
+    // Cross-promote 3 other tests. Deterministic per (slug, type) rotation
+    // — the old fixed slice(0, 3) sent every one of the ~108 type pages'
+    // internal links to the same three tests, starving the rest (and the
+    // IQ landing) of link equity. Hash keeps output static per page.
+    const pool = TEST_CATALOG.filter((t) => t.slug !== slug);
+    const seed = (slug + type)
+      .split('')
+      .reduce((a, c) => a + c.charCodeAt(0), 0);
+    const crossTests = [0, 1, 2].map((i) => pool[(seed + i) % pool.length]);
 
     return (
       <TypeDetail

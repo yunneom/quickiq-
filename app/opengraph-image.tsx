@@ -3,7 +3,7 @@ import { headers } from 'next/headers';
 import { TEST_CATALOG } from '@/lib/tests/catalog';
 
 export const runtime = 'edge';
-export const alt = 'QuickIQ — 6가지 성격·인지 테스트';
+export const alt = 'QuickIQ — 무료 심리테스트 10종';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 
@@ -85,7 +85,7 @@ export default async function HubOgImageRoot() {
                 display: 'flex',
               }}
             >
-              {'당신을 알아가는\n6가지 테스트'}
+              {'당신을 알아가는\n10가지 테스트'}
             </div>
             <div
               style={{

@@ -125,13 +125,15 @@ test('faq JSON-LD is emitted on the landing page', async ({ request }) => {
   expect(html).toContain('"@type":"Question"');
 });
 
-test('short-URL redirects an unknown code back to landing', async ({ request }) => {
+test('short-URL redirects an unknown code to the IQ landing', async ({ request }) => {
   // We can't easily mint a real session in this isolated request
   // context, but the *miss* path (no matching session) must redirect
-  // to / rather than 404 so failed shares still funnel into the test.
+  // to the IQ conversion landing (tagged for attribution) rather than
+  // 404 so failed shares still funnel into the test.
   const res = await request.get('/r/deadbeef', { maxRedirects: 0 });
   expect([307, 308]).toContain(res.status());
-  expect(res.headers()['location']).toMatch(/\/$/);
+  expect(res.headers()['location']).toContain('/ko/iq');
+  expect(res.headers()['location']).toContain('utm_source=share_miss');
 });
 
 test('paid-only endpoints reject unpaid + unknown sessions', async ({ request }) => {
