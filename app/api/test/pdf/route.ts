@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import * as Sentry from '@sentry/nextjs';
 import { renderReportPdf } from '@/lib/pdf/render';
 import { getQuestions } from '@/lib/questions';
-import { getSession } from '@/lib/session-store';
+import { fetchPaidSessionData } from '@/lib/paid-session';
 import { withErrorHandling } from '@/lib/api/with-error-handling';
 
 export const runtime = 'nodejs';
@@ -24,7 +24,9 @@ export const GET = withErrorHandling('test/pdf', async (req: Request) => {
   if (!sessionId) {
     return NextResponse.json({ error: 'missing_session_id' }, { status: 400 });
   }
-  const session = getSession(sessionId);
+  // Memory → Supabase fallback: in production the in-memory store is
+  // empty, so without the DB lookup every paying customer got a 404 here.
+  const session = await fetchPaidSessionData(sessionId);
   if (!session || !session.result) {
     return NextResponse.json({ error: 'not_found' }, { status: 404 });
   }

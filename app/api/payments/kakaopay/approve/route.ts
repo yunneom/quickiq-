@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import * as Sentry from '@sentry/nextjs';
 import { waitUntil } from '@vercel/functions';
-import { kakaopayApprove } from '@/lib/payments/kakaopay';
+import { kakaopayApprove, kakaopayCancel } from '@/lib/payments/kakaopay';
 import { getSession, updateSession, markEventProcessed } from '@/lib/session-store';
 import { isSupabaseConfigured, createSupabaseAdmin } from '@/lib/supabase/server';
 import { sendReport } from '@/lib/email/send-report';
@@ -34,21 +34,23 @@ export async function GET(req: Request) {
 
   if (!pgToken || !sessionId) return back('missing_params');
 
-  // Look up tid + email. Prefer Supabase (the in-memory store is empty in
-  // prod), fall back to memory for local/dev where Supabase is absent.
+  // Look up tid + email + paid state. Prefer Supabase (the in-memory
+  // store is empty in prod), fall back to memory for local/dev.
   let tid: string | undefined;
   let email: string | undefined;
+  let alreadyPaid = false;
 
   if (isSupabaseConfigured()) {
     try {
       const admin = createSupabaseAdmin();
       const { data: row } = await admin
         .from('test_sessions')
-        .select('kakao_tid, email')
+        .select('kakao_tid, email, is_paid')
         .eq('id', sessionId)
         .single();
       tid = row?.kakao_tid ?? undefined;
       email = row?.email ?? undefined;
+      alreadyPaid = Boolean(row?.is_paid);
     } catch (err) {
       console.error('[kakaopay/approve] supabase read failed:', err);
       Sentry.captureException(err, {
@@ -61,6 +63,18 @@ export async function GET(req: Request) {
     const mem = getSession(sessionId);
     tid = tid ?? mem?.kakao_tid;
     email = email ?? mem?.email;
+    alreadyPaid = alreadyPaid || Boolean(mem?.is_paid);
+  }
+
+  // Idempotency BEFORE the PG call: on refresh / in-app-browser back-forward
+  // Kakao rejects the reused pg_token, which previously surfaced as
+  // "payment_failed" to a customer who had just paid — and dropped them on
+  // a checkout page where they could pay a second time. If the session is
+  // already paid, this redirect is the only correct answer.
+  if (alreadyPaid) {
+    return NextResponse.redirect(
+      new URL(`/${locale}/thank-you?sessionId=${sessionId}`, u.origin),
+    );
   }
   if (!tid || !email) return back('session_lost');
 
@@ -74,6 +88,26 @@ export async function GET(req: Request) {
     expectedAmount,
   });
   if (!approve.ok) {
+    // Amount mismatch is detected AFTER Kakao has captured the money —
+    // auto-refund so the buyer is never charged without a report.
+    if (approve.reason === 'confirmed_amount_mismatch') {
+      const cancel = await kakaopayCancel({
+        tid,
+        amount: approve.confirmedTotal ?? expectedAmount,
+      });
+      Sentry.captureMessage('kakaopay amount mismatch — auto-cancel attempted', {
+        level: 'fatal',
+        tags: { area: 'kakaopay', step: 'mismatch-cancel' },
+        extra: {
+          sessionId,
+          expectedAmount,
+          confirmedTotal: approve.confirmedTotal,
+          cancelOk: cancel.ok,
+          cancelReason: cancel.reason,
+        },
+      });
+      return back('payment_failed');
+    }
     console.error('[kakaopay/approve] failed', { reason: approve.reason, sessionId });
     Sentry.captureMessage('kakaopay approve failed', {
       level: 'warning',
@@ -103,10 +137,27 @@ export async function GET(req: Request) {
           new URL(`/${locale}/thank-you?sessionId=${sessionId}`, u.origin),
         );
       }
-      await admin
+      if (dupErr) {
+        // Money IS captured but the ledger insert failed (FK violation,
+        // outage, …). Silently continuing here made refund/settlement
+        // reconciliation impossible — record loudly, then still deliver.
+        Sentry.captureMessage('kakaopay paid but payments insert failed', {
+          level: 'error',
+          tags: { area: 'kakaopay', step: 'ledger' },
+          extra: { sessionId, code: dupErr.code, message: dupErr.message },
+        });
+      }
+      const { error: updErr } = await admin
         .from('test_sessions')
         .update({ is_paid: true, paid_at: new Date().toISOString() })
         .eq('id', sessionId);
+      if (updErr) {
+        Sentry.captureMessage('kakaopay paid but is_paid update failed', {
+          level: 'error',
+          tags: { area: 'kakaopay', step: 'mark-paid' },
+          extra: { sessionId, message: updErr.message },
+        });
+      }
     } catch (err) {
       console.error('[kakaopay/approve] supabase write failed:', err);
       Sentry.captureException(err, {

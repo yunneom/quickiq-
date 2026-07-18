@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { waitUntil } from '@vercel/functions';
 import * as Sentry from '@sentry/nextjs';
-import { getSession } from '@/lib/session-store';
+import { fetchPaidSessionData } from '@/lib/paid-session';
 import { sendReport } from '@/lib/email/send-report';
 import { withErrorHandling } from '@/lib/api/with-error-handling';
 import { checkRateLimit, isRateLimitDisabled } from '@/lib/rate-limit';
@@ -54,7 +54,9 @@ export const POST = withErrorHandling('email/resend', async (req: Request) => {
     return NextResponse.json({ error: 'invalid_body' }, { status: 400 });
   }
 
-  const session = getSession(body.sessionId);
+  // Memory → Supabase fallback: in production the in-memory store is
+  // empty, so without the DB lookup every paying customer got a 404 here.
+  const session = await fetchPaidSessionData(body.sessionId);
   if (!session) {
     return NextResponse.json({ error: 'not_found' }, { status: 404 });
   }

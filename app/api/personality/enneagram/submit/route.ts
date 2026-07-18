@@ -47,7 +47,7 @@ export const POST = withErrorHandling('personality/enneagram/submit', async (req
 
   if (isSupabaseConfigured()) {
     const admin = createSupabaseAdmin();
-    const { error } = await admin
+    const { data: updated, error } = await admin
       .from('test_sessions')
       .update({
         completed_at: new Date().toISOString(),
@@ -56,9 +56,19 @@ export const POST = withErrorHandling('personality/enneagram/submit', async (req
         axis_scores: result.axisScores,
         test_type: ENNEAGRAM_TEST_TYPE,
       })
-      .eq('id', body.sessionId);
+      .eq('id', body.sessionId)
+      // Guard: never overwrite a completed (or paid) session. Result
+      // URLs are shared publicly, so sessionIds leak by design — an
+      // unconditional update let anyone destroy a buyer's IQ data by
+      // POSTing here with a shared sessionId.
+      .is('completed_at', null)
+      .eq('is_paid', false)
+      .select('id');
     if (error) {
       return NextResponse.json({ error: 'db_error' }, { status: 500 });
+    }
+    if (!updated || updated.length === 0) {
+      return NextResponse.json({ error: 'already_completed' }, { status: 409 });
     }
   }
 

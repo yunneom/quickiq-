@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { createCheckoutUrl } from '@/lib/payments/lemon-squeezy';
 import { isTossConfigured, tossClientKey } from '@/lib/payments/toss';
 import { isKakaopayConfigured, kakaopayReady } from '@/lib/payments/kakaopay';
-import { updateSession } from '@/lib/session-store';
+import { getSession, updateSession } from '@/lib/session-store';
 import { isSupabaseConfigured, createSupabaseAdmin } from '@/lib/supabase/server';
 import { withErrorHandling } from '@/lib/api/with-error-handling';
 import { priceKRW } from '@/lib/pricing';
@@ -49,6 +49,7 @@ export const POST = withErrorHandling('checkout', async (req: Request) => {
   }
 
   const amount = priceKRW();
+  const origin = new URL(req.url).origin;
 
   // Persist email + the price this session is being charged so the
   // admin dashboard can later segment conversion by price A/B cohort
@@ -59,20 +60,37 @@ export const POST = withErrorHandling('checkout', async (req: Request) => {
   });
   // Also persist to Supabase — the in-memory store is empty in prod, so
   // without this the buyer's email would be lost before the payment
-  // confirm step needs it.
+  // confirm step needs it. supabase-js does NOT throw on query errors, so
+  // we must check {error} explicitly: an unsaved email means a paid buyer
+  // with no report, which is strictly worse than blocking checkout.
   if (isSupabaseConfigured()) {
-    try {
-      const admin = createSupabaseAdmin();
-      await admin
-        .from('test_sessions')
-        .update({ email: body.email })
-        .eq('id', body.sessionId);
-    } catch (err) {
-      console.error('[checkout] failed to persist email to Supabase:', err);
+    const admin = createSupabaseAdmin();
+    const { data: rows, error } = await admin
+      .from('test_sessions')
+      .update({ email: body.email })
+      .eq('id', body.sessionId)
+      .select('id, is_paid');
+    if (error || !rows || rows.length === 0) {
+      console.error('[checkout] failed to persist email:', error?.message ?? 'no matching session row');
+      return NextResponse.json(
+        { error: 'session_unavailable' },
+        { status: 503, headers: { 'Retry-After': '10' } },
+      );
     }
+    // Already-paid session must never re-enter a payment flow — send the
+    // buyer to their thank-you page instead (client follows mode:redirect).
+    if (rows[0].is_paid) {
+      return NextResponse.json({
+        mode: 'redirect',
+        url: `${origin}/${body.locale}/thank-you?sessionId=${body.sessionId}`,
+      });
+    }
+  } else if (getSession(body.sessionId)?.is_paid) {
+    return NextResponse.json({
+      mode: 'redirect',
+      url: `${origin}/${body.locale}/thank-you?sessionId=${body.sessionId}`,
+    });
   }
-
-  const origin = new URL(req.url).origin;
 
   // Preferred path #1: Kakao Pay (KR). Two-step: ready → buyer pays in
   // KakaoTalk → approve. We persist the returned tid so /approve can
