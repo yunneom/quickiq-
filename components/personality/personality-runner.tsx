@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
+import { trackFunnel } from '@/components/analytics/meta-pixel';
+import { readUtm } from '@/components/analytics/utm-capture';
 import type {
   PersonalityAnswer,
   PersonalityQuestion,
@@ -71,6 +73,7 @@ export function PersonalityRunner({
 }: Props) {
   const router = useRouter();
   const c = { ...DEFAULT_COPY[locale], ...copy };
+  const testType = apiBase.split('/').pop() ?? 'unknown';
 
   const [phase, setPhase] = useState<Phase>(requireGender ? 'gender' : 'loading');
   const [gender, setGender] = useState<Gender | null>(null);
@@ -89,7 +92,7 @@ export function PersonalityRunner({
         const res = await fetch(`${apiBase}/start`, {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ locale }),
+          body: JSON.stringify({ locale, utm: readUtm() ?? undefined }),
         });
         if (!res.ok) throw new Error('start_failed');
         const data = (await res.json()) as {
@@ -100,6 +103,7 @@ export function PersonalityRunner({
         setSessionId(data.sessionId);
         setQuestions(data.questions);
         setPhase('running');
+        trackFunnel('PT_TestStart', { testType, locale, sessionId: data.sessionId });
       } catch (err) {
         console.error('[personality-runner] start failed', err);
         if (cancelled) return;
@@ -110,7 +114,7 @@ export function PersonalityRunner({
     return () => {
       cancelled = true;
     };
-  }, [phase, apiBase, locale, c.errorStart]);
+  }, [phase, apiBase, locale, c.errorStart, testType]);
 
   function handleGender(g: Gender) {
     setGender(g);
@@ -145,6 +149,7 @@ export function PersonalityRunner({
         }),
       });
       if (!res.ok) throw new Error('submit_failed');
+      trackFunnel('PT_TestSubmitted', { testType, locale, sessionId });
       router.push(`${resultPathBase}/${sessionId}`);
     } catch (err) {
       console.error('[personality-runner] submit failed', err);
