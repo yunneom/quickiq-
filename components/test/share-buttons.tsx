@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { shareToKakao } from '@/lib/share/kakao';
+import { trackFunnel } from '@/components/analytics/meta-pixel';
 import { markShareBonusUnlocked } from '@/components/test/share-bonus';
 
 interface Props {
@@ -38,6 +39,7 @@ export function ShareButtons({ pct, locale, url, sessionId }: Props) {
       setTimeout(() => setCopied(false), 1500);
       // Share-to-unlock: a successful copy counts as a share intent.
       markShareBonusUnlocked();
+      trackFunnel('IQ_Shared', { channel: 'copy', locale });
     } catch {
       // ignore
     }
@@ -55,6 +57,7 @@ export function ShareButtons({ pct, locale, url, sessionId }: Props) {
     try {
       await navigator.share({ title: t('shareTitle'), text, url: absoluteUrl });
       markShareBonusUnlocked();
+      trackFunnel('IQ_Shared', { channel: 'native', locale });
     } catch {
       // user dismissed the share sheet or share blocked — silent
     }
@@ -75,6 +78,7 @@ export function ShareButtons({ pct, locale, url, sessionId }: Props) {
   // and showing a toast — the user can then paste it into KakaoTalk
   // manually, which still completes the referral loop.
   const handleKakao = async () => {
+    trackFunnel('IQ_Shared', { channel: 'kakao', locale });
     // Card image must be the real OG route — `${absoluteUrl}/opengraph-image`
     // resolved to /r/{code}/opengraph-image, which doesn't exist (404), so
     // KakaoTalk cards went out imageless.

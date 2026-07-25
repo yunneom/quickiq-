@@ -59,7 +59,13 @@ export type FunnelEvent =
   | 'IQ_ResultViewed'
   | 'IQ_CheckoutViewed'
   | 'IQ_PaymentSuccess'
-  | 'IQ_ExitIntent';
+  | 'IQ_ExitIntent'
+  | 'IQ_Shared'
+  // Personality/quiz funnel — pass { testType } in params (mbti, tf, …).
+  | 'PT_TestStart'
+  | 'PT_TestSubmitted'
+  | 'PT_ResultViewed'
+  | 'PT_Shared';
 
 export function trackFunnel(name: FunnelEvent, params?: Record<string, unknown>) {
   if (typeof window === 'undefined') return;
