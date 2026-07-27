@@ -22,6 +22,18 @@ import type { Question } from '@/lib/questions/types';
 
 export type CardTheme = 'blue' | 'orange' | 'green' | 'purple';
 
+/**
+ * Per-theme gradient + the dark hex used for option-letter squares.
+ * Shared by the square feed card and the 9:16 reel frames so both
+ * renderers stay visually consistent.
+ */
+export const CARD_THEMES: Record<CardTheme, { bg: string; accent: string }> = {
+  blue: { bg: 'linear-gradient(135deg, #2554e6 0%, #15308f 100%)', accent: '#15308f' },
+  orange: { bg: 'linear-gradient(135deg, #ff7a18 0%, #d1204b 100%)', accent: '#b81c42' },
+  green: { bg: 'linear-gradient(135deg, #10b981 0%, #065f46 100%)', accent: '#065f46' },
+  purple: { bg: 'linear-gradient(135deg, #7c3aed 0%, #3b1d8f 100%)', accent: '#3b1d8f' },
+};
+
 export interface IgCardOption {
   id: string;
   text: string;
