@@ -1,4 +1,5 @@
 import { ImageResponse } from 'next/og';
+import type { CardTheme } from '@/lib/social/ig-content';
 
 export const runtime = 'edge';
 
@@ -9,9 +10,18 @@ export const runtime = 'edge';
  * this URL server-side when we stage a media container, so any auth check
  * here would break publishing.
  *
- * `?d=<dayIndex>` selects the question deterministically (same day → same
+ * `?d=<dayIndex>` selects the post deterministically (same day → same
  * card), so a retried publish renders the identical image.
  */
+
+// Per-theme gradient + the dark hex used for the option-letter squares.
+const THEMES: Record<CardTheme, { bg: string; accent: string }> = {
+  blue: { bg: 'linear-gradient(135deg, #2554e6 0%, #15308f 100%)', accent: '#15308f' },
+  orange: { bg: 'linear-gradient(135deg, #ff7a18 0%, #d1204b 100%)', accent: '#b81c42' },
+  green: { bg: 'linear-gradient(135deg, #10b981 0%, #065f46 100%)', accent: '#065f46' },
+  purple: { bg: 'linear-gradient(135deg, #7c3aed 0%, #3b1d8f 100%)', accent: '#3b1d8f' },
+};
+
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const day = Number(searchParams.get('d'));
@@ -21,16 +31,18 @@ export async function GET(req: Request) {
   const plan = planForDay(Number.isFinite(day) ? day : utcDayIndex());
   if (!plan) return new Response('no question', { status: 404 });
 
-  const q = plan.question;
-  const label =
-    q.category === 'verbal'
-      ? 'VERBAL REASONING'
-      : q.category === 'numerical'
-        ? 'NUMERICAL REASONING'
-        : 'LOGICAL REASONING';
+  const card = plan.card;
+  const theme = THEMES[card.theme] ?? THEMES.blue;
 
   // Long prompts need a smaller face to stay on one card.
-  const promptSize = q.question_text.length > 90 ? 46 : q.question_text.length > 55 ? 56 : 66;
+  const promptSize =
+    card.prompt.length > 140
+      ? 40
+      : card.prompt.length > 90
+        ? 46
+        : card.prompt.length > 55
+          ? 56
+          : 66;
 
   return new ImageResponse(
     (
@@ -40,7 +52,7 @@ export async function GET(req: Request) {
           height: 1080,
           display: 'flex',
           flexDirection: 'column',
-          background: 'linear-gradient(135deg, #2554e6 0%, #15308f 100%)',
+          background: theme.bg,
           padding: 72,
           fontFamily: 'sans-serif',
           position: 'relative',
@@ -72,7 +84,7 @@ export async function GET(req: Request) {
               letterSpacing: 4,
             }}
           >
-            {label}
+            {card.label}
           </span>
           <span style={{ color: '#FFFFFF', fontSize: 30, fontWeight: 800 }}>
             QuickIQ
@@ -87,20 +99,38 @@ export async function GET(req: Request) {
             justifyContent: 'center',
           }}
         >
+          {card.badge ? (
+            <div style={{ display: 'flex', marginBottom: 28 }}>
+              <span
+                style={{
+                  background: 'rgba(0,0,0,0.30)',
+                  color: '#FFE14D',
+                  fontSize: 26,
+                  fontWeight: 800,
+                  letterSpacing: 2,
+                  borderRadius: 999,
+                  padding: '12px 26px',
+                }}
+              >
+                {card.badge}
+              </span>
+            </div>
+          ) : null}
+
           <div
             style={{
               color: '#FFFFFF',
               fontSize: promptSize,
               fontWeight: 800,
               lineHeight: 1.25,
-              marginBottom: 56,
+              marginBottom: 48,
             }}
           >
-            {q.question_text}
+            {card.prompt}
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-            {q.options.map((o) => (
+            {card.options.map((o) => (
               <div
                 key={o.id}
                 style={{
@@ -121,7 +151,7 @@ export async function GET(req: Request) {
                     height: 52,
                     borderRadius: 14,
                     background: '#FFFFFF',
-                    color: '#15308f',
+                    color: theme.accent,
                     fontSize: 28,
                     fontWeight: 800,
                   }}
@@ -147,7 +177,7 @@ export async function GET(req: Request) {
           }}
         >
           <span style={{ color: '#FFFFFF', fontSize: 30, fontWeight: 700 }}>
-            Answer in bio → 30-question IQ test
+            {card.footer}
           </span>
         </div>
       </div>

@@ -1,0 +1,63 @@
+# @quickiq 인스타그램 프로필 세팅 가이드
+
+글로벌(영어) 계정용. 프로필은 모든 게시글 캡션의 "link in bio" CTA가
+착지하는 곳이므로, 아래 그대로 복사해 넣으면 됩니다.
+
+## 이름 (Name 필드 — 검색에 걸리는 부분)
+
+```
+QuickIQ | IQ Test & Brain Teasers
+```
+
+Name 필드는 IG 검색 인덱스에 포함되므로 "IQ Test" 키워드를 반드시 포함.
+
+## 소개 (Bio — 150자 제한)
+
+```
+🧠 Daily brain teasers that 99% fail
+🎯 Can you beat IQ 130?
+⏱️ Free 30-question test · no sign-up · 7 min
+👇 Take the test
+```
+
+## 링크 (Website 필드)
+
+```
+https://iq.dailyenterkr.com/en?utm_source=instagram&utm_medium=bio&utm_campaign=quickiq_ig
+```
+
+- UTM이 붙어 있어 funnel_events에서 IG 유입이 그대로 측정됩니다
+  (utm_source=instagram으로 필터).
+- `/en` 명시: IG 앱 내 브라우저는 Accept-Language가 기기 언어라서
+  글로벌 팔로워는 어차피 /en에 떨어지지만, 링크에 박아두면 확실합니다.
+
+## 카테고리 / 전환 버튼
+
+- 카테고리: **Education** (또는 Entertainment)
+- 프로페셔널 대시보드 → 카테고리 표시 ON
+
+## 운영 루틴 (자동화가 하는 일 / 사람이 할 일)
+
+자동 (이미 배포됨):
+- 매일 21:00 KST 퍼즐 카드 1장 자동 발행 (Vercel Cron)
+- 로테이션: 3일 주기 [베이트, 베이트, 실제 문항] — 트릭 로직 /
+  스펠링 트랩 / "99% fail" 수학 + 실제 테스트 문항 프리뷰
+- 모든 캡션에 IQ 테스트 홍보 블록 + 해시태그 자동 포함
+
+수동 (하루 5분, 효과 큼):
+1. **답 고정 댓글 금지** — 정답을 절대 댓글로 달지 말 것. 댓글창이
+   토론장이 되는 게 알고리즘 연료입니다.
+2. 발행 30분~1시간 후 댓글에 **"Answer in 24h 😏 — or find out now
+   (link in bio)"** 하나만 남기고 고정(pin).
+3. 다음날 전날 게시글에 정답 + 한 줄 해설 댓글 추가.
+4. 좋아요/댓글에 하트 몇 개 (초기 계정 신뢰 신호).
+
+## 스토리 하이라이트 (여유 있을 때)
+
+- `START HERE` — 테스트 링크 스티커 붙인 스토리 1장 고정
+- `ANSWERS` — 전날 정답 공개 스토리 아카이브
+
+## 고정(Pin) 게시글 전략
+
+베이트 게시글 중 댓글 반응이 가장 좋은 것 1~2개를 프로필 상단에
+고정 — 신규 방문자가 바로 참여하게 만드는 훅 역할.
