@@ -26,9 +26,28 @@ export const maxDuration = 120;
  */
 export async function GET(req: Request) {
   const secret = process.env.CRON_SECRET?.trim();
-  const auth = req.headers.get('authorization');
-  if (!secret || auth !== `Bearer ${secret}`) {
-    return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+
+  // Distinguish "server has no secret" from "caller sent the wrong one".
+  // Both used to return a bare 401, which made a missing/unredeployed env
+  // var indistinguishable from a typo. Neither response reveals the secret.
+  if (!secret) {
+    return NextResponse.json(
+      {
+        error: 'cron_secret_not_configured',
+        hint: 'Set CRON_SECRET in Vercel (Production) and redeploy — env vars are injected at build time.',
+      },
+      { status: 503 },
+    );
+  }
+
+  // Tolerate the whitespace people accidentally paste around the token.
+  const auth = req.headers.get('authorization')?.trim();
+  const provided = auth?.replace(/^Bearer\s+/i, '').trim();
+  if (provided !== secret) {
+    return NextResponse.json(
+      { error: 'unauthorized', hint: 'CRON_SECRET mismatch.' },
+      { status: 401 },
+    );
   }
 
   if (!isInstagramConfigured()) {
