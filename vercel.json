@@ -1,7 +1,9 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "nextjs",
-  "regions": ["icn1"],
+  "regions": [
+    "icn1"
+  ],
   "headers": [
     {
       "source": "/api/webhooks/lemon-squeezy",
@@ -29,5 +31,11 @@
       "permanent": false
     }
   ],
-  "cleanUrls": true
+  "cleanUrls": true,
+  "crons": [
+    {
+      "path": "/api/cron/ig-post",
+      "schedule": "0 12 * * *"
+    }
+  ]
 }

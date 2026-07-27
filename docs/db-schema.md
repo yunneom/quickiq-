@@ -132,3 +132,11 @@ npm run seed
 - `utm jsonb`
 - `created_at timestamptz default now()`
 - 인덱스: (event, created_at). RLS enable + 정책 없음(service role 전용).
+
+## 0010 — ig_posts (인스타 자동 발행 원장)
+
+`ig_posts`: 크론이 발행 **전에** 행을 선점해서 재시도·중복 실행 시 이중 게시를 막는다.
+- `post_key text unique` — `{dayIndex}:{questionId}` (멱등 키)
+- `status` — publishing / published / failed
+- `media_id`, `image_url`, `error`, `created_at`
+- RLS enable + 정책 없음(service role 전용)
