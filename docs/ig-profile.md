@@ -39,7 +39,10 @@ https://iq.dailyenterkr.com/en?utm_source=instagram&utm_medium=bio&utm_campaign=
 ## 운영 루틴 (자동화가 하는 일 / 사람이 할 일)
 
 자동 (이미 배포됨):
-- 매일 21:00 KST 퍼즐 카드 1장 자동 발행 (Vercel Cron)
+- 매일 21:00 KST **릴스 1개** 자동 발행 (Vercel Cron) — 5초 카운트다운
+  퀴즈 영상 (5→1 타이머 + TIME'S UP + LINK IN BIO CTA), 피드에도 공유
+- 영상 파이프라인이 실패하면 정사각 이미지 포스트로 자동 폴백 —
+  일일 발행은 절대 죽지 않음
 - 로테이션: 3일 주기 [베이트, 베이트, 실제 문항] — 트릭 로직 /
   스펠링 트랩 / "99% fail" 수학 + 실제 테스트 문항 프리뷰
 - 모든 캡션에 IQ 테스트 홍보 블록 + 해시태그 자동 포함

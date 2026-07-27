@@ -78,6 +78,22 @@ export async function createImageContainer(args: {
   });
 }
 
+/**
+ * Step 1 (video) — stage a Reel. `share_to_feed` keeps it visible on the
+ * profile grid, which is where bio-link traffic comes from.
+ */
+export async function createReelsContainer(args: {
+  videoUrl: string;
+  caption: string;
+}): Promise<IgResult<{ id: string }>> {
+  return igPost<{ id: string }>('/media', {
+    media_type: 'REELS',
+    video_url: args.videoUrl,
+    caption: args.caption,
+    share_to_feed: 'true',
+  });
+}
+
 /** Step 1b — a carousel child (not published on its own). */
 export async function createCarouselItem(
   imageUrl: string,
@@ -107,33 +123,77 @@ export async function publishContainer(
   return igPost<{ id: string }>('/media_publish', { creation_id: creationId });
 }
 
+/** One status poll of a container. Exported for the post-publish re-check. */
+export async function getContainerStatus(
+  containerId: string,
+): Promise<
+  IgResult<{ statusCode?: string; errorMessage?: string; errorCode?: number }>
+> {
+  if (!IG_ACCESS_TOKEN) return { ok: false, reason: 'instagram_not_configured' };
+  try {
+    const res = await fetch(
+      `${GRAPH}/${containerId}?fields=status_code,status&access_token=${IG_ACCESS_TOKEN}`,
+      { cache: 'no-store' },
+    );
+    const raw = (await res.json().catch(() => ({}))) as {
+      status_code?: string;
+      status?: string;
+      error?: { message?: string; code?: number };
+    };
+    return {
+      ok: true,
+      data: {
+        statusCode: raw.status_code,
+        errorMessage: raw.error?.message ?? (res.ok ? undefined : `http_${res.status}`),
+        errorCode: raw.error?.code,
+      },
+    };
+  } catch (err) {
+    return {
+      ok: false,
+      reason: err instanceof Error ? err.message : 'fetch_failed',
+    };
+  }
+}
+
 /**
  * Poll a container until Instagram finishes ingesting it. Publishing a
  * container that is still IN_PROGRESS fails, and images occasionally take
  * longer than a fixed sleep, so we poll instead of guessing.
+ *
+ * `deadlineAt` (epoch ms) hard-stops the wait regardless of attempts —
+ * the cron route uses it to guarantee the image fallback still has time
+ * to run inside the function's maxDuration.
+ *
+ * Hard API errors (expired token, bad permissions) bail out immediately
+ * instead of burning the whole poll window as a fake "timeout" — except
+ * error code 100 ("object does not exist") during the first attempts,
+ * which is Instagram's replication lag right after container creation.
  */
 export async function waitForContainer(
   containerId: string,
-  { attempts = 10, delayMs = 3000 } = {},
+  {
+    attempts = 10,
+    delayMs = 3000,
+    deadlineAt,
+  }: { attempts?: number; delayMs?: number; deadlineAt?: number } = {},
 ): Promise<IgResult<'FINISHED'>> {
   if (!IG_ACCESS_TOKEN) return { ok: false, reason: 'instagram_not_configured' };
   for (let i = 0; i < attempts; i++) {
+    if (deadlineAt && Date.now() + delayMs > deadlineAt) {
+      return { ok: false, reason: 'container_timeout' };
+    }
     await new Promise((r) => setTimeout(r, delayMs));
-    try {
-      const res = await fetch(
-        `${GRAPH}/${containerId}?fields=status_code,status&access_token=${IG_ACCESS_TOKEN}`,
-        { cache: 'no-store' },
-      );
-      const raw = (await res.json().catch(() => ({}))) as {
-        status_code?: string;
-        status?: string;
-      };
-      if (raw.status_code === 'FINISHED') return { ok: true, data: 'FINISHED' };
-      if (raw.status_code === 'ERROR' || raw.status_code === 'EXPIRED') {
-        return { ok: false, reason: `container_${raw.status_code}`, raw };
-      }
-    } catch {
-      // transient — keep polling
+    const status = await getContainerStatus(containerId);
+    if (!status.ok) continue; // network blip — keep polling
+    const { statusCode, errorMessage, errorCode } = status.data;
+    if (statusCode === 'FINISHED') return { ok: true, data: 'FINISHED' };
+    if (statusCode === 'ERROR' || statusCode === 'EXPIRED') {
+      return { ok: false, reason: `container_${statusCode}` };
+    }
+    if (errorMessage) {
+      const replicationLag = errorCode === 100 && i < 3;
+      if (!replicationLag) return { ok: false, reason: errorMessage };
     }
   }
   return { ok: false, reason: 'container_timeout' };
@@ -182,4 +242,46 @@ export async function publishImagePost(args: {
   if (!ready.ok) return { ok: false, reason: ready.reason };
 
   return publishContainer(container.data.id);
+}
+
+/**
+ * Convenience: stage → wait → publish a Reel. Video ingestion is much
+ * slower than images (transcode + safety checks), so the poll window is
+ * up to ~3 minutes, bounded harder by `deadlineAt` when provided.
+ *
+ * Failure reasons are step-prefixed (`create:` / `wait:` / `publish:`) so
+ * the caller can decide whether an image fallback is SAFE: a `publish:`
+ * failure is ambiguous — Instagram may have committed the publish even
+ * though our HTTP response was lost — so falling back there risks a
+ * double post. We re-check the container once: `PUBLISHED` means the
+ * reel actually went out and we report success.
+ */
+export async function publishReelPost(args: {
+  videoUrl: string;
+  caption: string;
+  deadlineAt?: number;
+}): Promise<IgResult<{ id: string }>> {
+  const container = await createReelsContainer(args);
+  if (!container.ok) {
+    return { ok: false, reason: `create:${container.reason}` };
+  }
+
+  const ready = await waitForContainer(container.data.id, {
+    attempts: 36,
+    delayMs: 5000,
+    deadlineAt: args.deadlineAt,
+  });
+  if (!ready.ok) return { ok: false, reason: `wait:${ready.reason}` };
+
+  const published = await publishContainer(container.data.id);
+  if (published.ok) return published;
+
+  // Ambiguous publish failure — did Instagram commit it anyway?
+  const status = await getContainerStatus(container.data.id);
+  if (status.ok && status.data.statusCode === 'PUBLISHED') {
+    // The reel is live; we only lost the media id. Report the container
+    // id so the ledger still records something traceable.
+    return { ok: true, data: { id: container.data.id } };
+  }
+  return { ok: false, reason: `publish:${published.reason}` };
 }

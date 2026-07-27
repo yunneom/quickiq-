@@ -1,5 +1,4 @@
 import { ImageResponse } from 'next/og';
-import type { CardTheme } from '@/lib/social/ig-content';
 
 export const runtime = 'edge';
 
@@ -14,25 +13,27 @@ export const runtime = 'edge';
  * card), so a retried publish renders the identical image.
  */
 
-// Per-theme gradient + the dark hex used for the option-letter squares.
-const THEMES: Record<CardTheme, { bg: string; accent: string }> = {
-  blue: { bg: 'linear-gradient(135deg, #2554e6 0%, #15308f 100%)', accent: '#15308f' },
-  orange: { bg: 'linear-gradient(135deg, #ff7a18 0%, #d1204b 100%)', accent: '#b81c42' },
-  green: { bg: 'linear-gradient(135deg, #10b981 0%, #065f46 100%)', accent: '#065f46' },
-  purple: { bg: 'linear-gradient(135deg, #7c3aed 0%, #3b1d8f 100%)', accent: '#3b1d8f' },
-};
-
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
-  const day = Number(searchParams.get('d'));
+  // Number(null)/Number('')/Number(' ') are all 0 — "absent/blank" must
+  // mean "today", not day 0, so check the trimmed raw param first.
+  const dRaw = searchParams.get('d')?.trim() ?? null;
 
   // Imported lazily so the edge bundle only pulls the EN pool.
-  const { planForDay, utcDayIndex } = await import('@/lib/social/ig-content');
-  const plan = planForDay(Number.isFinite(day) ? day : utcDayIndex());
+  const { planForDay, utcDayIndex, CARD_THEMES } = await import(
+    '@/lib/social/ig-content'
+  );
+  // Public route: clamp to a non-negative integer so hostile values
+  // (?d=-1, ?d=1.5) can't index outside the pools and 500.
+  const day =
+    dRaw !== null && dRaw !== '' && Number.isFinite(Number(dRaw))
+      ? Math.max(0, Math.trunc(Number(dRaw)))
+      : utcDayIndex();
+  const plan = planForDay(day);
   if (!plan) return new Response('no question', { status: 404 });
 
   const card = plan.card;
-  const theme = THEMES[card.theme] ?? THEMES.blue;
+  const theme = CARD_THEMES[card.theme] ?? CARD_THEMES.blue;
 
   // Long prompts need a smaller face to stay on one card.
   const promptSize =
