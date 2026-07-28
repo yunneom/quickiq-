@@ -17,9 +17,10 @@ export type UploadResult =
   | { ok: true; url: string }
   | { ok: false; reason: string };
 
-export async function uploadPublicVideo(
+export async function uploadPublicMedia(
   path: string,
   buffer: Buffer,
+  contentType: string,
 ): Promise<UploadResult> {
   if (!isSupabaseConfigured()) {
     return { ok: false, reason: 'supabase_not_configured' };
@@ -33,7 +34,7 @@ export async function uploadPublicVideo(
 
     const { error } = await admin.storage
       .from(BUCKET)
-      .upload(path, buffer, { contentType: 'video/mp4', upsert: true });
+      .upload(path, buffer, { contentType, upsert: true });
     if (error) return { ok: false, reason: error.message };
 
     const { data } = admin.storage.from(BUCKET).getPublicUrl(path);
@@ -44,4 +45,12 @@ export async function uploadPublicVideo(
       reason: err instanceof Error ? err.message : 'upload_failed',
     };
   }
+}
+
+/** Back-compat convenience for the reel pipeline. */
+export function uploadPublicVideo(
+  path: string,
+  buffer: Buffer,
+): Promise<UploadResult> {
+  return uploadPublicMedia(path, buffer, 'video/mp4');
 }

@@ -11,8 +11,9 @@ import * as Sentry from '@sentry/nextjs';
  *
  * Requirements the API enforces on us:
  *   - the account must be Professional (Business/Creator)
- *   - image_url must be a PUBLIC url the Instagram fetcher can GET
- *     (our /api/ig/card route is public and returns image/jpeg)
+ *   - image_url must be a PUBLIC url the Instagram fetcher can GET, and
+ *     the documented image format is JPEG — the cron re-encodes the card
+ *     to JPEG in storage before handing it over
  *   - publishing is rate limited (~50 posts / rolling 24h)
  *
  * Credentials (Meta app → Instagram → API setup with Instagram login):
@@ -49,6 +50,8 @@ async function igPost<T>(
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body,
       cache: 'no-store',
+      // Bounded: a hung Graph API socket must never eat the cron budget.
+      signal: AbortSignal.timeout(20_000),
     });
     const raw: unknown = await res.json().catch(() => ({}));
     if (!res.ok) {
@@ -133,7 +136,7 @@ export async function getContainerStatus(
   try {
     const res = await fetch(
       `${GRAPH}/${containerId}?fields=status_code,status&access_token=${IG_ACCESS_TOKEN}`,
-      { cache: 'no-store' },
+      { cache: 'no-store', signal: AbortSignal.timeout(15_000) },
     );
     const raw = (await res.json().catch(() => ({}))) as {
       status_code?: string;
@@ -209,7 +212,7 @@ export async function getPublishingQuota(): Promise<
   try {
     const res = await fetch(
       `${GRAPH}/${IG_USER_ID}/content_publishing_limit?fields=config,quota_usage&access_token=${IG_ACCESS_TOKEN}`,
-      { cache: 'no-store' },
+      { cache: 'no-store', signal: AbortSignal.timeout(15_000) },
     );
     const raw = (await res.json().catch(() => ({}))) as {
       data?: Array<{ quota_usage?: number; config?: { quota_total?: number } }>;
@@ -230,18 +233,36 @@ export async function getPublishingQuota(): Promise<
   }
 }
 
-/** Convenience: stage → wait → publish a single image post. */
+/**
+ * Convenience: stage → wait → publish a single image post. Deadline-aware
+ * and step-prefixed like publishReelPost — the media_publish ambiguity
+ * (committed on IG, response lost) exists here too.
+ */
 export async function publishImagePost(args: {
   imageUrl: string;
   caption: string;
+  deadlineAt?: number;
 }): Promise<IgResult<{ id: string }>> {
   const container = await createImageContainer(args);
-  if (!container.ok) return container;
+  if (!container.ok) {
+    return { ok: false, reason: `create:${container.reason}` };
+  }
 
-  const ready = await waitForContainer(container.data.id);
-  if (!ready.ok) return { ok: false, reason: ready.reason };
+  const ready = await waitForContainer(container.data.id, {
+    attempts: 10,
+    delayMs: 3000,
+    deadlineAt: args.deadlineAt,
+  });
+  if (!ready.ok) return { ok: false, reason: `wait:${ready.reason}` };
 
-  return publishContainer(container.data.id);
+  const published = await publishContainer(container.data.id);
+  if (published.ok) return published;
+
+  const status = await getContainerStatus(container.data.id);
+  if (status.ok && status.data.statusCode === 'PUBLISHED') {
+    return { ok: true, data: { id: container.data.id } };
+  }
+  return { ok: false, reason: `publish:${published.reason}` };
 }
 
 /**
