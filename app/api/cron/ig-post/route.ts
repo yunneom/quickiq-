@@ -6,7 +6,7 @@ import {
   publishReelPost,
   getPublishingQuota,
 } from '@/lib/social/instagram';
-import { planForDay, utcDayIndex } from '@/lib/social/ig-content';
+import { plansForDay, utcDayIndex, type IgPostPlan } from '@/lib/social/ig-content';
 import { buildReelVideo } from '@/lib/social/reel';
 import { uploadPublicVideo } from '@/lib/social/storage';
 import { getSiteUrl } from '@/lib/site-url';
@@ -17,41 +17,59 @@ export const runtime = 'nodejs';
 // video ingestion polling. 300s is the Hobby (fluid) ceiling.
 export const maxDuration = 300;
 
-// Time budget inside maxDuration: the reel attempt must surrender early
-// enough that the image fallback (container + poll + publish ≈ 60s) plus
-// ledger writes always fit. Deadlines are absolute epoch-ms.
+// Time budget inside maxDuration. Deadlines are absolute epoch-ms.
 const TOTAL_BUDGET_MS = 290_000; // 10s under maxDuration for safety
+// Reserved so a reel that fails still leaves room for the image fallback
+// (container + poll + publish ≈ 60s) plus the ledger write.
 const FALLBACK_RESERVE_MS = 90_000;
 // A reel publish attempt needs container create + at least a few polls.
 const MIN_REEL_PUBLISH_MS = 45_000;
+// Don't start another post unless a whole cheap path could still finish.
+const MIN_POST_MS = 110_000;
+
+// Posts per invocation. Vercel Hobby allows 2 cron schedules/day, so two
+// runs × 2 posts covers the 3 daily slots with room for a retry.
+const MAX_POSTS_PER_RUN = 2;
 
 // A 'publishing' row this old belongs to a run that was killed mid-flight
 // (function timeout, crash) — it may be reclaimed.
 const STALE_CLAIM_MINUTES = 20;
 
+type PostOutcome = {
+  slot: number;
+  postKey: string;
+  status: 'published' | 'failed' | 'skipped';
+  kind?: 'reel' | 'image';
+  mediaId?: string;
+  reason?: string;
+};
+
 /**
- * Scheduled Instagram post (Vercel Cron → see vercel.json).
+ * Scheduled Instagram posting (Vercel Cron → see vercel.json).
  *
- * Publishes the daily plan as a REEL (countdown video) and falls back to
- * the still-image feed post if the video pipeline fails BEFORE the
- * publish step — a failed `media_publish` is ambiguous (Instagram may
- * have committed it) so falling back there could double-post; we record
- * the failure instead and the ledger stays reclaimable.
+ * Each day has SLOTS_PER_DAY planned posts; a run publishes the ones that
+ * are still unclaimed, up to MAX_POSTS_PER_RUN and only while the time
+ * budget allows. Whatever doesn't fit is picked up by the next run —
+ * that is the retry mechanism, not an error path.
  *
- * Idempotent by design: the day index picks the post, and `ig_posts` has
- * a unique key on it. A retried/duplicate firing either takes over a
- * dead claim (failed, or stale 'publishing') or exits.
+ * Each post publishes as a REEL (countdown-free quiz video) and falls
+ * back to the still image if the video pipeline fails BEFORE the publish
+ * step — a failed `media_publish` is ambiguous (Instagram may have
+ * committed it) so falling back there could double-post.
  *
- * Auth: Vercel Cron sends `Authorization: Bearer $CRON_SECRET`. Without a
- * matching secret we refuse — this endpoint spends a publishing quota and
- * must not be triggerable by anyone who finds the URL.
+ * Idempotent by design: `ig_posts.post_key` is unique per (day, slot,
+ * plan). A retried/duplicate firing either takes over a dead claim
+ * (failed, or stale 'publishing') or skips.
+ *
+ * Auth: Vercel Cron sends `Authorization: Bearer $CRON_SECRET`.
  *
  * Manual testing (with the same bearer token):
- *   ?d=<dayIndex>   render/publish a specific day's plan. A FUTURE day
+ *   ?d=<dayIndex>   publish a specific day's plans. A FUTURE day
  *                   additionally requires ?test= so it can't consume the
  *                   scheduled slot ahead of time.
+ *   ?slot=<n>       publish only that slot.
  *   ?test=<label>   suffix the ledger key so a test post never blocks the
- *                   scheduled one (e.g. ?d=20663&test=1)
+ *                   scheduled one (e.g. ?d=20663&slot=0&test=1)
  */
 export async function GET(req: Request) {
   const startedAt = Date.now();
@@ -88,6 +106,7 @@ export async function GET(req: Request) {
   // absent/blank" must be checked explicitly — otherwise the scheduled
   // run (no ?d=) would pin itself to day 0 forever.
   const dRaw = searchParams.get('d')?.trim() ?? null;
+  const slotRaw = searchParams.get('slot')?.trim() ?? null;
 
   const testRaw = searchParams.get('test');
   const testLabel = testRaw?.replace(/[^a-zA-Z0-9-]/g, '') ?? null;
@@ -107,28 +126,114 @@ export async function GET(req: Request) {
       : today;
 
   // Publishing a FUTURE day without a test label would pre-claim that
-  // day's postKey and kill its scheduled run.
+  // day's postKeys and kill its scheduled run.
   if (day > today && !testLabel) {
     return NextResponse.json(
       {
         error: 'future_day_requires_test',
-        hint: `?d=${day} is in the future — add &test=<label> so the scheduled post is not consumed.`,
+        hint: `?d=${day} is in the future — add &test=<label> so the scheduled posts are not consumed.`,
       },
       { status: 400 },
     );
   }
 
-  const plan = planForDay(day);
-  if (!plan) return NextResponse.json({ skipped: 'no_plan' });
+  const allPlans = plansForDay(day);
+  if (allPlans.length === 0) return NextResponse.json({ skipped: 'no_plan' });
 
-  const postKey = `${day}:${plan.key}${testLabel ? `:test-${testLabel}` : ''}`;
+  const onlySlot =
+    slotRaw !== null && slotRaw !== '' && Number.isFinite(Number(slotRaw))
+      ? Math.trunc(Number(slotRaw))
+      : null;
+  const slots = allPlans
+    .map((plan, slot) => ({ plan, slot }))
+    .filter(({ slot }) => onlySlot === null || slot === onlySlot);
+  if (slots.length === 0) {
+    return NextResponse.json({ skipped: 'slot_out_of_range' });
+  }
 
-  // Quota BEFORE the ledger claim: a quota-exhausted exit must not burn
-  // the day's unique key.
   const quota = await getPublishingQuota();
-  if (quota.ok && quota.data.used >= quota.data.limit) {
+  // Quota is checked BEFORE any ledger claim so an exhausted quota never
+  // burns the day's unique keys. When the check itself fails we proceed —
+  // Instagram enforces the real limit anyway.
+  const quotaRemaining = quota.ok
+    ? Math.max(0, quota.data.limit - quota.data.used)
+    : MAX_POSTS_PER_RUN;
+  if (quota.ok && quotaRemaining === 0) {
     return NextResponse.json({ skipped: 'quota_exhausted', ...quota.data });
   }
+
+  const siteUrl = getSiteUrl();
+  const hardDeadline = startedAt + TOTAL_BUDGET_MS;
+  const budget = Math.min(MAX_POSTS_PER_RUN, quotaRemaining);
+
+  const outcomes: PostOutcome[] = [];
+  let publishedCount = 0;
+
+  for (const { plan, slot } of slots) {
+    if (publishedCount >= budget) break;
+    if (Date.now() > hardDeadline - MIN_POST_MS) {
+      outcomes.push({
+        slot,
+        postKey: buildPostKey(day, slot, plan, testLabel),
+        status: 'skipped',
+        reason: 'budget_exhausted_next_run_will_take_it',
+      });
+      break;
+    }
+
+    const outcome = await publishSlot({
+      day,
+      slot,
+      plan,
+      testLabel,
+      siteUrl,
+      // Split what's left evenly across the posts we still intend to make.
+      deadlineAt: Math.min(
+        hardDeadline,
+        Date.now() +
+          Math.max(
+            MIN_POST_MS,
+            Math.floor((hardDeadline - Date.now()) / (budget - publishedCount)),
+          ),
+      ),
+    });
+    outcomes.push(outcome);
+    if (outcome.status === 'published') publishedCount += 1;
+  }
+
+  const anyFailure = outcomes.some((o) => o.status === 'failed');
+  return NextResponse.json(
+    {
+      ok: !anyFailure,
+      day,
+      published: publishedCount,
+      elapsedMs: Date.now() - startedAt,
+      outcomes,
+    },
+    { status: anyFailure && publishedCount === 0 ? 502 : 200 },
+  );
+}
+
+function buildPostKey(
+  day: number,
+  slot: number,
+  plan: IgPostPlan,
+  testLabel: string | null,
+): string {
+  return `${day}:${slot}:${plan.key}${testLabel ? `:test-${testLabel}` : ''}`;
+}
+
+/** Claim → build → publish → record, for a single slot. */
+async function publishSlot(args: {
+  day: number;
+  slot: number;
+  plan: IgPostPlan;
+  testLabel: string | null;
+  siteUrl: string;
+  deadlineAt: number;
+}): Promise<PostOutcome> {
+  const { day, slot, plan, testLabel, siteUrl, deadlineAt } = args;
+  const postKey = buildPostKey(day, slot, plan, testLabel);
 
   // Claim the slot BEFORE publishing so a concurrent/retried run can't
   // post the same card twice (unique violation → skip/take-over).
@@ -141,7 +246,7 @@ export async function GET(req: Request) {
       if (String(error.code) === '23505') {
         // The key exists. Published → done. Failed, or a 'publishing'
         // claim old enough to belong to a killed run → take it over so
-        // a manual retry can rescue the day. Anything else → a live
+        // the next run can rescue the slot. Anything else → a live
         // concurrent run owns it.
         const staleCutoff = new Date(
           Date.now() - STALE_CLAIM_MINUTES * 60_000,
@@ -158,10 +263,12 @@ export async function GET(req: Request) {
             created_at: new Date().toISOString(),
           })
           .eq('post_key', postKey)
-          .or(`status.eq.failed,and(status.eq.publishing,created_at.lt.${staleCutoff})`)
+          .or(
+            `status.eq.failed,and(status.eq.publishing,created_at.lt.${staleCutoff})`,
+          )
           .select('id');
         if (!reclaimed || reclaimed.length === 0) {
-          return NextResponse.json({ skipped: 'already_posted', postKey });
+          return { slot, postKey, status: 'skipped', reason: 'already_posted' };
         }
       } else {
         Sentry.captureMessage('ig cron ledger insert failed', {
@@ -173,17 +280,14 @@ export async function GET(req: Request) {
     }
   }
 
-  const siteUrl = getSiteUrl();
-  const imageUrl = `${siteUrl}/api/ig/card?d=${day}`;
-  const hardDeadline = startedAt + TOTAL_BUDGET_MS;
-  const reelDeadline = hardDeadline - FALLBACK_RESERVE_MS;
+  const imageUrl = `${siteUrl}/api/ig/card?d=${day}&s=${slot}`;
+  const reelDeadline = deadlineAt - FALLBACK_RESERVE_MS;
 
-  // --- Reel first ---------------------------------------------------------
   let kind: 'reel' | 'image' = 'reel';
   let mediaUrl = '';
   let published: Awaited<ReturnType<typeof publishReelPost>>;
 
-  const reel = await buildReelVideo({ dayIndex: day, baseUrl: siteUrl });
+  const reel = await buildReelVideo({ dayIndex: day, slot, baseUrl: siteUrl });
   if (!reel.ok) {
     published = { ok: false, reason: `build:${reel.reason}` };
   } else if (Date.now() > reelDeadline - MIN_REEL_PUBLISH_MS) {
@@ -206,10 +310,9 @@ export async function GET(req: Request) {
     }
   }
 
-  // --- Image fallback -----------------------------------------------------
-  // Safe only when the reel demonstrably did NOT go out: a `publish:`
-  // failure is ambiguous (response lost after IG committed) — falling
-  // back there could put both the reel and the image on the grid.
+  // Image fallback is safe only when the reel demonstrably did NOT go
+  // out: a `publish:` failure is ambiguous (response lost after IG
+  // committed) — falling back there could put both on the grid.
   if (!published.ok && !published.reason.startsWith('publish:')) {
     Sentry.captureMessage('ig cron reel failed — falling back to image', {
       level: 'warning',
@@ -240,17 +343,14 @@ export async function GET(req: Request) {
       tags: { area: 'instagram', step: 'publish' },
       extra: { postKey, reason: published.reason },
     });
-    return NextResponse.json(
-      { ok: false, reason: published.reason, postKey },
-      { status: 502 },
-    );
+    return { slot, postKey, status: 'failed', reason: published.reason };
   }
 
-  return NextResponse.json({
-    ok: true,
+  return {
+    slot,
+    postKey,
+    status: 'published',
     kind,
     mediaId: published.data.id,
-    postKey,
-    elapsedMs: Date.now() - startedAt,
-  });
+  };
 }

@@ -24,15 +24,12 @@
       ]
     }
   ],
-  "redirects": [
-    {
-      "source": "/",
-      "destination": "/ko",
-      "permanent": false
-    }
-  ],
   "cleanUrls": true,
   "crons": [
+    {
+      "path": "/api/cron/ig-post",
+      "schedule": "0 0 * * *"
+    },
     {
       "path": "/api/cron/ig-post",
       "schedule": "0 12 * * *"

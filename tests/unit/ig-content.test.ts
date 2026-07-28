@@ -1,64 +1,133 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { planForDay, eligibleQuestions } from '../../lib/social/ig-content';
+import {
+  planForSlot,
+  plansForDay,
+  eligibleQuestions,
+  baitPoolSize,
+  baitPostsForTest,
+  SLOTS_PER_DAY,
+} from '../../lib/social/ig-content';
 
-describe('planForDay', () => {
-  it('is deterministic — same day, same post', () => {
-    const a = planForDay(20661);
-    const b = planForDay(20661);
-    assert.ok(a && b);
-    assert.equal(a.key, b.key);
-    assert.equal(a.caption, b.caption);
+describe('plansForDay', () => {
+  it('is deterministic — same day, same posts', () => {
+    const a = plansForDay(20661);
+    const b = plansForDay(20661);
+    assert.deepEqual(
+      a.map((p) => p.key),
+      b.map((p) => p.key),
+    );
   });
 
-  it('follows the [bait, bait, question] 3-day cycle', () => {
-    for (let d = 0; d < 30; d++) {
-      const plan = planForDay(d);
-      assert.ok(plan, `no plan for day ${d}`);
-      if (d % 3 === 2) {
-        assert.match(plan.key, /^q-/, `day ${d} should be a question post`);
-      } else {
-        assert.match(plan.key, /^bait-/, `day ${d} should be a bait post`);
+  it('produces one post per slot', () => {
+    const plans = plansForDay(20661);
+    assert.equal(plans.length, SLOTS_PER_DAY);
+  });
+
+  it('never repeats a post within a day', () => {
+    for (let d = 0; d < 40; d++) {
+      const keys = plansForDay(d).map((p) => p.key);
+      assert.equal(new Set(keys).size, keys.length, `day ${d} repeats a post`);
+    }
+  });
+
+  it('ends each day with a real test question, bait before it', () => {
+    for (let d = 0; d < 20; d++) {
+      const plans = plansForDay(d);
+      plans.forEach((plan, slot) => {
+        if (slot === SLOTS_PER_DAY - 1) {
+          assert.match(plan.key, /^q-/, `day ${d} slot ${slot} should be a question`);
+        } else {
+          assert.match(plan.key, /^bait-/, `day ${d} slot ${slot} should be bait`);
+        }
+      });
+    }
+  });
+
+  it('walks the bait pool without repeating until it is exhausted', () => {
+    const keys: string[] = [];
+    const days = Math.ceil(baitPoolSize() / (SLOTS_PER_DAY - 1));
+    for (let d = 0; d < days; d++) {
+      for (let slot = 0; slot < SLOTS_PER_DAY - 1; slot++) {
+        const plan = planForSlot(d, slot);
+        assert.ok(plan);
+        keys.push(plan.key);
+      }
+    }
+    assert.equal(new Set(keys).size, baitPoolSize());
+  });
+
+  it('every caption promotes the IQ test with the bio CTA', () => {
+    for (let d = 0; d < 5; d++) {
+      for (const plan of plansForDay(d)) {
+        assert.ok(
+          plan.caption.includes('link in bio'),
+          `${plan.key} caption is missing the bio CTA`,
+        );
+        assert.ok(plan.caption.includes('#quickiq'));
       }
     }
   });
 
-  it('walks the bait pool without skipping or repeating within a cycle', () => {
-    // Consecutive bait slots must advance the pool by exactly one entry.
-    const keys: string[] = [];
-    for (let d = 0; d < 39; d++) {
-      if (d % 3 === 2) continue;
-      const plan = planForDay(d);
-      assert.ok(plan);
-      keys.push(plan.key);
-    }
-    // 26 bait slots over 39 days; pool must not repeat until exhausted.
-    const poolSize = new Set(keys).size;
-    assert.deepEqual(keys.slice(0, poolSize), [...new Set(keys)]);
-  });
-
-  it('every caption promotes the IQ test with the bio CTA', () => {
-    for (let d = 0; d < 6; d++) {
-      const plan = planForDay(d);
-      assert.ok(plan);
-      assert.ok(
-        plan.caption.includes('link in bio'),
-        `day ${d} caption is missing the bio CTA`,
-      );
-      assert.ok(plan.caption.includes('#quickiq'));
+  it('never leaks the answer in the caption or on the card', () => {
+    for (let d = 0; d < 20; d++) {
+      for (const plan of plansForDay(d)) {
+        if (!plan.explain) continue;
+        assert.ok(
+          !plan.caption.includes(plan.explain),
+          `${plan.key} caption leaks the explanation`,
+        );
+      }
     }
   });
 
   it('cards are always renderable: prompt + at least 2 options', () => {
     for (let d = 0; d < 60; d++) {
-      const plan = planForDay(d);
-      assert.ok(plan);
-      assert.ok(plan.card.prompt.length > 0);
-      assert.ok(plan.card.options.length >= 2);
-      for (const o of plan.card.options) {
-        assert.ok(o.text.length > 0, `day ${d} option ${o.id} has empty text`);
+      for (const plan of plansForDay(d)) {
+        assert.ok(plan.card.prompt.length > 0);
+        assert.ok(plan.card.options.length >= 2);
+        for (const o of plan.card.options) {
+          assert.ok(o.text.length > 0, `${plan.key} option ${o.id} has empty text`);
+        }
       }
     }
+  });
+
+  it('clamps out-of-range slots instead of returning null', () => {
+    assert.ok(planForSlot(20661, -5));
+    assert.ok(planForSlot(20661, 99));
+  });
+});
+
+describe('bait pool integrity', () => {
+  it('has unique ids', () => {
+    const ids = baitPostsForTest().map((b) => b.id);
+    assert.equal(new Set(ids).size, ids.length);
+  });
+
+  it('every answer points at an option that exists', () => {
+    for (const b of baitPostsForTest()) {
+      assert.ok(
+        b.options.some((o) => o.id === b.answer),
+        `${b.id} answer ${b.answer} is not among its options`,
+      );
+    }
+  });
+
+  it('has no duplicate option ids or duplicate option text', () => {
+    for (const b of baitPostsForTest()) {
+      const ids = b.options.map((o) => o.id);
+      const texts = b.options.map((o) => o.text.toLowerCase());
+      assert.equal(new Set(ids).size, ids.length, `${b.id} has duplicate option ids`);
+      assert.equal(new Set(texts).size, texts.length, `${b.id} has duplicate options`);
+    }
+  });
+
+  it('is big enough to run 2 bait posts a day for a month without repeats', () => {
+    assert.ok(
+      baitPoolSize() >= 30 * (SLOTS_PER_DAY - 1) - 20,
+      `bait pool is only ${baitPoolSize()}`,
+    );
   });
 });
 

@@ -1,31 +1,34 @@
 import { ImageResponse } from 'next/og';
-import { REEL } from '@/lib/social/reel-spec';
+import { REEL, reelFrameKey, REEL_FRAME_COUNT } from '@/lib/social/reel-spec';
+import { renderScene } from '@/lib/social/quiz-scene';
 import type { CardTheme } from '@/lib/social/ig-content';
 
 export const runtime = 'edge';
 
 /**
  * Public 1080×1920 (9:16) reel frame. The cron's video builder fetches
- * frames 0..N and stitches them into the daily countdown reel, so this
- * must stay PUBLIC like /api/ig/card.
+ * frames 0..N and stitches them into the daily reel, so this must stay
+ * PUBLIC like /api/ig/card.
  *
- * `?d=<dayIndex>` picks the post; `?f=<frame>` picks the moment:
- *   f = 0..countdownFrom-1 → countdown card showing "5" … "1"
- *   f = countdownFrom      → outro card ("time's up" + IQ-test CTA)
+ * `?d=<dayIndex>&s=<slot>` picks the post; `?f=<frame>` picks the moment:
+ *   f=0 question · f=1 "take your time" nudge · f=2 outro CTA
+ *
+ * There is no countdown: viewers were still reading when the old timer
+ * hit zero. The question simply holds long enough to read it twice.
  */
 
 // Simple Material-style icon paths — the renderer has no emoji font, so
 // these are the "pictures" that keep frames from being text-only.
 const THEME_ICON: Record<CardTheme, string> = {
-  // car (trick logic)
+  // car (speed / trick logic)
   orange:
     'M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8a1 1 0 001 1h1a1 1 0 001-1v-1h12v1a1 1 0 001 1h1a1 1 0 001-1v-8l-2.08-5.99zM6.5 16A1.5 1.5 0 118 14.5 1.5 1.5 0 016.5 16zm11 0a1.5 1.5 0 111.5-1.5 1.5 1.5 0 01-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z',
   // pencil (spelling)
   green:
     'M3 17.25V21h3.75L17.8 9.94l-3.75-3.75L3 17.25zM20.7 7.04a1 1 0 000-1.41l-2.34-2.34a1 1 0 00-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z',
-  // lightning bolt (math)
+  // lightning bolt (percent / sequence)
   purple: 'M13 2L4 14h6l-1 8 9-12h-6l1-8z',
-  // star (real test question)
+  // star (work rate / real test question)
   blue: 'M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z',
 };
 
@@ -35,8 +38,9 @@ export async function GET(req: Request) {
   // mean "today", not day 0, so check the trimmed raw param first.
   const dRaw = searchParams.get('d')?.trim() ?? null;
   const frame = Number(searchParams.get('f'));
+  const slot = Number(searchParams.get('s'));
 
-  const { planForDay, utcDayIndex, CARD_THEMES } = await import(
+  const { planForSlot, utcDayIndex, CARD_THEMES } = await import(
     '@/lib/social/ig-content'
   );
   // Public route: clamp to a non-negative integer so hostile values
@@ -45,14 +49,13 @@ export async function GET(req: Request) {
     dRaw !== null && dRaw !== '' && Number.isFinite(Number(dRaw))
       ? Math.max(0, Math.trunc(Number(dRaw)))
       : utcDayIndex();
-  const plan = planForDay(day);
+  const plan = planForSlot(day, Number.isFinite(slot) ? slot : 0);
   if (!plan) return new Response('no question', { status: 404 });
 
   const f = Number.isFinite(frame)
-    ? Math.min(Math.max(frame, 0), REEL.countdownFrom)
+    ? Math.min(Math.max(Math.trunc(frame), 0), REEL_FRAME_COUNT - 1)
     : 0;
-  const isOutro = f === REEL.countdownFrom;
-  const secondsLeft = REEL.countdownFrom - f;
+  const role = reelFrameKey(f);
 
   const card = plan.card;
   const theme = CARD_THEMES[card.theme] ?? CARD_THEMES.blue;
@@ -60,12 +63,12 @@ export async function GET(req: Request) {
 
   const promptSize =
     card.prompt.length > 140
-      ? 52
+      ? 50
       : card.prompt.length > 90
-        ? 58
+        ? 56
         : card.prompt.length > 55
-          ? 66
-          : 74;
+          ? 64
+          : 72;
 
   const header = (
     <div
@@ -120,10 +123,16 @@ export async function GET(req: Request) {
           background: 'rgba(0,0,0,0.12)',
         }}
       />
+      {/* Oversized theme mark — keeps text-only puzzles from looking bare. */}
+      <div style={{ display: 'flex', position: 'absolute', bottom: 150, right: -60 }}>
+        <svg width="560" height="560" viewBox="0 0 24 24">
+          <path d={icon} fill="rgba(255,255,255,0.07)" />
+        </svg>
+      </div>
     </>
   );
 
-  if (isOutro) {
+  if (role === 'outro') {
     return new ImageResponse(
       (
         <div
@@ -153,31 +162,32 @@ export async function GET(req: Request) {
             <span
               style={{
                 color: '#FFFFFF',
-                fontSize: 128,
+                fontSize: 116,
                 fontWeight: 900,
                 letterSpacing: 2,
               }}
             >
-              TIME&apos;S UP!
+              GOT IT?
             </span>
             <span
               style={{
                 color: 'rgba(255,255,255,0.92)',
-                fontSize: 52,
+                fontSize: 50,
                 fontWeight: 700,
                 marginTop: 40,
+                textAlign: 'center',
               }}
             >
-              Got your answer?
+              Comment your answer below
             </span>
             <span
               style={{
                 color: 'rgba(255,255,255,0.85)',
-                fontSize: 44,
+                fontSize: 42,
                 marginTop: 16,
               }}
             >
-              Drop it in the comments — no cheating
+              Answer revealed tomorrow
             </span>
           </div>
 
@@ -191,18 +201,10 @@ export async function GET(req: Request) {
               alignItems: 'center',
             }}
           >
-            <span
-              style={{ color: theme.accent, fontSize: 56, fontWeight: 800 }}
-            >
+            <span style={{ color: theme.accent, fontSize: 56, fontWeight: 800 }}>
               Now test your REAL IQ
             </span>
-            <span
-              style={{
-                color: '#4b5563',
-                fontSize: 36,
-                marginTop: 18,
-              }}
-            >
+            <span style={{ color: '#4b5563', fontSize: 36, marginTop: 18 }}>
               Free 30-question test · 7 minutes · instant score
             </span>
             <div
@@ -225,7 +227,8 @@ export async function GET(req: Request) {
     );
   }
 
-  const remainingFraction = secondsLeft / REEL.countdownFrom;
+  const isNudge = role === 'nudge';
+  const scene = renderScene(card.scene, { width: REEL.width - 160 });
 
   return new ImageResponse(
     (
@@ -244,124 +247,89 @@ export async function GET(req: Request) {
         {decor}
         {header}
 
-        {card.badge ? (
-          <div style={{ display: 'flex', marginTop: 48 }}>
-            <span
-              style={{
-                background: 'rgba(0,0,0,0.30)',
-                color: '#FFE14D',
-                fontSize: 30,
-                fontWeight: 800,
-                letterSpacing: 2,
-                borderRadius: 999,
-                padding: '14px 30px',
-              }}
-            >
-              {card.badge}
-            </span>
-          </div>
-        ) : null}
-
-        <div
-          style={{
-            color: '#FFFFFF',
-            fontSize: promptSize,
-            fontWeight: 800,
-            lineHeight: 1.22,
-            marginTop: 44,
-          }}
-        >
-          {card.prompt}
-        </div>
-
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 20,
-            marginTop: 48,
-          }}
-        >
-          {card.options.map((o) => (
-            <div
-              key={o.id}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 24,
-                background: 'rgba(255,255,255,0.13)',
-                borderRadius: 24,
-                padding: '24px 32px',
-              }}
-            >
-              <span
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  width: 58,
-                  height: 58,
-                  borderRadius: 16,
-                  background: '#FFFFFF',
-                  color: theme.accent,
-                  fontSize: 32,
-                  fontWeight: 800,
-                }}
-              >
-                {o.id}
-              </span>
-              <span style={{ color: '#FFFFFF', fontSize: 42, fontWeight: 600 }}>
-                {o.text}
-              </span>
-            </div>
-          ))}
-        </div>
-
+        {/* Centred so text-only puzzles don't leave a dead half-screen. */}
         <div
           style={{
             flex: 1,
             display: 'flex',
             flexDirection: 'column',
-            alignItems: 'center',
             justifyContent: 'center',
           }}
         >
+          {card.badge || isNudge ? (
+            <div style={{ display: 'flex', marginBottom: 36 }}>
+              <span
+                style={{
+                  background: isNudge ? '#FFE14D' : 'rgba(0,0,0,0.30)',
+                  color: isNudge ? '#111827' : '#FFE14D',
+                  fontSize: 30,
+                  fontWeight: 800,
+                  letterSpacing: 2,
+                  borderRadius: 999,
+                  padding: '14px 30px',
+                }}
+              >
+                {isNudge ? 'TAKE YOUR TIME — READ IT AGAIN' : card.badge}
+              </span>
+            </div>
+          ) : null}
+
           <div
             style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: 230,
-              height: 230,
-              borderRadius: 999,
-              border: '14px solid rgba(255,255,255,0.35)',
-              background: 'rgba(0,0,0,0.18)',
+              color: '#FFFFFF',
+              fontSize: promptSize,
+              fontWeight: 800,
+              lineHeight: 1.22,
             }}
           >
-            <span style={{ color: '#FFFFFF', fontSize: 120, fontWeight: 900 }}>
-              {secondsLeft}
-            </span>
+            {card.prompt}
           </div>
+
+          {scene ? (
+            <div style={{ display: 'flex', marginTop: 48 }}>{scene}</div>
+          ) : null}
 
           <div
             style={{
               display: 'flex',
-              width: 760,
-              height: 22,
-              borderRadius: 999,
-              background: 'rgba(255,255,255,0.22)',
-              marginTop: 44,
+              flexDirection: 'column',
+              gap: 20,
+              marginTop: 52,
             }}
           >
-            <div
-              style={{
-                display: 'flex',
-                width: Math.round(760 * remainingFraction),
-                height: 22,
-                borderRadius: 999,
-                background: '#FFE14D',
-              }}
-            />
+            {card.options.map((o) => (
+              <div
+                key={o.id}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 24,
+                  background: 'rgba(255,255,255,0.13)',
+                  borderRadius: 24,
+                  padding: '24px 32px',
+                }}
+              >
+                <span
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: 58,
+                    height: 58,
+                    borderRadius: 16,
+                    background: '#FFFFFF',
+                    color: theme.accent,
+                    fontSize: 32,
+                    fontWeight: 800,
+                  }}
+                >
+                  {o.id}
+                </span>
+                <span style={{ color: '#FFFFFF', fontSize: 42, fontWeight: 600 }}>
+                  {o.text}
+                </span>
+              </div>
+            ))}
           </div>
         </div>
 
@@ -370,13 +338,21 @@ export async function GET(req: Request) {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            background: 'rgba(0,0,0,0.22)',
+            background: isNudge ? '#FFE14D' : 'rgba(0,0,0,0.22)',
             borderRadius: 999,
             padding: '24px 36px',
           }}
         >
-          <span style={{ color: '#FFFFFF', fontSize: 34, fontWeight: 700 }}>
-            Comment your answer before time runs out
+          <span
+            style={{
+              color: isNudge ? '#111827' : '#FFFFFF',
+              fontSize: 34,
+              fontWeight: 700,
+            }}
+          >
+            {isNudge
+              ? 'No timer. Think it through.'
+              : 'Comment your answer · Full IQ test in bio'}
           </span>
         </div>
       </div>

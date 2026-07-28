@@ -23,13 +23,15 @@ export type ReelResult =
 
 export async function buildReelVideo(args: {
   dayIndex: number;
+  slot?: number;
   baseUrl: string;
 }): Promise<ReelResult> {
   try {
+    const slot = args.slot ?? 0;
     const pngs = await Promise.all(
       Array.from({ length: REEL_FRAME_COUNT }, async (_, f) => {
         const res = await fetch(
-          `${args.baseUrl}/api/ig/reel-frame?d=${args.dayIndex}&f=${f}`,
+          `${args.baseUrl}/api/ig/reel-frame?d=${args.dayIndex}&s=${slot}&f=${f}`,
           // Bounded: a hung self-fetch must not eat the cron's time budget.
           { cache: 'no-store', signal: AbortSignal.timeout(20_000) },
         );
