@@ -8,7 +8,8 @@ import {
 } from '@/lib/social/instagram';
 import { plansForDay, utcDayIndex, type IgPostPlan } from '@/lib/social/ig-content';
 import { buildReelVideo } from '@/lib/social/reel';
-import { uploadPublicVideo } from '@/lib/social/storage';
+import { uploadPublicMedia, uploadPublicVideo } from '@/lib/social/storage';
+import sharp from 'sharp';
 import { getSiteUrl } from '@/lib/site-url';
 import { isSupabaseConfigured, createSupabaseAdmin } from '@/lib/supabase/server';
 
@@ -20,12 +21,15 @@ export const maxDuration = 300;
 // Time budget inside maxDuration. Deadlines are absolute epoch-ms.
 const TOTAL_BUDGET_MS = 290_000; // 10s under maxDuration for safety
 // Reserved so a reel that fails still leaves room for the image fallback
-// (container + poll + publish ≈ 60s) plus the ledger write.
-const FALLBACK_RESERVE_MS = 90_000;
+// (container + short poll + publish ≈ 25s) plus the ledger write.
+const FALLBACK_RESERVE_MS = 50_000;
 // A reel publish attempt needs container create + at least a few polls.
 const MIN_REEL_PUBLISH_MS = 45_000;
-// Don't start another post unless a whole cheap path could still finish.
-const MIN_POST_MS = 110_000;
+// Don't start another post unless a realistic reel path could finish:
+// build ~55s + upload + create + minimum poll + publish + fallback reserve.
+const MIN_POST_MS = 145_000;
+// One post never gets more than this — keeps room for a second slot.
+const MAX_POST_WINDOW_MS = 200_000;
 
 // Posts per invocation. Vercel Hobby allows 2 cron schedules/day, so two
 // runs × 2 posts covers the 3 daily slots with room for a retry.
@@ -187,15 +191,10 @@ export async function GET(req: Request) {
       plan,
       testLabel,
       siteUrl,
-      // Split what's left evenly across the posts we still intend to make.
-      deadlineAt: Math.min(
-        hardDeadline,
-        Date.now() +
-          Math.max(
-            MIN_POST_MS,
-            Math.floor((hardDeadline - Date.now()) / (budget - publishedCount)),
-          ),
-      ),
+      // Front-load: give the current post a full window (capped) rather
+      // than splitting evenly — one solid reel beats two rushed ones, and
+      // whatever doesn't fit this run is the next run's first job.
+      deadlineAt: Math.min(hardDeadline, Date.now() + MAX_POST_WINDOW_MS),
     });
     outcomes.push(outcome);
     if (outcome.status === 'published') publishedCount += 1;
@@ -287,7 +286,12 @@ async function publishSlot(args: {
   let mediaUrl = '';
   let published: Awaited<ReturnType<typeof publishReelPost>>;
 
-  const reel = await buildReelVideo({ dayIndex: day, slot, baseUrl: siteUrl });
+  const reel = await buildReelVideo({
+    dayIndex: day,
+    slot,
+    baseUrl: siteUrl,
+    deadlineAt: reelDeadline - MIN_REEL_PUBLISH_MS,
+  });
   if (!reel.ok) {
     published = { ok: false, reason: `build:${reel.reason}` };
   } else if (Date.now() > reelDeadline - MIN_REEL_PUBLISH_MS) {
@@ -320,8 +324,16 @@ async function publishSlot(args: {
       extra: { postKey, reason: published.reason },
     });
     kind = 'image';
-    mediaUrl = imageUrl;
-    published = await publishImagePost({ imageUrl, caption: plan.caption });
+    // Instagram's documented image format is JPEG; the card route emits
+    // PNG (ImageResponse has no JPEG mode). Re-encode into storage and
+    // hand IG the stable JPEG URL instead of the PNG route.
+    const jpegUrl = await cardAsJpeg(imageUrl, postKey);
+    mediaUrl = jpegUrl ?? imageUrl;
+    published = await publishImagePost({
+      imageUrl: mediaUrl,
+      caption: plan.caption,
+      deadlineAt,
+    });
   }
 
   if (isSupabaseConfigured()) {
@@ -353,4 +365,35 @@ async function publishSlot(args: {
     kind,
     mediaId: published.data.id,
   };
+}
+
+/**
+ * Fetch the card PNG and park a JPEG copy in public storage. Returns null
+ * on any failure — the caller then falls back to the raw PNG URL, which
+ * Instagram has accepted in practice even though JPEG is the documented
+ * format.
+ */
+async function cardAsJpeg(
+  imageUrl: string,
+  postKey: string,
+): Promise<string | null> {
+  try {
+    const res = await fetch(imageUrl, {
+      cache: 'no-store',
+      signal: AbortSignal.timeout(20_000),
+    });
+    if (!res.ok) return null;
+    const jpeg = await sharp(Buffer.from(await res.arrayBuffer()))
+      .flatten({ background: '#0B0E14' })
+      .jpeg({ quality: 90 })
+      .toBuffer();
+    const upload = await uploadPublicMedia(
+      `cards/${postKey.replace(/:/g, '-')}.jpg`,
+      jpeg,
+      'image/jpeg',
+    );
+    return upload.ok ? upload.url : null;
+  } catch {
+    return null;
+  }
 }

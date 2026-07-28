@@ -140,3 +140,36 @@ describe('eligibleQuestions', () => {
     }
   });
 });
+
+describe('cinematic background mapping', () => {
+  it('every plan has a valid bg scene', () => {
+    for (let d = 0; d < 60; d++) {
+      for (const plan of plansForDay(d)) {
+        assert.ok(
+          ['rails', 'road', 'chalk', 'slate'].includes(plan.card.bg),
+          `${plan.key} has bg ${plan.card.bg}`,
+        );
+      }
+    }
+  });
+
+  it('rails is reserved for train/bridge problems, road for vehicular ones', () => {
+    for (let d = 0; d < 120; d++) {
+      for (const plan of plansForDay(d)) {
+        const text = plan.card.prompt.toLowerCase();
+        if (plan.card.bg === 'rails') {
+          assert.ok(
+            /train|bridge/.test(text),
+            `${plan.key} got rails without a train: ${plan.card.prompt}`,
+          );
+        }
+        if (plan.card.bg === 'road') {
+          assert.ok(
+            /km\/h|car|bus|cyclist|runner|race|driv/.test(text),
+            `${plan.key} got road without a vehicle: ${plan.card.prompt}`,
+          );
+        }
+      }
+    }
+  });
+});

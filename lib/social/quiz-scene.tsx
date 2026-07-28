@@ -33,7 +33,15 @@ export type Scene =
   /** Number tiles ending in "?" — sequence puzzles. */
   | { kind: 'sequence'; items: string[] }
   /** Labelled horizontal bars — comparison / rate puzzles. */
-  | { kind: 'bars'; items: Array<{ caption: string; fill: number }> };
+  | {
+      kind: 'bars';
+      items: Array<{
+        caption: string;
+        fill: number;
+        /** Shown at the bar's end — given values only, '?' for the unknown. */
+        value?: string;
+      }>;
+    };
 
 /** Side-view vehicle bodies (Material outlines). */
 const VEHICLE_PATH = {
@@ -224,42 +232,73 @@ function BarsScene({
         width,
       }}
     >
-      {scene.items.map((item, i) => (
-        <div
-          key={`${item.caption}-${i}`}
-          style={{ display: 'flex', flexDirection: 'column', width }}
-        >
-          <span
-            style={{
-              color: 'rgba(255,255,255,0.95)',
-              fontSize: captionSize,
-              fontWeight: 700,
-              marginBottom: compact ? 4 : 8,
-            }}
-          >
-            {item.caption}
-          </span>
+      {scene.items.map((item, i) => {
+        const trackW = width - (item.value ? (compact ? 96 : 128) : 0);
+        return (
           <div
-            style={{
-              display: 'flex',
-              width,
-              height: barH,
-              borderRadius: 999,
-              background: 'rgba(0,0,0,0.28)',
-            }}
+            key={`${item.caption}-${i}`}
+            style={{ display: 'flex', flexDirection: 'column', width }}
           >
-            <div
+            <span
               style={{
-                display: 'flex',
-                width: Math.round(width * Math.min(Math.max(item.fill, 0.06), 1)),
-                height: barH,
-                borderRadius: 999,
-                background: '#FFE14D',
+                color: 'rgba(255,255,255,0.95)',
+                fontSize: captionSize,
+                fontWeight: 700,
+                marginBottom: compact ? 4 : 8,
               }}
-            />
+            >
+              {item.caption}
+            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: compact ? 12 : 16 }}>
+              {item.value === '?' ? (
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: trackW,
+                    height: barH,
+                    borderRadius: 999,
+                    border: '3px dashed rgba(255,225,77,0.65)',
+                    background: 'rgba(0,0,0,0.18)',
+                  }}
+                />
+              ) : (
+                <div
+                  style={{
+                    display: 'flex',
+                    width: trackW,
+                    height: barH,
+                    borderRadius: 999,
+                    background: 'rgba(0,0,0,0.28)',
+                  }}
+                >
+                  <div
+                    style={{
+                      display: 'flex',
+                      width: Math.round(trackW * Math.min(Math.max(item.fill, 0.06), 1)),
+                      height: barH,
+                      borderRadius: 999,
+                      background: '#FFE14D',
+                    }}
+                  />
+                </div>
+              )}
+              {item.value ? (
+                <span
+                  style={{
+                    color: '#FFE14D',
+                    fontSize: compact ? 26 : 34,
+                    fontWeight: 800,
+                  }}
+                >
+                  {item.value}
+                </span>
+              ) : null}
+            </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }

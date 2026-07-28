@@ -2,6 +2,7 @@ import { dummyEnQuestions } from '@/lib/questions/dummy-en';
 import { extraEnQuestions } from '@/lib/questions/extra-en';
 import type { Question } from '@/lib/questions/types';
 import type { Scene } from './quiz-scene';
+import type { BgScene } from './reel-bg';
 
 /**
  * Content plan for the global (English) Instagram account.
@@ -49,6 +50,8 @@ export interface IgCard {
   options: IgCardOption[];
   /** Illustration drawn from the question's data (optional). */
   scene?: Scene;
+  /** Cinematic animated background scene for the reel/video. */
+  bg: BgScene;
   theme: CardTheme;
   /** Bottom CTA pill text. */
   footer: string;
@@ -105,7 +108,8 @@ const BAIT_POSTS: BaitPost[] = [
     kind: 'speed',
     hook: 'Everyone answers this too fast 🚨',
     badge: 'MOST PEOPLE GET IT WRONG',
-    prompt: '3 cars leave the same city at the same time. Which one arrives first?',
+    prompt:
+      'Car A does 40 km/h for 100 km. Car B does 60 km/h for 200 km. Car C does 80 km/h for 350 km. They leave together — which arrives FIRST?',
     options: [
       { id: 'A', text: 'Car A' },
       { id: 'B', text: 'Car B' },
@@ -344,9 +348,9 @@ const BAIT_POSTS: BaitPost[] = [
     scene: {
       kind: 'bars',
       items: [
-        { caption: 'Day climbs +3 m', fill: 0.3 },
-        { caption: 'Night slips −2 m', fill: 0.2 },
-        { caption: 'Well depth 10 m', fill: 1 },
+        { caption: 'Day climbs +3 m', fill: 0.3 , value: '+3 m' },
+        { caption: 'Night slips −2 m', fill: 0.2 , value: '−2 m' },
+        { caption: 'Well depth 10 m', fill: 1 , value: '10 m' },
       ],
     },
     answer: 'B',
@@ -370,8 +374,8 @@ const BAIT_POSTS: BaitPost[] = [
     scene: {
       kind: 'bars',
       items: [
-        { caption: '5 machines → 5 widgets → 5 min', fill: 0.25 },
-        { caption: '100 machines → 100 widgets → ?', fill: 1 },
+        { caption: '5 machines → 5 widgets → 5 min', fill: 0.25 , value: '5 min' },
+        { caption: '100 machines → 100 widgets → ?', fill: 1 , value: '?' },
       ],
     },
     answer: 'B',
@@ -392,8 +396,8 @@ const BAIT_POSTS: BaitPost[] = [
     scene: {
       kind: 'bars',
       items: [
-        { caption: '3 painters → 6 days', fill: 1 },
-        { caption: '6 painters → ?', fill: 0.5 },
+        { caption: '3 painters → 6 days', fill: 1 , value: '6 days' },
+        { caption: '6 painters → ?', fill: 0.5 , value: '?' },
       ],
     },
     answer: 'A',
@@ -415,8 +419,8 @@ const BAIT_POSTS: BaitPost[] = [
     scene: {
       kind: 'bars',
       items: [
-        { caption: 'Tap A · full in 4 h', fill: 0.66 },
-        { caption: 'Tap B · full in 6 h', fill: 0.44 },
+        { caption: 'Tap A · full in 4 h', fill: 0.66 , value: '4 h' },
+        { caption: 'Tap B · full in 6 h', fill: 0.44 , value: '6 h' },
       ],
     },
     answer: 'B',
@@ -437,8 +441,8 @@ const BAIT_POSTS: BaitPost[] = [
     scene: {
       kind: 'bars',
       items: [
-        { caption: '6 hens → 6 eggs → 6 days', fill: 0.5 },
-        { caption: '12 hens → 12 eggs → ?', fill: 1 },
+        { caption: '6 hens → 6 eggs → 6 days', fill: 0.5 , value: '6 days' },
+        { caption: '12 hens → 12 eggs → ?', fill: 1 , value: '?' },
       ],
     },
     answer: 'B',
@@ -459,8 +463,8 @@ const BAIT_POSTS: BaitPost[] = [
     scene: {
       kind: 'bars',
       items: [
-        { caption: '4 workers → 12 h', fill: 1 },
-        { caption: '6 workers → ?', fill: 0.66 },
+        { caption: '4 workers → 12 h', fill: 1 , value: '12 h' },
+        { caption: '6 workers → ?', fill: 0.66 , value: '?' },
       ],
     },
     answer: 'A',
@@ -481,8 +485,8 @@ const BAIT_POSTS: BaitPost[] = [
     scene: {
       kind: 'bars',
       items: [
-        { caption: '3 cats → 3 mice → 3 min', fill: 0.2 },
-        { caption: '? cats → 100 mice → 100 min', fill: 1 },
+        { caption: '3 cats → 3 mice → 3 min', fill: 0.2 , value: '3 min' },
+        { caption: '? cats → 100 mice → 100 min', fill: 1 , value: '?' },
       ],
     },
     answer: 'A',
@@ -505,9 +509,9 @@ const BAIT_POSTS: BaitPost[] = [
     scene: {
       kind: 'bars',
       items: [
-        { caption: 'Original $100', fill: 1 },
-        { caption: 'After 50% off', fill: 0.5 },
-        { caption: 'After 20% more off', fill: 0.4 },
+        { caption: 'Original $100', fill: 1 , value: '$100' },
+        { caption: 'After 50% off', fill: 0.5 , value: '−50%' },
+        { caption: 'After 20% more off', fill: 0.4 , value: '−20%' },
       ],
     },
     answer: 'B',
@@ -528,9 +532,9 @@ const BAIT_POSTS: BaitPost[] = [
     scene: {
       kind: 'bars',
       items: [
-        { caption: 'Start $100', fill: 0.9 },
-        { caption: '+10% → $110', fill: 1 },
-        { caption: '−10% → ?', fill: 0.89 },
+        { caption: 'Start $100', fill: 0.9 , value: '$100' },
+        { caption: '+10% → $110', fill: 1 , value: '$110' },
+        { caption: '−10% → ?', fill: 0.89 , value: '?' },
       ],
     },
     answer: 'B',
@@ -551,8 +555,8 @@ const BAIT_POSTS: BaitPost[] = [
     scene: {
       kind: 'bars',
       items: [
-        { caption: 'Price paid $20 (after −20%)', fill: 0.8 },
-        { caption: 'Original price ?', fill: 1 },
+        { caption: 'Price paid $20 (after −20%)', fill: 0.8 , value: '$20' },
+        { caption: 'Original price ?', fill: 1 , value: '?' },
       ],
     },
     answer: 'B',
@@ -573,9 +577,9 @@ const BAIT_POSTS: BaitPost[] = [
     scene: {
       kind: 'bars',
       items: [
-        { caption: 'Start 200', fill: 1 },
-        { caption: '50% of it', fill: 0.5 },
-        { caption: '20% of that = ?', fill: 0.1 },
+        { caption: 'Start 200', fill: 1 , value: '200' },
+        { caption: '50% of it', fill: 0.5 , value: '100' },
+        { caption: '20% of that = ?', fill: 0.1 , value: '?' },
       ],
     },
     answer: 'A',
@@ -596,8 +600,8 @@ const BAIT_POSTS: BaitPost[] = [
     scene: {
       kind: 'bars',
       items: [
-        { caption: '3 apples = $1.50', fill: 0.43 },
-        { caption: '7 apples = ?', fill: 1 },
+        { caption: '3 apples = $1.50', fill: 0.43 , value: '$1.50' },
+        { caption: '7 apples = ?', fill: 1 , value: '?' },
       ],
     },
     answer: 'B',
@@ -619,8 +623,8 @@ const BAIT_POSTS: BaitPost[] = [
     scene: {
       kind: 'bars',
       items: [
-        { caption: '5 numbers · average 10', fill: 0.83 },
-        { caption: '4 numbers left · average 12', fill: 1 },
+        { caption: '5 numbers · average 10', fill: 0.83 , value: 'avg 10' },
+        { caption: '4 numbers left · average 12', fill: 1 , value: 'avg 12' },
       ],
     },
     answer: 'A',
@@ -641,9 +645,9 @@ const BAIT_POSTS: BaitPost[] = [
     scene: {
       kind: 'bars',
       items: [
-        { caption: '$10 flat', fill: 0.5 },
-        { caption: '+ half of its own price', fill: 0.5 },
-        { caption: 'Total price = ?', fill: 1 },
+        { caption: '$10 flat', fill: 0.5 , value: '$10' },
+        { caption: '+ half of its own price', fill: 0.5 , value: '+½' },
+        { caption: 'Total price = ?', fill: 1 , value: '?' },
       ],
     },
     answer: 'B',
@@ -664,9 +668,9 @@ const BAIT_POSTS: BaitPost[] = [
     scene: {
       kind: 'bars',
       items: [
-        { caption: 'Start 90', fill: 1 },
-        { caption: 'Two-thirds of it', fill: 0.66 },
-        { caption: 'Half of that = ?', fill: 0.33 },
+        { caption: 'Start 90', fill: 1 , value: '90' },
+        { caption: 'Two-thirds of it', fill: 0.66 , value: '?' },
+        { caption: 'Half of that = ?', fill: 0.33 , value: '?' },
       ],
     },
     answer: 'A',
@@ -962,9 +966,9 @@ const BAIT_POSTS: BaitPost[] = [
     scene: {
       kind: 'bars',
       items: [
-        { caption: 'Day 46', fill: 0.25 },
-        { caption: 'Day 47', fill: 0.5 },
-        { caption: 'Day 48 · lake full', fill: 1 },
+        { caption: 'Day 46', fill: 0.25 , value: '?' },
+        { caption: 'Day 47', fill: 0.5 , value: '?' },
+        { caption: 'Day 48 · lake full', fill: 1 , value: 'FULL' },
       ],
     },
     answer: 'B',
@@ -985,8 +989,8 @@ const BAIT_POSTS: BaitPost[] = [
     scene: {
       kind: 'bars',
       items: [
-        { caption: 'Started with 17 sheep', fill: 1 },
-        { caption: 'All but 9 ran away → ?', fill: 0.53 },
+        { caption: 'Started with 17 sheep', fill: 1 , value: '17' },
+        { caption: 'All but 9 ran away → ?', fill: 0.53 , value: '?' },
       ],
     },
     answer: 'B',
@@ -1178,6 +1182,22 @@ const BAIT_THEME: Record<BaitKind, CardTheme> = {
   spelling: 'green',
 };
 
+/**
+ * Which cinematic background a bait post gets. Train/bridge problems put
+ * the viewer between the rails; car problems on the night road; everything
+ * else lands on a classroom board (slate for spelling-bee vibes).
+ */
+function baitBg(b: BaitPost): BgScene {
+  if (b.kind === 'speed') {
+    if (/train|bridge/i.test(b.id + b.prompt)) return 'rails';
+    // Only genuinely vehicular problems get the road POV — a snail
+    // climbing a well on a highway background would be nonsense.
+    if (/km\/h|car|bus|cyclist|runner|race|drive/i.test(b.prompt)) return 'road';
+  }
+  if (b.kind === 'spelling') return 'slate';
+  return 'chalk';
+}
+
 const KIND_TAG: Record<BaitKind, string> = {
   speed: '#mathpuzzle',
   rate: '#logicpuzzle',
@@ -1270,15 +1290,23 @@ function questionCaption(q: Question, hook: string): string {
   ].join('\n');
 }
 
+/** Reuse the caption hook as the on-card badge when none is set. */
+function hookBadge(hook: string): string | null {
+  const ascii = hook.replace(/[^\x20-\x7E]/g, '').replace(/\s+/g, ' ').trim();
+  const cut = ascii.replace(/[.!?]+$/, '').toUpperCase();
+  return cut.length >= 8 && cut.length <= 38 ? cut : null;
+}
+
 function baitPlan(b: BaitPost): IgPostPlan {
   return {
     key: `bait-${b.id}`,
     card: {
       label: BAIT_LABEL[b.kind],
-      badge: b.badge,
+      badge: b.badge ?? hookBadge(b.hook),
       prompt: b.prompt,
       options: b.options,
       scene: b.scene,
+      bg: baitBg(b),
       theme: BAIT_THEME[b.kind],
       // No emoji here — the image renderer has no emoji font.
       footer: 'Comment your answer · Full IQ test in bio',
@@ -1323,6 +1351,7 @@ function questionPlan(q: Question, hook: string): IgPostPlan {
       prompt: scene ? promptWithoutSequence(q.question_text) : q.question_text,
       options: q.options.map((o) => ({ id: o.id, text: o.text ?? '' })),
       scene,
+      bg: q.category === 'verbal' ? 'slate' : 'chalk',
       theme: 'blue',
       footer: 'Answer in bio → 30-question IQ test',
     },
