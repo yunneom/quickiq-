@@ -1,16 +1,17 @@
 import { ImageResponse } from 'next/og';
+import { renderScene } from '@/lib/social/quiz-scene';
 
 export const runtime = 'edge';
 
 /**
- * Public 1080×1080 puzzle card for Instagram feed posts.
+ * Public 1080×1080 puzzle card — the still-image fallback for feed posts.
  *
  * Must stay PUBLIC and unauthenticated: Instagram's ingestion fetcher GETs
  * this URL server-side when we stage a media container, so any auth check
  * here would break publishing.
  *
- * `?d=<dayIndex>` selects the post deterministically (same day → same
- * card), so a retried publish renders the identical image.
+ * `?d=<dayIndex>&s=<slot>` selects the post deterministically (same day +
+ * slot → same card), so a retried publish renders the identical image.
  */
 
 export async function GET(req: Request) {
@@ -18,9 +19,10 @@ export async function GET(req: Request) {
   // Number(null)/Number('')/Number(' ') are all 0 — "absent/blank" must
   // mean "today", not day 0, so check the trimmed raw param first.
   const dRaw = searchParams.get('d')?.trim() ?? null;
+  const slot = Number(searchParams.get('s'));
 
   // Imported lazily so the edge bundle only pulls the EN pool.
-  const { planForDay, utcDayIndex, CARD_THEMES } = await import(
+  const { planForSlot, utcDayIndex, CARD_THEMES } = await import(
     '@/lib/social/ig-content'
   );
   // Public route: clamp to a non-negative integer so hostile values
@@ -29,11 +31,12 @@ export async function GET(req: Request) {
     dRaw !== null && dRaw !== '' && Number.isFinite(Number(dRaw))
       ? Math.max(0, Math.trunc(Number(dRaw)))
       : utcDayIndex();
-  const plan = planForDay(day);
+  const plan = planForSlot(day, Number.isFinite(slot) ? slot : 0);
   if (!plan) return new Response('no question', { status: 404 });
 
   const card = plan.card;
   const theme = CARD_THEMES[card.theme] ?? CARD_THEMES.blue;
+  const scene = renderScene(card.scene, { width: 1080 - 144, compact: true });
 
   // Long prompts need a smaller face to stay on one card.
   const promptSize =
@@ -124,11 +127,15 @@ export async function GET(req: Request) {
               fontSize: promptSize,
               fontWeight: 800,
               lineHeight: 1.25,
-              marginBottom: 48,
+              marginBottom: scene ? 32 : 48,
             }}
           >
             {card.prompt}
           </div>
+
+          {scene ? (
+            <div style={{ display: 'flex', marginBottom: 36 }}>{scene}</div>
+          ) : null}
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
             {card.options.map((o) => (

@@ -2,9 +2,11 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   REEL,
+  REEL_FRAMES,
   REEL_FRAME_COUNT,
   REEL_DURATION_SECONDS,
   reelFrameSchedule,
+  reelFrameKey,
 } from '../../lib/social/reel-spec';
 
 describe('reel spec', () => {
@@ -16,8 +18,16 @@ describe('reel spec', () => {
     assert.equal(REEL.height % 2, 0);
     // 23–60 fps per spec.
     assert.ok(REEL.fps >= 23 && REEL.fps <= 60);
-    // At least 3 seconds long.
+    // Reels must be at least 3 seconds.
     assert.ok(REEL_DURATION_SECONDS >= 3);
+  });
+
+  it('gives the question enough reading time (no countdown pressure)', () => {
+    const reading = REEL_FRAMES.filter((f) => f.key !== 'outro').reduce(
+      (sum, f) => sum + f.seconds,
+      0,
+    );
+    assert.ok(reading >= 8, `only ${reading}s of reading time`);
   });
 
   it('schedule covers every frame exactly once, in order', () => {
@@ -29,5 +39,14 @@ describe('reel spec', () => {
   it('schedule seconds sum to the reel duration', () => {
     const total = reelFrameSchedule().reduce((sum, s) => sum + s.seconds, 0);
     assert.equal(total, REEL_DURATION_SECONDS);
+  });
+
+  it('clamps frame indexes to a valid role', () => {
+    assert.equal(reelFrameKey(-3), REEL_FRAMES[0].key);
+    assert.equal(reelFrameKey(99), REEL_FRAMES[REEL_FRAME_COUNT - 1].key);
+  });
+
+  it('ends on the call to action', () => {
+    assert.equal(REEL_FRAMES[REEL_FRAME_COUNT - 1].key, 'outro');
   });
 });
