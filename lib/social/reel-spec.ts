@@ -2,11 +2,10 @@
  * Shared reel geometry/timing — imported by BOTH the edge frame renderer
  * and the node video builder, so it must stay dependency-free.
  *
- * A reel is built from three stills. There is deliberately NO countdown:
- * a ticking timer rushed viewers who were still reading the question, and
- * reading time is what makes them stop scrolling. Instead the question
- * holds long enough to read twice, gets a nudge frame that changes the
- * pixels (retention) without changing the puzzle, and closes on the CTA.
+ * A reel is built from three stills: the question holds 12s (a visible
+ * timer bar drains meanwhile), a 6s mid-roll AD for the IQ test cuts in
+ * broadcast-style (the bar keeps draining — reason to stay), and the
+ * outro closes on GOT IT? + the bio CTA.
  */
 export const REEL = {
   width: 1080,
@@ -16,8 +15,8 @@ export const REEL = {
 
 /** Frame roles, in render order. `f=<index>` on /api/ig/reel-frame. */
 export const REEL_FRAMES = [
-  { key: 'question', seconds: 6 },
-  { key: 'nudge', seconds: 3 },
+  { key: 'question', seconds: 12 },
+  { key: 'ad', seconds: 6 },
   { key: 'outro', seconds: 4 },
 ] as const;
 
@@ -29,6 +28,14 @@ export const REEL_DURATION_SECONDS = REEL_FRAMES.reduce(
   (sum, f) => sum + f.seconds,
   0,
 );
+
+/**
+ * Answering window — everything before the outro. The on-screen timer
+ * bar drains across exactly this many seconds.
+ */
+export const TIMER_SECONDS = REEL_FRAMES.filter(
+  (f) => f.key !== 'outro',
+).reduce((sum, f) => sum + f.seconds, 0);
 
 /** Per-frame hold times, in render order. */
 export function reelFrameSchedule(): Array<{ frame: number; seconds: number }> {

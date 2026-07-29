@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   REEL,
   REEL_FRAMES,
+  TIMER_SECONDS,
   REEL_FRAME_COUNT,
   REEL_DURATION_SECONDS,
   reelFrameSchedule,
@@ -22,12 +23,13 @@ describe('reel spec', () => {
     assert.ok(REEL_DURATION_SECONDS >= 3);
   });
 
-  it('gives the question enough reading time (no countdown pressure)', () => {
+  it('gives at least 15s of answering time (user requirement: 15-20s)', () => {
     const reading = REEL_FRAMES.filter((f) => f.key !== 'outro').reduce(
       (sum, f) => sum + f.seconds,
       0,
     );
-    assert.ok(reading >= 8, `only ${reading}s of reading time`);
+    assert.ok(reading >= 15, `only ${reading}s of answering time`);
+    assert.equal(reading, TIMER_SECONDS);
   });
 
   it('schedule covers every frame exactly once, in order', () => {
