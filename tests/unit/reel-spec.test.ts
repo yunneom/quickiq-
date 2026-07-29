@@ -23,13 +23,25 @@ describe('reel spec', () => {
     assert.ok(REEL_DURATION_SECONDS >= 3);
   });
 
-  it('gives at least 15s of answering time (user requirement: 15-20s)', () => {
-    const reading = REEL_FRAMES.filter((f) => f.key !== 'outro').reduce(
+  it('gives at least 20s of solving time, timer bar matching it', () => {
+    const question =
+      REEL_FRAMES.find((f) => f.key === 'question')?.seconds ?? 0;
+    assert.ok(question >= 20, `only ${question}s of solving time`);
+    assert.equal(question, TIMER_SECONDS);
+  });
+
+  it('runs the ad AFTER the clock, never inside the solving window', () => {
+    const order = REEL_FRAMES.map((f) => f.key);
+    assert.ok(
+      order.indexOf('ad') > order.indexOf('question'),
+      'the ad must not interrupt solving time',
+    );
+    // Nothing before the ad may be counted as ad time.
+    const beforeAd = REEL_FRAMES.slice(0, order.indexOf('ad')).reduce(
       (sum, f) => sum + f.seconds,
       0,
     );
-    assert.ok(reading >= 15, `only ${reading}s of answering time`);
-    assert.equal(reading, TIMER_SECONDS);
+    assert.equal(beforeAd, TIMER_SECONDS);
   });
 
   it('schedule covers every frame exactly once, in order', () => {

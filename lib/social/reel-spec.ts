@@ -2,10 +2,13 @@
  * Shared reel geometry/timing — imported by BOTH the edge frame renderer
  * and the node video builder, so it must stay dependency-free.
  *
- * A reel is built from three stills: the question holds 12s (a visible
- * timer bar drains meanwhile), a 6s mid-roll AD for the IQ test cuts in
- * broadcast-style (the bar keeps draining — reason to stay), and the
- * outro closes on GOT IT? + the bio CTA.
+ * A reel is built from three stills: the question holds 20s with a timer
+ * bar draining beside it (the full solving window), then a 6s AD for the
+ * IQ test runs as the "commercial break" once time is up, and the outro
+ * closes on GOT IT? + the bio CTA.
+ *
+ * The ad sits AFTER the clock, never inside it — solving time is never
+ * spent on the pitch.
  */
 export const REEL = {
   width: 1080,
@@ -15,7 +18,7 @@ export const REEL = {
 
 /** Frame roles, in render order. `f=<index>` on /api/ig/reel-frame. */
 export const REEL_FRAMES = [
-  { key: 'question', seconds: 12 },
+  { key: 'question', seconds: 20 },
   { key: 'ad', seconds: 6 },
   { key: 'outro', seconds: 4 },
 ] as const;
@@ -30,12 +33,12 @@ export const REEL_DURATION_SECONDS = REEL_FRAMES.reduce(
 );
 
 /**
- * Answering window — everything before the outro. The on-screen timer
- * bar drains across exactly this many seconds.
+ * Solving window — the question frame alone. The on-screen timer bar
+ * drains across exactly this many seconds and then disappears, so the
+ * ad break that follows is bonus screen time, not stolen thinking time.
  */
-export const TIMER_SECONDS = REEL_FRAMES.filter(
-  (f) => f.key !== 'outro',
-).reduce((sum, f) => sum + f.seconds, 0);
+export const TIMER_SECONDS =
+  REEL_FRAMES.find((f) => f.key === 'question')?.seconds ?? 0;
 
 /** Per-frame hold times, in render order. */
 export function reelFrameSchedule(): Array<{ frame: number; seconds: number }> {
