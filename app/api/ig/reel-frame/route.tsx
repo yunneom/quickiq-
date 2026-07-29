@@ -362,7 +362,7 @@ export async function GET(req: Request) {
                   marginTop: 36,
                 }}
               >
-                Your puzzle is back in a second — clock is still running
+                Time&apos;s up — answer reveal right after this
               </span>
             </div>
           </div>

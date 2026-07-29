@@ -15,7 +15,7 @@ import { planForSlot } from './ig-content';
  *
  * Node-only (sharp + wasm encoder) — must never be imported from edge
  * routes. Pipeline per video:
- *   1. fetch the 3 transparent overlay PNGs (question / nudge / outro)
+ *   1. fetch the 3 transparent overlay PNGs (question / ad / outro)
  *      from our own public /api/ig/reel-frame
  *   2. for every background frame: generate the scene SVG for that
  *      moment (approaching train, night road, chalk dust — all code,
@@ -23,17 +23,26 @@ import { planForSlot } from './ig-content';
  *      the active overlay on top
  *   3. feed RGBA frames to the wasm H.264 encoder
  *
- * Backgrounds animate at BG_FPS and each frame is emitted twice, so the
- * output is a spec-clean 30fps while halving rasterization work.
+ * Backgrounds animate at BG_FPS and each frame is emitted 30/BG_FPS
+ * times, so the output is a spec-clean 30fps for a fraction of the
+ * rasterization work. The draining timer bar is drawn here too, since
+ * the overlay PNGs are stills.
  *
  * Output: H.264 baseline / yuv420p / 30fps MP4 — accepted by Instagram's
  * REELS ingestion (no audio track; IG treats it as original silent audio).
  */
 
-// 10 unique bg frames/s (each emitted 3x for 30fps output): the scenes are
-// slow-moving glow, so 10fps reads smooth while a 22s reel rasterizes only
-// ~220 frames — about the same work as the old 13s at 15fps.
-const BG_FPS = 10;
+/**
+ * Unique background frames per second (each emitted 30/BG_FPS times so the
+ * output stays a spec-clean 30fps). Must divide 30 exactly.
+ *
+ * Rasterizing one 1080×1920 scene SVG costs ~150ms, so this number sets
+ * the build time: at 6fps a 30s reel rasterizes 180 frames (~32s) and
+ * still reads smooth, because the scenes move slowly by design — the
+ * train needs the whole reel to arrive, so nothing travels far between
+ * frames.
+ */
+const BG_FPS = 6;
 
 export type ReelResult =
   | { ok: true; buffer: Buffer }
@@ -79,6 +88,8 @@ export async function buildReelVideo(args: {
     if (!plan) return { ok: false, reason: 'no_plan' };
     const scene = plan.card.bg;
 
+    // Decode each overlay PNG ONCE into raw RGBA: composite() would
+    // otherwise re-decode the same PNG on every one of the ~180 frames.
     const overlays = await Promise.all(
       Array.from({ length: REEL_FRAME_COUNT }, async (_, f) => {
         const res = await fetch(
@@ -87,7 +98,18 @@ export async function buildReelVideo(args: {
           { cache: 'no-store', signal: AbortSignal.timeout(20_000) },
         );
         if (!res.ok) throw new Error(`frame_${f}_http_${res.status}`);
-        return Buffer.from(await res.arrayBuffer());
+        const decoded = await sharp(Buffer.from(await res.arrayBuffer()))
+          .ensureAlpha()
+          .raw()
+          .toBuffer({ resolveWithObject: true });
+        return {
+          input: decoded.data,
+          raw: {
+            width: decoded.info.width,
+            height: decoded.info.height,
+            channels: 4 as const,
+          },
+        } satisfies OverlayOptions;
       }),
     );
 
@@ -110,7 +132,7 @@ export async function buildReelVideo(args: {
         const second = Math.floor(u / BG_FPS);
         const overlay = overlays[overlayIndexAt(second)];
         const bar = timerBarSvg(scene, u / BG_FPS);
-        const layers: OverlayOptions[] = [{ input: overlay }];
+        const layers: OverlayOptions[] = [overlay];
         if (bar) {
           layers.push({ input: Buffer.from(bar), top: 168, left: 0 });
         }
