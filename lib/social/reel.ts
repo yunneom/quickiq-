@@ -1,12 +1,13 @@
-import sharp from 'sharp';
+import sharp, { type OverlayOptions } from 'sharp';
 import { createH264MP4Encoder } from 'h264-mp4-encoder';
 import {
   REEL,
   REEL_FRAME_COUNT,
   REEL_DURATION_SECONDS,
+  TIMER_SECONDS,
   reelFrameSchedule,
 } from './reel-spec';
-import { bgFrameSvg } from './reel-bg';
+import { bgFrameSvg, BG_ACCENT } from './reel-bg';
 import { planForSlot } from './ig-content';
 
 /**
@@ -29,11 +30,30 @@ import { planForSlot } from './ig-content';
  * REELS ingestion (no audio track; IG treats it as original silent audio).
  */
 
-const BG_FPS = 15;
+// 10 unique bg frames/s (each emitted 3x for 30fps output): the scenes are
+// slow-moving glow, so 10fps reads smooth while a 22s reel rasterizes only
+// ~220 frames — about the same work as the old 13s at 15fps.
+const BG_FPS = 10;
 
 export type ReelResult =
   | { ok: true; buffer: Buffer }
   | { ok: false; reason: string };
+
+/**
+ * The visible time-limit bar: a slim strip under the top pills that
+ * drains over TIMER_SECONDS, then disappears for the outro. Drawn per
+ * frame so it moves with the video (the overlay PNGs are stills).
+ */
+function timerBarSvg(scene: keyof typeof BG_ACCENT, elapsedS: number): string | null {
+  const remaining = 1 - elapsedS / TIMER_SECONDS;
+  if (remaining <= 0) return null;
+  const trackW = REEL.width - 144;
+  const w = Math.max(6, Math.round(trackW * remaining));
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${REEL.width}" height="44">
+  <rect x="72" y="14" width="${trackW}" height="16" rx="8" fill="rgba(255,255,255,0.16)"/>
+  <rect x="72" y="14" width="${w}" height="16" rx="8" fill="${BG_ACCENT[scene]}"/>
+</svg>`;
+}
 
 /** Which overlay is on screen during a given second of the reel. */
 function overlayIndexAt(second: number): number {
@@ -89,8 +109,13 @@ export async function buildReelVideo(args: {
         const t = u / (uniqueFrames - 1);
         const second = Math.floor(u / BG_FPS);
         const overlay = overlays[overlayIndexAt(second)];
+        const bar = timerBarSvg(scene, u / BG_FPS);
+        const layers: OverlayOptions[] = [{ input: overlay }];
+        if (bar) {
+          layers.push({ input: Buffer.from(bar), top: 168, left: 0 });
+        }
         return sharp(Buffer.from(bgFrameSvg(scene, t)))
-          .composite([{ input: overlay }])
+          .composite(layers)
           .ensureAlpha()
           .raw()
           .toBuffer();

@@ -16,8 +16,8 @@ export const REEL = {
 
 /** Frame roles, in render order. `f=<index>` on /api/ig/reel-frame. */
 export const REEL_FRAMES = [
-  { key: 'question', seconds: 6 },
-  { key: 'nudge', seconds: 3 },
+  { key: 'question', seconds: 12 },
+  { key: 'nudge', seconds: 6 },
   { key: 'outro', seconds: 4 },
 ] as const;
 
@@ -29,6 +29,14 @@ export const REEL_DURATION_SECONDS = REEL_FRAMES.reduce(
   (sum, f) => sum + f.seconds,
   0,
 );
+
+/**
+ * Answering window — everything before the outro. The on-screen timer
+ * bar drains across exactly this many seconds.
+ */
+export const TIMER_SECONDS = REEL_FRAMES.filter(
+  (f) => f.key !== 'outro',
+).reduce((sum, f) => sum + f.seconds, 0);
 
 /** Per-frame hold times, in render order. */
 export function reelFrameSchedule(): Array<{ frame: number; seconds: number }> {
