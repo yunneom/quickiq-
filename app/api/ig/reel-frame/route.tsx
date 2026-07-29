@@ -14,7 +14,7 @@ export const runtime = 'edge';
  *   top bar (category + wordmark) → quiz popup panel → CTA strip
  *
  * `?d=<dayIndex>&s=<slot>` picks the post; `?f=<frame>` picks the moment:
- *   f=0 question · f=1 urgency nudge · f=2 outro CTA
+ *   f=0 question · f=1 mid-roll ad break · f=2 outro CTA
  *
  * Must stay PUBLIC like /api/ig/card (fetched by the builder over HTTP).
  */
@@ -41,14 +41,6 @@ const BG_ICON: Record<BgScene, string> = {
   road: ICONS.car,
   chalk: ICONS.pencil,
   slate: ICONS.pencil,
-};
-
-/** Urgency copy replaces the timer — the scene itself applies pressure. */
-const NUDGE_COPY: Record<BgScene, string> = {
-  rails: 'LOCK IN YOUR ANSWER',
-  road: 'LOCK IN YOUR ANSWER',
-  chalk: 'READ IT AGAIN — NO RUSH',
-  slate: 'READ IT AGAIN — NO RUSH',
 };
 
 export async function GET(req: Request) {
@@ -79,7 +71,6 @@ export async function GET(req: Request) {
   const accent = BG_ACCENT[bg];
   const ink = ACCENT_INK[bg];
   const isBoard = bg === 'chalk' || bg === 'slate';
-  const isNudge = role === 'nudge';
 
   const promptSize =
     card.prompt.length > 140
@@ -245,7 +236,143 @@ export async function GET(req: Request) {
     );
   }
 
-  // Question / nudge — the quiz popup panel over the moving scene.
+  if (role === 'ad') {
+    // Mid-roll ad break: the product pitch cuts in broadcast-style while
+    // the timer bar (drawn by the builder) keeps draining — the reason
+    // to sit through it.
+    return new ImageResponse(
+      (
+        <div
+          style={{
+            width: REEL.width,
+            height: REEL.height,
+            display: 'flex',
+            flexDirection: 'column',
+            padding: 72,
+            fontFamily: 'sans-serif',
+          }}
+        >
+          {topBar}
+
+          <div
+            style={{
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                background: isBoard ? 'rgba(0,0,0,0.30)' : 'rgba(5,8,13,0.92)',
+                border: isBoard
+                  ? '4px dashed rgba(245,238,220,0.55)'
+                  : `2px solid ${accent}66`,
+                borderRadius: isBoard ? 20 : 30,
+                padding: '56px 48px',
+              }}
+            >
+              <span
+                style={{
+                  background: accent,
+                  color: ink,
+                  fontSize: 28,
+                  fontWeight: 800,
+                  letterSpacing: 3,
+                  borderRadius: 999,
+                  padding: '12px 28px',
+                }}
+              >
+                QUICK AD BREAK
+              </span>
+
+              <span
+                style={{
+                  color: '#FFFFFF',
+                  fontSize: 62,
+                  fontWeight: 800,
+                  lineHeight: 1.2,
+                  textAlign: 'center',
+                  marginTop: 40,
+                }}
+              >
+                Smarter than 90% of people?
+              </span>
+              <span
+                style={{
+                  color: 'rgba(255,255,255,0.85)',
+                  fontSize: 40,
+                  fontWeight: 600,
+                  marginTop: 18,
+                  textAlign: 'center',
+                }}
+              >
+                Prove it with the REAL 30-question IQ test
+              </span>
+
+              <div
+                style={{
+                  display: 'flex',
+                  gap: 14,
+                  marginTop: 40,
+                  flexWrap: 'wrap',
+                  justifyContent: 'center',
+                }}
+              >
+                {['Free', '7 minutes', 'Instant score', 'No sign-up'].map(
+                  (chip) => (
+                    <span
+                      key={chip}
+                      style={{
+                        background: 'rgba(255,255,255,0.12)',
+                        color: '#FFFFFF',
+                        fontSize: 30,
+                        fontWeight: 700,
+                        borderRadius: 999,
+                        padding: '12px 26px',
+                      }}
+                    >
+                      {chip}
+                    </span>
+                  ),
+                )}
+              </div>
+
+              <div
+                style={{
+                  display: 'flex',
+                  background: accent,
+                  borderRadius: 999,
+                  padding: '24px 64px',
+                  marginTop: 44,
+                }}
+              >
+                <span style={{ color: ink, fontSize: 44, fontWeight: 800 }}>
+                  LINK IN BIO
+                </span>
+              </div>
+
+              <span
+                style={{
+                  color: 'rgba(255,255,255,0.65)',
+                  fontSize: 27,
+                  marginTop: 36,
+                }}
+              >
+                Your puzzle is back in a second — clock is still running
+              </span>
+            </div>
+          </div>
+        </div>
+      ),
+      { width: REEL.width, height: REEL.height },
+    );
+  }
+
+  // Question — the quiz popup panel over the moving scene.
   // Road-kind mini illustrations are gone: the background IS the road now.
   const scene =
     card.scene && card.scene.kind !== 'road'
@@ -292,25 +419,23 @@ export async function GET(req: Request) {
                   display: 'flex',
                   alignItems: 'center',
                   gap: 12,
-                  background: isNudge ? accent : `${accent}29`,
+                  background: `${accent}29`,
                   borderRadius: 999,
                   padding: '12px 26px',
                 }}
               >
                 <svg width="30" height="30" viewBox="0 0 24 24">
-                  <path d={ICONS.warn} fill={isNudge ? ink : accent} />
+                  <path d={ICONS.warn} fill={accent} />
                 </svg>
                 <span
                   style={{
-                    color: isNudge ? ink : accent,
+                    color: accent,
                     fontSize: 27,
                     fontWeight: 800,
                     letterSpacing: 2,
                   }}
                 >
-                  {isNudge
-                    ? NUDGE_COPY[bg]
-                    : (card.badge ?? 'CAN YOU SOLVE IT?')}
+                  {card.badge ?? 'CAN YOU SOLVE IT?'}
                 </span>
               </div>
             </div>
