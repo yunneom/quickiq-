@@ -128,3 +128,17 @@ describe('Suno share-link resolution', () => {
     assert.equal(extractSunoMp3('<html></html>', 'https://suno.com/s/x'), null);
   });
 });
+
+describe('audio seed list', () => {
+  it('has unique ids and recognizable Suno URLs', async () => {
+    const { AUDIO_SEED } = await import('../../lib/social/audio-seed');
+    const { isSunoShareUrl } = await import('../../lib/social/suno');
+    const ids = AUDIO_SEED.map((s) => s.id);
+    assert.equal(new Set(ids).size, ids.length, 'duplicate seed ids');
+    assert.ok(AUDIO_SEED.length >= 8);
+    for (const seed of AUDIO_SEED) {
+      assert.match(seed.id, /^[a-z0-9-]{1,40}$/, `${seed.id} bad id`);
+      assert.ok(isSunoShareUrl(seed.url), `${seed.id} url not a Suno link: ${seed.url}`);
+    }
+  });
+});

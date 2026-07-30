@@ -19,6 +19,8 @@
  */
 
 import { createSupabaseAdmin, isSupabaseConfigured } from '@/lib/supabase/server';
+import { AUDIO_SEED } from './audio-seed';
+import { isSunoShareUrl, resolveSunoShareUrl } from './suno';
 
 const BUCKET = 'ig-media';
 const DIR = 'audio';
@@ -108,4 +110,61 @@ export function pickTrackId(
   if (trackIds.length === 0) return null;
   const sorted = [...trackIds].sort();
   return sorted[(dayIndex * 3 + slot) % sorted.length];
+}
+
+const SEED_MAX_BYTES = 20 * 1024 * 1024;
+
+/**
+ * Import operator-seeded tracks that are not in the library yet.
+ *
+ * Called by the cron before publishing: pulls at most `maxImports`
+ * missing seeds per run (resolve share link → download → store), bounded
+ * by `deadlineAt` so a slow CDN can never eat the posting budget. A seed
+ * that fails is simply retried on a later run.
+ */
+export async function importSeedTracks(
+  maxImports: number,
+  deadlineAt: number,
+): Promise<{ imported: string[]; pending: number }> {
+  const imported: string[] = [];
+  if (!isSupabaseConfigured()) return { imported, pending: 0 };
+
+  const manifest = await readAudioManifest();
+  const have = new Set(manifest.tracks.map((t) => t.id));
+  const missing = AUDIO_SEED.filter((seed) => !have.has(seed.id));
+
+  for (const seed of missing) {
+    if (imported.length >= maxImports || Date.now() > deadlineAt) break;
+    try {
+      const audioUrl = isSunoShareUrl(seed.url)
+        ? await resolveSunoShareUrl(seed.url)
+        : seed.url;
+      if (!audioUrl) continue;
+
+      const res = await fetch(audioUrl, {
+        cache: 'no-store',
+        signal: AbortSignal.timeout(20_000),
+      });
+      if (!res.ok) continue;
+      const type = res.headers.get('content-type') ?? '';
+      if (!/audio\/|octet-stream/.test(type)) continue;
+
+      const mp3 = Buffer.from(await res.arrayBuffer());
+      if (mp3.length === 0 || mp3.length > SEED_MAX_BYTES) continue;
+
+      const stored = await storeAudioTrack(seed.id, mp3, {
+        title: seed.title,
+        credit: 'Suno',
+        sourceUrl: audioUrl,
+      });
+      if (stored.ok) imported.push(seed.id);
+    } catch {
+      // Retried on the next run.
+    }
+  }
+
+  return {
+    imported,
+    pending: missing.length - imported.length,
+  };
 }
