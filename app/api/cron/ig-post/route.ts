@@ -7,6 +7,7 @@ import {
   getPublishingQuota,
 } from '@/lib/social/instagram';
 import { importSeedTracks } from '@/lib/social/audio';
+import { importClips } from '@/lib/social/clip-sources';
 import { plansForDay, utcDayIndex, type IgPostPlan } from '@/lib/social/ig-content';
 import { buildReelVideo } from '@/lib/social/reel';
 import { uploadPublicMedia, uploadPublicVideo } from '@/lib/social/storage';
@@ -179,6 +180,16 @@ export async function GET(req: Request) {
     pending: 0,
   }));
 
+  // Background footage: top up the clip pool (search → license filter →
+  // download → validate → store). One clip per run, bounded so audio +
+  // clips can never push the window below one full post (145s). Once the
+  // pool hits its per-scene target this is a single manifest read.
+  const clips = await importClips(1, startedAt + 125_000).catch(() => ({
+    imported: [] as string[],
+    scenesShort: [],
+    notes: ['import_crashed'],
+  }));
+
   const outcomes: PostOutcome[] = [];
   let publishedCount = 0;
 
@@ -217,6 +228,9 @@ export async function GET(req: Request) {
       published: publishedCount,
       audioImported: seeds.imported,
       audioPending: seeds.pending,
+      clipsImported: clips.imported,
+      clipScenesShort: clips.scenesShort,
+      clipNotes: clips.notes,
       elapsedMs: Date.now() - startedAt,
       outcomes,
     },
@@ -319,7 +333,11 @@ async function publishSlot(args: {
       mediaUrl = upload.url;
       published = await publishReelPost({
         videoUrl: upload.url,
-        caption: plan.caption,
+        // CC BY footage carries its credit into the caption — that IS
+        // the license compliance, so it must never be dropped.
+        caption: reel.credit
+          ? `${plan.caption}\n\n🎥 ${reel.credit}`
+          : plan.caption,
         deadlineAt: reelDeadline,
       });
     }
