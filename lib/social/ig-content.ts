@@ -124,7 +124,8 @@ const BAIT_POSTS: BaitPost[] = [
       ],
     },
     answer: 'A',
-    explain: 'A takes 2h30, B takes 3h20, C takes 4h23. Fastest ≠ first.',
+    explain:
+      'A takes 2 hr 30 min, B takes 3 hr 20 min, C takes 4 hr 23 min. Fastest is not first.',
   },
   {
     id: 'speed-catchup',
@@ -175,7 +176,7 @@ const BAIT_POSTS: BaitPost[] = [
   {
     id: 'speed-roundtrip',
     kind: 'speed',
-    hook: 'Same road, two speeds. Average is not 50 🤯',
+    hook: 'Same road, two speeds. The average is not 50 🤯',
     badge: null,
     prompt:
       'You drive to work at 40 km/h and drive home on the same road at 60 km/h. Average speed for the whole trip?',
@@ -203,10 +204,10 @@ const BAIT_POSTS: BaitPost[] = [
     prompt:
       'Two cars start 300 km apart and drive toward each other at 60 km/h and 40 km/h. How long until they meet?',
     options: [
-      { id: 'A', text: '2 h 30' },
-      { id: 'B', text: '3 h' },
-      { id: 'C', text: '5 h' },
-      { id: 'D', text: '6 h' },
+      { id: 'A', text: '2 hr 30 min' },
+      { id: 'B', text: '3 hr' },
+      { id: 'C', text: '5 hr' },
+      { id: 'D', text: '6 hr' },
     ],
     scene: {
       kind: 'road',
@@ -226,10 +227,10 @@ const BAIT_POSTS: BaitPost[] = [
     prompt:
       'Two trains are 400 km apart, heading toward each other at 120 km/h and 80 km/h. When do they meet?',
     options: [
-      { id: 'A', text: 'After 2 h' },
-      { id: 'B', text: 'After 2 h 30' },
-      { id: 'C', text: 'After 3 h 20' },
-      { id: 'D', text: 'After 4 h' },
+      { id: 'A', text: 'After 2 hr' },
+      { id: 'B', text: 'After 2 hr 30 min' },
+      { id: 'C', text: 'After 3 hr 20 min' },
+      { id: 'D', text: 'After 4 hr' },
     ],
     scene: {
       kind: 'road',
@@ -244,7 +245,7 @@ const BAIT_POSTS: BaitPost[] = [
   {
     id: 'speed-bridge',
     kind: 'speed',
-    hook: 'Careful — the train has a length 🚆',
+    hook: 'Careful — the train itself is 200 m long 🚆',
     badge: 'ALMOST EVERYONE FORGETS THIS',
     prompt:
       'A 200 m long train travels at 20 m/s. How long does it take to completely cross a 300 m bridge?',
@@ -274,15 +275,15 @@ const BAIT_POSTS: BaitPost[] = [
   {
     id: 'speed-chase',
     kind: 'speed',
-    hook: 'Cyclist vs runner. Who is patient enough to solve it?',
+    hook: 'Cyclist vs runner. Do the math in your head 🚴',
     badge: null,
     prompt:
       'A runner is 5 km ahead, going 10 km/h. A cyclist chases at 15 km/h. How long to catch up?',
     options: [
       { id: 'A', text: '30 min' },
-      { id: 'B', text: '1 h' },
-      { id: 'C', text: '1 h 30' },
-      { id: 'D', text: '2 h' },
+      { id: 'B', text: '1 hr' },
+      { id: 'C', text: '1 hr 30 min' },
+      { id: 'D', text: '2 hr' },
     ],
     scene: {
       kind: 'road',
@@ -299,7 +300,7 @@ const BAIT_POSTS: BaitPost[] = [
     kind: 'speed',
     hook: '5 seconds. No calculator ⏱️',
     badge: null,
-    prompt: '72 km/h is how many metres per second?',
+    prompt: '72 km/h is how many meters per second?',
     options: [
       { id: 'A', text: '20 m/s' },
       { id: 'B', text: '25 m/s' },
@@ -316,7 +317,7 @@ const BAIT_POSTS: BaitPost[] = [
   {
     id: 'speed-minutes',
     kind: 'speed',
-    hook: 'Quick one. Don’t overthink it.',
+    hook: "Quick one. Don't overthink it.",
     badge: null,
     prompt: 'A car covers 30 km at a steady 90 km/h. How many minutes does that take?',
     options: [
@@ -411,10 +412,10 @@ const BAIT_POSTS: BaitPost[] = [
     prompt:
       'Tap A fills a tank in 4 hours. Tap B fills it in 6 hours. How long with both taps open?',
     options: [
-      { id: 'A', text: '5 hours' },
-      { id: 'B', text: '2 h 24 min' },
-      { id: 'C', text: '2 h 30 min' },
-      { id: 'D', text: '10 hours' },
+      { id: 'A', text: '5 hr' },
+      { id: 'B', text: '2 hr 24 min' },
+      { id: 'C', text: '2 hr 30 min' },
+      { id: 'D', text: '10 hr' },
     ],
     scene: {
       kind: 'bars',
@@ -424,12 +425,12 @@ const BAIT_POSTS: BaitPost[] = [
       ],
     },
     answer: 'B',
-    explain: 'Rates add: ¼ + ⅙ = 5/12 per hour → 12/5 h = 2 h 24 min.',
+    explain: 'Rates add: 1/4 + 1/6 = 5/12 per hour → 12/5 hr = 2 hr 24 min.',
   },
   {
     id: 'rate-hens',
     kind: 'rate',
-    hook: 'Hens, eggs, days. Only one is a trap 🥚',
+    hook: 'Hens, eggs, days. Your gut is wrong here 🥚',
     badge: null,
     prompt: 'If 6 hens lay 6 eggs in 6 days, how many days do 12 hens need to lay 12 eggs?',
     options: [
@@ -451,7 +452,7 @@ const BAIT_POSTS: BaitPost[] = [
   {
     id: 'rate-diggers',
     kind: 'rate',
-    hook: 'Basic maths. Comment before you scroll 👇',
+    hook: 'Basic math. Comment before you scroll 👇',
     badge: null,
     prompt: '4 workers dig a trench in 12 hours. How long would 6 workers need?',
     options: [
@@ -475,7 +476,8 @@ const BAIT_POSTS: BaitPost[] = [
     kind: 'rate',
     hook: 'Simple numbers. Sneaky logic.',
     badge: 'THINK BEFORE YOU SCROLL',
-    prompt: '3 cats catch 3 mice in 3 minutes. How many cats catch 100 mice in 100 minutes?',
+    prompt:
+      '3 cats catch 3 mice in 3 minutes. How many cats does it take to catch 100 mice in exactly 100 minutes?',
     options: [
       { id: 'A', text: '3 cats' },
       { id: 'B', text: '100 cats' },
@@ -543,7 +545,7 @@ const BAIT_POSTS: BaitPost[] = [
   {
     id: 'pct-reverse',
     kind: 'percent',
-    hook: 'Reverse the discount. $24 is the trap 🪤',
+    hook: 'Undo the discount. Most people miss it 🪤',
     badge: null,
     prompt: 'A shirt costs $20 after a 20% discount. What was the original price?',
     options: [
@@ -588,7 +590,7 @@ const BAIT_POSTS: BaitPost[] = [
   {
     id: 'pct-apples',
     kind: 'percent',
-    hook: 'Shopping maths. Don’t embarrass yourself 🍎',
+    hook: "Shopping math. Don't embarrass yourself 🍎",
     badge: null,
     prompt: 'If 3 apples cost $1.50, how much do 7 apples cost?',
     options: [
@@ -633,7 +635,7 @@ const BAIT_POSTS: BaitPost[] = [
   {
     id: 'pct-book',
     kind: 'percent',
-    hook: 'Reads like a riddle. It’s algebra 📚',
+    hook: "Reads like a riddle. It's algebra 📚",
     badge: null,
     prompt: 'A book costs $10 plus half of its own price. How much is the book?',
     options: [
@@ -683,7 +685,7 @@ const BAIT_POSTS: BaitPost[] = [
     kind: 'sequence',
     hook: 'Spot the pattern in 10 seconds ⏱️',
     badge: 'TOP 10% ONLY',
-    prompt: 'What comes next?',
+    prompt: 'What comes next? 2, 3, 5, 9, 17, ?',
     options: [
       { id: 'A', text: '26' },
       { id: 'B', text: '33' },
@@ -699,7 +701,7 @@ const BAIT_POSTS: BaitPost[] = [
     kind: 'sequence',
     hook: 'If you see it, your brain works differently.',
     badge: null,
-    prompt: 'What comes next?',
+    prompt: 'What comes next? 3, 6, 18, 72, ?',
     options: [
       { id: 'A', text: '360' },
       { id: 'B', text: '288' },
@@ -715,7 +717,7 @@ const BAIT_POSTS: BaitPost[] = [
     kind: 'sequence',
     hook: 'Easy… until you look twice.',
     badge: null,
-    prompt: 'What comes next?',
+    prompt: 'What comes next? 1, 4, 9, 16, 25, ?',
     options: [
       { id: 'A', text: '30' },
       { id: 'B', text: '36' },
@@ -731,7 +733,7 @@ const BAIT_POSTS: BaitPost[] = [
     kind: 'sequence',
     hook: 'Not squares. Look again 👀',
     badge: null,
-    prompt: 'What comes next?',
+    prompt: 'What comes next? 2, 5, 10, 17, 26, ?',
     options: [
       { id: 'A', text: '35' },
       { id: 'B', text: '37' },
@@ -745,9 +747,9 @@ const BAIT_POSTS: BaitPost[] = [
   {
     id: 'seq-fibonacci',
     kind: 'sequence',
-    hook: 'Nature’s favourite sequence 🌻',
+    hook: "Nature's favorite sequence 🌻",
     badge: null,
-    prompt: 'What comes next?',
+    prompt: 'What comes next? 1, 1, 2, 3, 5, 8, ?',
     options: [
       { id: 'A', text: '11' },
       { id: 'B', text: '13' },
@@ -761,9 +763,9 @@ const BAIT_POSTS: BaitPost[] = [
   {
     id: 'seq-mersenne',
     kind: 'sequence',
-    hook: 'Double it, then some. What’s next?',
+    hook: "Double it, then some. What's next?",
     badge: null,
-    prompt: 'What comes next?',
+    prompt: 'What comes next? 3, 7, 15, 31, ?',
     options: [
       { id: 'A', text: '62' },
       { id: 'B', text: '63' },
@@ -779,7 +781,7 @@ const BAIT_POSTS: BaitPost[] = [
     kind: 'sequence',
     hook: 'Going down. How far? 📉',
     badge: null,
-    prompt: 'What comes next?',
+    prompt: 'What comes next? 81, 27, 9, 3, ?',
     options: [
       { id: 'A', text: '1' },
       { id: 'B', text: '0' },
@@ -795,7 +797,7 @@ const BAIT_POSTS: BaitPost[] = [
     kind: 'sequence',
     hook: 'This one explodes fast 💥',
     badge: 'ONLY 1% SEE IT',
-    prompt: 'What comes next?',
+    prompt: 'What comes next? 1, 2, 6, 24, 120, ?',
     options: [
       { id: 'A', text: '600' },
       { id: 'B', text: '720' },
@@ -809,9 +811,9 @@ const BAIT_POSTS: BaitPost[] = [
   {
     id: 'seq-double-plus-one',
     kind: 'sequence',
-    hook: 'Comment your answer before you scroll 👇',
+    hook: 'Double it, add one. Simple — until it is not.',
     badge: null,
-    prompt: 'What comes next?',
+    prompt: 'What comes next? 4, 9, 19, 39, ?',
     options: [
       { id: 'A', text: '78' },
       { id: 'B', text: '79' },
@@ -827,7 +829,7 @@ const BAIT_POSTS: BaitPost[] = [
     kind: 'sequence',
     hook: 'Only 1% see the pattern 🔍',
     badge: 'ONLY 1% SEE IT',
-    prompt: 'What comes next?',
+    prompt: 'What comes next? 1, 11, 21, 1211, 111221, ?',
     options: [
       { id: 'A', text: '312211' },
       { id: 'B', text: '122111' },
@@ -853,7 +855,7 @@ const BAIT_POSTS: BaitPost[] = [
       { id: 'D', text: '8' },
     ],
     answer: 'B',
-    explain: 'Left to right after the bracket: 8 ÷ 2 × 4 = 16.',
+    explain: 'Left to right after the parentheses: 8 ÷ 2 × 4 = 16.',
   },
   {
     id: 'math-pattern-sum',
@@ -869,7 +871,7 @@ const BAIT_POSTS: BaitPost[] = [
     ],
     scene: {
       kind: 'sequence',
-      items: ['10', '63', '66', '?'],
+      items: ['2+3=10', '7+2=63', '6+5=66', '8+4=?'],
     },
     answer: 'A',
     explain: 'The rule is a × (a + b): 8 × 12 = 96.',
@@ -892,7 +894,7 @@ const BAIT_POSTS: BaitPost[] = [
   {
     id: 'math-ones',
     kind: 'trick',
-    hook: 'Ten ones and one zero. What could go wrong?',
+    hook: 'Eleven ones and one zero. What could go wrong?',
     badge: null,
     prompt: '1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 × 0 + 1 = ?',
     options: [
@@ -907,7 +909,7 @@ const BAIT_POSTS: BaitPost[] = [
   {
     id: 'math-half',
     kind: 'trick',
-    hook: 'Sounds easy. Isn’t.',
+    hook: "Sounds easy. Isn't.",
     badge: null,
     prompt: 'Divide 30 by ½, then add 10. What do you get?',
     options: [
@@ -932,7 +934,7 @@ const BAIT_POSTS: BaitPost[] = [
       { id: 'D', text: 'Forever' },
     ],
     answer: 'B',
-    explain: 'After the first subtraction you are no longer subtracting from 25.',
+    explain: 'Once — after that you are subtracting from 20, not 25.',
   },
   {
     id: 'trick-batball',
@@ -1031,7 +1033,7 @@ const BAIT_POSTS: BaitPost[] = [
     hook: 'Doctors get this wrong too 💊',
     badge: null,
     prompt:
-      'A doctor gives you 3 pills and says take one every 30 minutes. How long until the pills are gone?',
+      'A doctor gives you 3 pills: take one right now, then one every 30 minutes after that. How long until the pills are gone?',
     options: [
       { id: 'A', text: '90 minutes' },
       { id: 'B', text: '60 minutes' },
@@ -1090,7 +1092,7 @@ const BAIT_POSTS: BaitPost[] = [
   {
     id: 'spell-embarrassed',
     kind: 'spelling',
-    hook: "Don't be embarrassed if you miss it 😅",
+    hook: "Don't be ashamed if you miss it 😅",
     badge: null,
     prompt: 'Which spelling is correct?',
     options: [
@@ -1150,7 +1152,7 @@ const BAIT_POSTS: BaitPost[] = [
   {
     id: 'spell-occurrence',
     kind: 'spelling',
-    hook: 'A rare occurrence: getting this right first try.',
+    hook: 'Rare event: getting this right on the first try.',
     badge: null,
     prompt: 'Which spelling is correct?',
     options: [
@@ -1167,7 +1169,7 @@ const BAIT_POSTS: BaitPost[] = [
 const BAIT_LABEL: Record<BaitKind, string> = {
   speed: 'SPEED & DISTANCE',
   rate: 'WORK RATE',
-  percent: 'PERCENTAGE TEST',
+  percent: 'MENTAL MATH',
   sequence: 'PATTERN CHECK',
   trick: 'LOGIC CHECK',
   spelling: 'SPELLING TEST',
@@ -1198,6 +1200,16 @@ function baitBg(b: BaitPost): BgScene {
   return 'chalk';
 }
 
+/** Searchable phrase that opens the caption for each puzzle family. */
+const KIND_KEYWORD: Record<BaitKind, string> = {
+  speed: 'Speed and distance puzzle',
+  rate: 'Work rate puzzle',
+  percent: 'Mental math test',
+  sequence: 'Number sequence puzzle',
+  trick: 'Trick question',
+  spelling: 'Spelling test',
+};
+
 const KIND_TAG: Record<BaitKind, string> = {
   speed: '#mathpuzzle',
   rate: '#logicpuzzle',
@@ -1218,27 +1230,18 @@ const HOOKS = [
   '90% pick the wrong one here.',
   'If you got this instantly, your logic is above average.',
   'Comment your answer before you scroll 👇',
-  'This one filters the top 10% fast.',
+  'This one separates the top 10% fast.',
   'Easy… until you look twice.',
 ];
 
-const HASHTAGS = [
-  '#iqtest',
-  '#brainteaser',
-  '#riddle',
-  '#puzzle',
-  '#logicpuzzle',
-  '#braintraining',
-  '#quiz',
-  '#mindgames',
-  '#iq',
-  '#testyourself',
-  '#brainteasers',
-  '#dailypuzzle',
-  '#quizztime',
-  '#criticalthinking',
-  '#puzzlelover',
-];
+/**
+ * Three base tags, not seventeen. Instagram capped hashtags at 5 in 2026
+ * and treats overflow as a spam signal; reach now comes from keywords in
+ * the caption text, not tag volume. tagsFor() appends the per-post kind
+ * tag and #quickiq, landing on exactly 5.
+ */
+const HASHTAGS = ['#iqtest', '#brainteaser', '#quiz'];
+
 
 const CATEGORY_TAG: Record<string, string> = {
   verbal: '#verbalreasoning',
@@ -1260,7 +1263,9 @@ function tagsFor(extra: string[]): string {
 
 function baitCaption(b: BaitPost): string {
   return [
-    b.hook,
+    // Keyword-first: Instagram indexes caption text and weighs the
+    // opening line heaviest, so lead with the searchable phrase.
+    `${KIND_KEYWORD[b.kind]} — ${b.hook}`,
     '',
     b.prompt,
     '',
@@ -1276,7 +1281,7 @@ function baitCaption(b: BaitPost): string {
 
 function questionCaption(q: Question, hook: string): string {
   return [
-    hook,
+    `IQ test question — ${hook}`,
     '',
     q.question_text,
     '',
@@ -1293,17 +1298,24 @@ function questionCaption(q: Question, hook: string): string {
 /** Reuse the caption hook as the on-card badge when none is set. */
 function hookBadge(hook: string): string | null {
   const ascii = hook.replace(/[^\x20-\x7E]/g, '').replace(/\s+/g, ' ').trim();
-  const cut = ascii.replace(/[.!?]+$/, '').toUpperCase();
+  // Keep '?' — stripping it turns a question hook into an assertion, and
+  // several of those assertions state the answer ("HALVE THE DAYS").
+  const cut = ascii.replace(/[.!]+$/, '').toUpperCase();
   return cut.length >= 8 && cut.length <= 38 ? cut : null;
 }
 
 function baitPlan(b: BaitPost): IgPostPlan {
+  // Sequence puzzles carry their run in the prompt so the CAPTION is
+  // solvable on its own (screen readers, comments, reposts) — but the
+  // card already shows the run as tiles, so strip it there.
+  const cardPrompt =
+    b.scene?.kind === 'sequence' ? promptWithoutSequence(b.prompt) : b.prompt;
   return {
     key: `bait-${b.id}`,
     card: {
       label: BAIT_LABEL[b.kind],
       badge: b.badge ?? hookBadge(b.hook),
-      prompt: b.prompt,
+      prompt: cardPrompt,
       options: b.options,
       scene: b.scene,
       bg: baitBg(b),
@@ -1353,7 +1365,7 @@ function questionPlan(q: Question, hook: string): IgPostPlan {
       scene,
       bg: q.category === 'verbal' ? 'slate' : 'chalk',
       theme: 'blue',
-      footer: 'Answer in bio → 30-question IQ test',
+      footer: 'Full 30-question IQ test in bio',
     },
     // The caption keeps the full original text — it is the accessible copy.
     caption: questionCaption(q, hook),
@@ -1428,6 +1440,10 @@ export function baitPostsForTest(): ReadonlyArray<{
   options: IgCardOption[];
   answer: string;
   prompt: string;
+  hook: string;
+  badge: string | null;
+  explain: string;
+  scene?: Scene;
 }> {
   return BAIT_POSTS;
 }

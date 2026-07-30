@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { getSiteUrl } from '@/lib/site-url';
 import { Button } from '@/components/ui/button';
 import type { PersonalityProfile } from '@/lib/personality/types';
 import type { TestCatalogEntry } from '@/lib/tests/catalog';
@@ -70,7 +71,7 @@ export function TypeDetail({
   // Article + BreadcrumbList JSON-LD — same schema family the benchmark
   // sites use on every type page to earn rich results for
   // "<type> strengths and weaknesses" plus the SERP breadcrumb display.
-  const base = process.env.NEXT_PUBLIC_APP_URL ?? 'https://7iq.vercel.app';
+  const base = getSiteUrl();
   const articleLd = {
     '@context': 'https://schema.org',
     '@type': 'Article',

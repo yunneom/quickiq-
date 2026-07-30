@@ -7,7 +7,14 @@ import {
   TIMER_SECONDS,
   reelFrameSchedule,
 } from './reel-spec';
-import { bgFrameSvg, BG_ACCENT } from './reel-bg';
+import { bgFrameSvg, BG_ACCENT, type BgScene } from './reel-bg';
+import {
+  FOOTAGE_H,
+  FOOTAGE_W,
+  footageScrimSvg,
+  kenBurnsCrop,
+  loadFootage,
+} from './footage';
 import { planForSlot } from './ig-content';
 
 /**
@@ -17,10 +24,14 @@ import { planForSlot } from './ig-content';
  * routes. Pipeline per video:
  *   1. fetch the 3 transparent overlay PNGs (question / ad / outro)
  *      from our own public /api/ig/reel-frame
- *   2. for every background frame: generate the scene SVG for that
- *      moment (approaching train, night road, chalk dust — all code,
- *      zero stock-footage licensing), rasterize with sharp, composite
- *      the active overlay on top
+ *   2. for every background frame, build the base layer:
+ *        · a real photograph for this scene if one has been loaded
+ *          (/api/admin/footage), animated with a slow Ken Burns push-in
+ *          so a still reads as footage — a train front really does grow
+ *          over the 20s question
+ *        · otherwise the code-drawn scene SVG (approaching train, night
+ *          road, chalk dust) — always available, never a licensing risk
+ *      then composite the active overlay on top
  *   3. feed RGBA frames to the wasm H.264 encoder
  *
  * Backgrounds animate at BG_FPS and each frame is emitted 30/BG_FPS
@@ -113,6 +124,10 @@ export async function buildReelVideo(args: {
       }),
     );
 
+    // Photo base layer, when the operator has loaded one for this scene.
+    // Decoded to raw ONCE — per-frame work is then pure pixel movement.
+    const photo = await loadPhotoLayer(scene);
+
     const encoder = await createH264MP4Encoder();
     encoder.width = REEL.width;
     encoder.height = REEL.height;
@@ -132,11 +147,30 @@ export async function buildReelVideo(args: {
         const second = Math.floor(u / BG_FPS);
         const overlay = overlays[overlayIndexAt(second)];
         const bar = timerBarSvg(scene, u / BG_FPS);
-        const layers: OverlayOptions[] = [overlay];
+
+        const layers: OverlayOptions[] = [];
+        // Scrim first: it sits between the photo and our chrome.
+        if (photo) layers.push(photo.scrim);
+        layers.push(overlay);
         if (bar) {
           layers.push({ input: Buffer.from(bar), top: 168, left: 0 });
         }
-        return sharp(Buffer.from(bgFrameSvg(scene, t)))
+
+        const base = photo
+          ? sharp(photo.raw, {
+              raw: { width: FOOTAGE_W, height: FOOTAGE_H, channels: 4 },
+            }).extract(
+              kenBurnsCrop(
+                scene,
+                t,
+                { width: FOOTAGE_W, height: FOOTAGE_H },
+                { width: REEL.width, height: REEL.height },
+              ),
+            )
+          : sharp(Buffer.from(bgFrameSvg(scene, t)));
+
+        return base
+          .resize(REEL.width, REEL.height)
           .composite(layers)
           .ensureAlpha()
           .raw()
@@ -172,5 +206,44 @@ export async function buildReelVideo(args: {
       ok: false,
       reason: err instanceof Error ? err.message : 'reel_build_failed',
     };
+  }
+}
+
+/**
+ * Decode the scene photo (if any) plus its scrim into raw RGBA once, so
+ * the per-frame path never re-decodes a JPEG or rasterizes the gradient.
+ */
+async function loadPhotoLayer(scene: BgScene): Promise<{
+  raw: Buffer;
+  scrim: OverlayOptions;
+} | null> {
+  const jpeg = await loadFootage(scene);
+  if (!jpeg) return null;
+  try {
+    const raw = await sharp(jpeg)
+      .resize(FOOTAGE_W, FOOTAGE_H, { fit: 'cover' })
+      .ensureAlpha()
+      .raw()
+      .toBuffer();
+    const scrim = await sharp(
+      Buffer.from(footageScrimSvg(REEL.width, REEL.height)),
+    )
+      .ensureAlpha()
+      .raw()
+      .toBuffer({ resolveWithObject: true });
+    return {
+      raw,
+      scrim: {
+        input: scrim.data,
+        raw: {
+          width: scrim.info.width,
+          height: scrim.info.height,
+          channels: 4 as const,
+        },
+      },
+    };
+  } catch {
+    // A corrupt upload must not take the daily post down.
+    return null;
   }
 }

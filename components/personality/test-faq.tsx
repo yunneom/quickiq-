@@ -60,11 +60,15 @@ export function TestFaq({ locale, faqs }: Props) {
                   ▾
                 </span>
               </button>
-              {open && (
-                <div className="border-t border-gray-100 px-4 py-3 text-sm leading-relaxed text-gray-700">
-                  {f.a}
-                </div>
-              )}
+              {/* Always in the DOM, collapsed with `hidden`: the page's
+                  FAQPage JSON-LD marks these answers up, and Google
+                  requires the marked-up text to be present on the page. */}
+              <div
+                hidden={!open}
+                className="border-t border-gray-100 px-4 py-3 text-sm leading-relaxed text-gray-700"
+              >
+                {f.a}
+              </div>
             </div>
           );
         })}

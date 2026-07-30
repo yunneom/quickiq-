@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { getSiteUrl } from '@/lib/site-url';
 import {
   getMessages,
   getTranslations,
@@ -34,7 +35,7 @@ export default async function IqLandingPage({
   unstable_setRequestLocale(locale);
   const t = await getTranslations('landing');
   const tMeta = await getTranslations('meta');
-  const base = process.env.NEXT_PUBLIC_APP_URL ?? 'https://7iq.vercel.app';
+  const base = getSiteUrl();
   const loc = (locale === 'en' ? 'en' : 'ko') as 'ko' | 'en';
   const messages = (await getMessages()) as unknown as {
     landing?: { faqs?: Array<{ q: string; a: string }> };

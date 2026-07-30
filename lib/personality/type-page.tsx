@@ -44,6 +44,10 @@ export function makeTypeMetadata(slug: string) {
       title,
       description: profile.tagline,
       alternates: {
+        // Self-referencing canonical is required for Google to trust the
+        // hreflang cluster — and Next shallow-merges `alternates`, so
+        // setting `languages` here would otherwise drop the layout's.
+        canonical: `/${loc}/${slug}/types/${type}`,
         languages: {
           ko: `/ko/${slug}/types/${type}`,
           en: `/en/${slug}/types/${type}`,

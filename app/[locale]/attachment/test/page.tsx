@@ -3,6 +3,13 @@ import { unstable_setRequestLocale } from 'next-intl/server';
 import { PersonalityRunner } from '@/components/personality/personality-runner';
 import { locales, type Locale } from '@/i18n';
 
+// Runner pages are pure app UI with no indexable content, and inheriting
+// the layout's canonical made every one of them claim to BE the homepage.
+export const metadata = {
+  robots: { index: false, follow: true },
+};
+
+
 export default function AttachmentTestPage({
   params: { locale },
 }: {
