@@ -56,6 +56,14 @@ const securityHeaders = [
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  // ffmpeg-static's binary is loaded via a path (not require()), so the
+  // file tracer can't see it — include it explicitly for the routes that
+  // mux reel soundtracks.
+  experimental: {
+    outputFileTracingIncludes: {
+      '/api/cron/ig-post': ['./node_modules/ffmpeg-static/ffmpeg'],
+    },
+  },
   async headers() {
     return [
       {

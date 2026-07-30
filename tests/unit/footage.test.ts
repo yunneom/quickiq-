@@ -78,3 +78,21 @@ describe('kenBurnsCrop', () => {
     assert.ok(Math.abs(c.width / c.height - OUT.width / OUT.height) < 0.01);
   });
 });
+
+describe('pickTrackId (soundtrack rotation)', () => {
+  it('is deterministic and rotates across slots', async () => {
+    const { pickTrackId } = await import('../../lib/social/audio');
+    const ids = ['suno-b', 'suno-a', 'suno-c'];
+    assert.equal(pickTrackId(100, 0, ids), pickTrackId(100, 0, ids));
+    // three slots on one day use three different tracks when 3 are loaded
+    const day = new Set([
+      pickTrackId(100, 0, ids),
+      pickTrackId(100, 1, ids),
+      pickTrackId(100, 2, ids),
+    ]);
+    assert.equal(day.size, 3);
+    // order of the input list must not matter
+    assert.equal(pickTrackId(7, 1, ids), pickTrackId(7, 1, [...ids].reverse()));
+    assert.equal(pickTrackId(5, 0, []), null);
+  });
+});
