@@ -18,6 +18,8 @@ import {
 import { planForSlot } from './ig-content';
 import { loadAudioTrack, pickTrackId, readAudioManifest } from './audio';
 import { muxAudioIntoVideo } from './mux';
+import { loadClip, pickClipForSlot, readClipManifest } from './clips';
+import { extractClipFrames } from './clip-frames';
 
 /**
  * Builds the daily reel as an in-memory MP4 — now with a MOVING scene.
@@ -60,7 +62,12 @@ import { muxAudioIntoVideo } from './mux';
 const BG_FPS = 6;
 
 export type ReelResult =
-  | { ok: true; buffer: Buffer }
+  | {
+      ok: true;
+      buffer: Buffer;
+      /** Set when the background clip's license requires a caption credit. */
+      credit?: string;
+    }
   | { ok: false; reason: string };
 
 /**
@@ -128,9 +135,13 @@ export async function buildReelVideo(args: {
       }),
     );
 
-    // Photo base layer, when the operator has loaded one for this scene.
-    // Decoded to raw ONCE — per-frame work is then pure pixel movement.
-    const photo = await loadPhotoLayer(scene);
+    const uniqueFrames = REEL_DURATION_SECONDS * BG_FPS;
+
+    // Background priority: real clip → real photo (Ken Burns) → drawn
+    // SVG scene. Each step degrades silently — a bad clip must never
+    // take the daily post down.
+    const clip = await loadClipLayer(scene, args.dayIndex, slot, args.deadlineAt);
+    const photo = clip ? null : await loadPhotoLayer(scene);
 
     const encoder = await createH264MP4Encoder();
     encoder.width = REEL.width;
@@ -143,7 +154,6 @@ export async function buildReelVideo(args: {
     encoder.initialize();
 
     try {
-      const uniqueFrames = REEL_DURATION_SECONDS * BG_FPS;
       const dupe = Math.round(REEL.fps / BG_FPS);
 
       const renderFrame = (u: number) => {
@@ -153,25 +163,29 @@ export async function buildReelVideo(args: {
         const bar = timerBarSvg(scene, u / BG_FPS);
 
         const layers: OverlayOptions[] = [];
-        // Scrim first: it sits between the photo and our chrome.
-        if (photo) layers.push(photo.scrim);
+        // Scrim first: it sits between the footage and our chrome.
+        if (clip) layers.push(clip.scrim);
+        else if (photo) layers.push(photo.scrim);
         layers.push(overlay);
         if (bar) {
           layers.push({ input: Buffer.from(bar), top: 168, left: 0 });
         }
 
-        const base = photo
-          ? sharp(photo.raw, {
-              raw: { width: FOOTAGE_W, height: FOOTAGE_H, channels: 4 },
-            }).extract(
-              kenBurnsCrop(
-                scene,
-                t,
-                { width: FOOTAGE_W, height: FOOTAGE_H },
-                { width: REEL.width, height: REEL.height },
-              ),
-            )
-          : sharp(Buffer.from(bgFrameSvg(scene, t)));
+        const base = clip
+          ? // Already cropped to the output frame by ffmpeg.
+            sharp(clip.frames[Math.min(u, clip.frames.length - 1)])
+          : photo
+            ? sharp(photo.raw, {
+                raw: { width: FOOTAGE_W, height: FOOTAGE_H, channels: 4 },
+              }).extract(
+                kenBurnsCrop(
+                  scene,
+                  t,
+                  { width: FOOTAGE_W, height: FOOTAGE_H },
+                  { width: REEL.width, height: REEL.height },
+                ),
+              )
+            : sharp(Buffer.from(bgFrameSvg(scene, t)));
 
         return base
           .resize(REEL.width, REEL.height)
@@ -202,6 +216,7 @@ export async function buildReelVideo(args: {
       encoder.finalize();
       const out = encoder.FS.readFile(encoder.outputFilename);
       const silent = Buffer.from(out);
+      const credit = clip?.captionCredit;
 
       // Soundtrack: deterministic rotation over the operator's library.
       // Any failure publishes the silent cut instead of failing the post.
@@ -220,13 +235,13 @@ export async function buildReelVideo(args: {
               audio,
               REEL_DURATION_SECONDS,
             );
-            if (withAudio) return { ok: true, buffer: withAudio };
+            if (withAudio) return { ok: true, buffer: withAudio, credit };
           }
         }
       } catch {
         // fall through to the silent cut
       }
-      return { ok: true, buffer: silent };
+      return { ok: true, buffer: silent, credit };
     } finally {
       encoder.delete();
     }
@@ -235,6 +250,72 @@ export async function buildReelVideo(args: {
       ok: false,
       reason: err instanceof Error ? err.message : 'reel_build_failed',
     };
+  }
+}
+
+/**
+ * Real footage layer: pick this slot's clip from the pool, download it
+ * from our bucket and pre-extract every background frame with ffmpeg
+ * (looped and center-cropped to the reel frame). Null when no clip is
+ * loaded for the scene, extraction fails, or the deadline is too close
+ * to afford the extraction pass — callers then fall back to photo/SVG.
+ */
+async function loadClipLayer(
+  scene: BgScene,
+  dayIndex: number,
+  slot: number,
+  deadlineAt?: number,
+): Promise<{
+  frames: Buffer[];
+  scrim: OverlayOptions;
+  captionCredit?: string;
+} | null> {
+  try {
+    const manifest = await readClipManifest();
+    const entry = pickClipForSlot(scene, dayIndex, slot, manifest.clips);
+    if (!entry) return null;
+
+    // Extraction is a bounded native pass (~5-15s). If less than 45s of
+    // budget remains it would eat the encode's time — skip to fallbacks.
+    const remaining = deadlineAt ? deadlineAt - Date.now() : Infinity;
+    if (remaining < 45_000) return null;
+
+    const clip = await loadClip(entry.id);
+    if (!clip) return null;
+
+    const frames = await extractClipFrames({
+      clip,
+      fps: BG_FPS,
+      durationSeconds: REEL_DURATION_SECONDS,
+      width: REEL.width,
+      height: REEL.height,
+      timeoutMs: Math.min(60_000, Math.max(15_000, remaining - 30_000)),
+    });
+    if (!frames || frames.length === 0) return null;
+
+    const scrim = await sharp(
+      Buffer.from(footageScrimSvg(REEL.width, REEL.height)),
+    )
+      .ensureAlpha()
+      .raw()
+      .toBuffer({ resolveWithObject: true });
+
+    return {
+      frames,
+      scrim: {
+        input: scrim.data,
+        raw: {
+          width: scrim.info.width,
+          height: scrim.info.height,
+          channels: 4 as const,
+        },
+      },
+      captionCredit: entry.requiresAttribution && entry.credit
+        ? `${entry.credit}${entry.license ? ` (${entry.license})` : ''}`
+        : undefined,
+    };
+  } catch {
+    return null;
   }
 }
 

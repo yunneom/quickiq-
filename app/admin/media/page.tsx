@@ -26,6 +26,11 @@ interface FootageScene {
   storedAt?: string;
 }
 
+interface ClipSceneStatus {
+  scene: string;
+  clips: { id: string; credit?: string; license?: string }[];
+}
+
 const SCENES: Array<{ id: string; label: string }> = [
   { id: 'rails', label: '기찻길 (기차·다리 문제)' },
   { id: 'road', label: '야간 도로 (차량 속도 문제)' },
@@ -42,12 +47,17 @@ export default function MediaAdminPage() {
 
   const [tracks, setTracks] = useState<AudioTrack[]>([]);
   const [scenes, setScenes] = useState<FootageScene[]>([]);
+  const [clipScenes, setClipScenes] = useState<ClipSceneStatus[]>([]);
+  const [clipTarget, setClipTarget] = useState(3);
 
   const [songUrl, setSongUrl] = useState('');
   const [songId, setSongId] = useState('');
   const [photoUrl, setPhotoUrl] = useState('');
   const [photoScene, setPhotoScene] = useState('rails');
   const [photoCredit, setPhotoCredit] = useState('');
+  const [clipUrl, setClipUrl] = useState('');
+  const [clipScene, setClipScene] = useState('rails');
+  const [clipCredit, setClipCredit] = useState('');
 
   useEffect(() => {
     const saved = window.localStorage.getItem(TOKEN_KEY);
@@ -61,7 +71,7 @@ export default function MediaAdminPage() {
     setBusy(true);
     setErr(null);
     try {
-      const [audioRes, footageRes] = await Promise.all([
+      const [audioRes, footageRes, clipsRes] = await Promise.all([
         fetch('/api/admin/audio', {
           headers: { 'x-admin-token': t },
           cache: 'no-store',
@@ -70,16 +80,26 @@ export default function MediaAdminPage() {
           headers: { 'x-admin-token': t },
           cache: 'no-store',
         }),
+        fetch('/api/admin/clips', {
+          headers: { 'x-admin-token': t },
+          cache: 'no-store',
+        }),
       ]);
-      if (!audioRes.ok || !footageRes.ok) {
+      if (!audioRes.ok || !footageRes.ok || !clipsRes.ok) {
         setErr('토큰이 틀렸거나 서버 오류입니다.');
         setAuthed(false);
         return;
       }
       const audio = (await audioRes.json()) as { tracks: AudioTrack[] };
       const footage = (await footageRes.json()) as { scenes: FootageScene[] };
+      const clips = (await clipsRes.json()) as {
+        target: number;
+        scenes: ClipSceneStatus[];
+      };
       setTracks(audio.tracks ?? []);
       setScenes(footage.scenes ?? []);
+      setClipScenes(clips.scenes ?? []);
+      setClipTarget(clips.target ?? 3);
       setAuthed(true);
       window.localStorage.setItem(TOKEN_KEY, t);
     } catch (e) {
@@ -155,6 +175,85 @@ export default function MediaAdminPage() {
       setNotice(`사진 등록 완료: ${photoScene} 씬. 다음 발행부터 실사 배경이 적용됩니다.`);
       setPhotoUrl('');
       setPhotoCredit('');
+      await refresh(token);
+    } catch (e) {
+      setErr(String(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function runClipImport() {
+    setBusy(true);
+    setErr(null);
+    setNotice(null);
+    try {
+      const res = await fetch('/api/admin/clips', {
+        method: 'POST',
+        headers: {
+          'x-admin-token': token,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ action: 'import' }),
+      });
+      const data = (await res.json()) as {
+        ok?: boolean;
+        imported?: string[];
+        scenesShort?: string[];
+        error?: string;
+      };
+      if (!res.ok || !data.ok) {
+        setErr(data.error ?? `HTTP ${res.status}`);
+        return;
+      }
+      const n = data.imported?.length ?? 0;
+      setNotice(
+        n > 0
+          ? `영상 ${n}개 수집 완료 (${data.imported!.join(', ')}). 부족한 씬: ${
+              data.scenesShort?.length ? data.scenesShort.join(', ') : '없음'
+            }`
+          : `새로 수집된 영상 없음. 부족한 씬: ${
+              data.scenesShort?.length ? data.scenesShort.join(', ') : '없음 — 풀이 가득 찼습니다'
+            }`,
+      );
+      await refresh(token);
+    } catch (e) {
+      setErr(String(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function addClip() {
+    setBusy(true);
+    setErr(null);
+    setNotice(null);
+    try {
+      const res = await fetch('/api/admin/clips', {
+        method: 'POST',
+        headers: {
+          'x-admin-token': token,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          scene: clipScene,
+          url: clipUrl.trim(),
+          ...(clipCredit.trim() ? { credit: clipCredit.trim() } : {}),
+        }),
+      });
+      const data = (await res.json()) as {
+        ok?: boolean;
+        id?: string;
+        error?: string;
+        hint?: string;
+      };
+      if (!res.ok || !data.ok) {
+        setErr(`${data.error ?? `HTTP ${res.status}`}${data.hint ? ` — ${data.hint}` : ''}`);
+        return;
+      }
+      setNotice(`영상 등록 완료: ${data.id}. 다음 발행부터 이 씬은 실사 영상 배경입니다.`);
+      setClipUrl('');
+      setClipCredit('');
       await refresh(token);
     } catch (e) {
       setErr(String(e));
@@ -258,6 +357,81 @@ export default function MediaAdminPage() {
               ))}
             </ul>
           )}
+        </div>
+      </section>
+
+      {/* ------------------------------------------------ 영상 배경 */}
+      <section className="mt-6 rounded-2xl border border-gray-200 bg-white p-5">
+        <h2 className="text-lg font-bold text-gray-900">🎥 실사 배경 영상</h2>
+        <p className="mt-1 text-xs leading-relaxed text-gray-500">
+          퀴즈 뒤에 진짜 움직이는 영상이 깔립니다. 아래 버튼 하나면 서버가 저작권 안전한
+          라이브러리(위키미디어 CC0/CC BY, 키 설정 시 Pexels·Pixabay)에서 알아서 찾아와
+          검증 후 저장합니다. 뉴스·다큐·유명 영상 캡처는 자동으로 거릅니다.
+        </p>
+        <button
+          type="button"
+          onClick={() => void runClipImport()}
+          disabled={busy}
+          className="mt-4 w-full rounded-xl bg-brand-600 px-4 py-3 text-sm font-semibold text-white disabled:opacity-50"
+        >
+          {busy ? '수집 중… (몇 분 걸릴 수 있음)' : '영상 자동 수집 실행'}
+        </button>
+
+        <div className="mt-4 border-t border-gray-100 pt-4">
+          <p className="text-xs leading-relaxed text-gray-500">
+            직접 고르고 싶으면: Pexels/Pixabay/Mixkit에서 다운로드 버튼의 링크 주소를 복사해
+            붙여넣으세요 (25MB 이하, 720p면 충분).
+          </p>
+          <select
+            value={clipScene}
+            onChange={(e) => setClipScene(e.target.value)}
+            className="mt-3 w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:border-brand-500 focus:outline-none"
+          >
+            {SCENES.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.label}
+              </option>
+            ))}
+          </select>
+          <input
+            value={clipUrl}
+            onChange={(e) => setClipUrl(e.target.value)}
+            placeholder="영상 URL (https://… .mp4)"
+            className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:border-brand-500 focus:outline-none"
+          />
+          <input
+            value={clipCredit}
+            onChange={(e) => setClipCredit(e.target.value)}
+            placeholder="출처 (선택, 예: 작가명 / Pexels)"
+            className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:border-brand-500 focus:outline-none"
+          />
+          <button
+            type="button"
+            onClick={() => void addClip()}
+            disabled={busy || !clipUrl.trim()}
+            className="mt-3 w-full rounded-xl border border-brand-600 px-4 py-3 text-sm font-semibold text-brand-600 disabled:opacity-50"
+          >
+            {busy ? '등록 중…' : '이 영상 배경으로 사용하기'}
+          </button>
+        </div>
+
+        <div className="mt-5 border-t border-gray-100 pt-4">
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+            씬별 영상 풀 (목표 {clipTarget}개씩 · 포스트마다 로테이션)
+          </h3>
+          <ul className="mt-2 space-y-1">
+            {SCENES.map((s) => {
+              const pool = clipScenes.find((x) => x.scene === s.id)?.clips ?? [];
+              return (
+                <li key={s.id} className="flex items-baseline justify-between text-sm">
+                  <span className="text-gray-800">{s.label}</span>
+                  <span className={pool.length > 0 ? 'text-green-600' : 'text-gray-400'}>
+                    {pool.length > 0 ? `영상 ${pool.length}개` : '없음'}
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
         </div>
       </section>
 

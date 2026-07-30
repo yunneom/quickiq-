@@ -62,6 +62,7 @@ const nextConfig = {
   experimental: {
     outputFileTracingIncludes: {
       '/api/cron/ig-post': ['./node_modules/ffmpeg-static/ffmpeg'],
+      '/api/admin/clips': ['./node_modules/ffmpeg-static/ffmpeg'],
     },
   },
   async headers() {
