@@ -15,7 +15,7 @@ Name 필드는 IG 검색 인덱스에 포함되므로 "IQ Test" 키워드를 반
 
 ```
 🧠 Daily brain teasers that 99% fail
-🎯 Can you beat IQ 130?
+🎯 Can you score above 130?
 ⏱️ Free 30-question test · no sign-up · 7 min
 👇 Take the test
 ```
@@ -73,3 +73,42 @@ https://iq.dailyenterkr.com/en?utm_source=instagram&utm_medium=bio&utm_campaign=
 
 베이트 게시글 중 댓글 반응이 가장 좋은 것 1~2개를 프로필 상단에
 고정 — 신규 방문자가 바로 참여하게 만드는 훅 역할.
+
+
+## 실사 사진 배경 넣기 (릴스 노출 개선)
+
+코드로 그린 배경은 안전하지만 밋밋해서 스크롤을 못 멈춥니다. 씬별로
+**실제 사진 1장**을 넣으면 켄번즈(천천히 밀고 들어가는 카메라 무브)가
+붙어서 진짜 영상처럼 보입니다 — 기차 사진을 넣으면 20초 동안 기차가
+실제로 다가옵니다.
+
+### 넣는 방법
+
+Vercel 배포본은 인터넷이 열려 있으므로, 사진 URL만 주면 서버가 직접
+받아서 저장합니다. PowerShell에서:
+
+```powershell
+$h = @{ "x-admin-token" = "여기에_ADMIN_TOKEN"; "Content-Type" = "application/json" }
+$body = '{"scene":"rails","url":"https://.../train-night.jpg","credit":"Photographer / Pexels","license":"Pexels License"}'
+Invoke-RestMethod -Method Post -Headers $h -Body $body "https://iq.dailyenterkr.com/api/admin/footage"
+```
+
+씬 이름은 넷 중 하나: `rails`(기차·다리 문제) · `road`(차량 속도 문제) ·
+`chalk`(수학·작업률·수열) · `slate`(스펠링).
+
+현재 상태 확인:
+```powershell
+Invoke-RestMethod -Headers @{ "x-admin-token" = "여기에_ADMIN_TOKEN" } "https://iq.dailyenterkr.com/api/admin/footage"
+```
+
+사진이 없는 씬은 기존 코드 배경으로 자동 폴백되므로, 하나씩 채워도
+발행은 계속됩니다.
+
+### 사진 고를 때
+
+- **세로 사진**(9:16에 가까울수록 좋음). 가로 사진은 가운데를 잘라 씁니다.
+- **어두운 사진**이 좋습니다. 위에 어두운 스크림이 깔리지만, 원본이 밝으면
+  질문 패널과 대비가 약해집니다.
+- **화면 중앙이 비어 있는 구도** — 질문 패널이 가운데를 덮습니다.
+- 상업적 이용이 허용된 라이선스만. 뉴스·다큐 영상 캡처는 **금지**
+  (저작권 클레임 → 계정 정지 위험).

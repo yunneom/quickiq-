@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { getSiteUrl } from '@/lib/site-url';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import {
@@ -22,6 +23,7 @@ export async function generateMetadata({
     title: t('title'),
     description: t('subtitle'),
     alternates: {
+      canonical: `/${locale}/about`,
       languages: {
         ko: '/ko/about',
         en: '/en/about',
@@ -50,7 +52,7 @@ export default async function AboutPage({ params: { locale } }: PageParams) {
     { titleKey: 'logicalTitle', bodyKey: 'logicalBody' },
   ];
 
-  const base = process.env.NEXT_PUBLIC_APP_URL ?? 'https://7iq.vercel.app';
+  const base = getSiteUrl();
   const loc = (locale === 'en' ? 'en' : 'ko') as 'ko' | 'en';
 
   return (

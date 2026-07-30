@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages, getTranslations, unstable_setRequestLocale } from 'next-intl/server';
 import { locales, type Locale } from '@/i18n';
+import { getSiteUrl } from '@/lib/site-url';
 import { notFound } from 'next/navigation';
 import { CookieBanner } from '@/components/consent/cookie-banner';
 import { GatedAnalytics } from '@/components/consent/gated-analytics';
@@ -21,7 +22,9 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   if (!locales.includes(params.locale as Locale)) notFound();
   const t = await getTranslations({ locale: params.locale, namespace: 'meta' });
-  const base = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
+  // One origin for canonicals, hreflang and og:url — a localhost or
+  // preview-alias metadataBase makes every canonical on the site wrong.
+  const base = getSiteUrl();
   return {
     metadataBase: new URL(base),
     title: t('title'),

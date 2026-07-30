@@ -4,6 +4,29 @@ import { locales, type Locale } from '@/i18n';
 import { priceLabel } from '@/lib/pricing';
 import { getBusinessInfo } from '@/lib/legal/business';
 
+export async function generateMetadata({
+  params: { locale },
+}: {
+  params: { locale: string };
+}) {
+  const en = locale === 'en';
+  return {
+    title: en ? 'Terms of Service | QuickIQ' : '이용약관 | QuickIQ',
+    description: en
+      ? 'The terms that govern use of QuickIQ, including the refund policy.'
+      : 'QuickIQ 서비스 이용약관과 환불 규정을 안내합니다.',
+    alternates: {
+      canonical: `/${locale}/terms`,
+      languages: {
+        ko: '/ko/terms',
+        en: '/en/terms',
+        'x-default': '/ko/terms',
+      },
+    },
+  };
+}
+
+
 interface Section {
   h: string;
   body: string;

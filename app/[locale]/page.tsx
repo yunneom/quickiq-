@@ -47,6 +47,7 @@ export async function generateMetadata({
     title,
     description: c.sub.replace(/\n/g, ' '),
     alternates: {
+      canonical: `/${locale}`,
       languages: { ko: '/ko', en: '/en', 'x-default': '/ko' },
     },
   };

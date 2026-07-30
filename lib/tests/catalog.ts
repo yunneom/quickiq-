@@ -594,6 +594,54 @@ export const TEST_CATALOG: TestCatalogEntry[] = [
     accentText: 'text-brand-700',
     gradient: { from: '#2554e6', to: '#15308f' },
     emoji: '🧠',
+    // The money page shipped an 18-character meta description because it
+    // was the one entry without FAQs. These also unlock FAQPage schema.
+    faqs: {
+      ko: [
+        {
+          q: 'IQ 테스트는 무료인가요?',
+          a: '30문항 테스트와 추정 IQ·상위 백분위 결과까지 전부 무료입니다. 회원가입도 필요 없어요. 강점·약점 분석과 문항별 해설이 담긴 상세 리포트만 유료로 제공합니다.',
+        },
+        {
+          q: '얼마나 걸리나요?',
+          a: '평균 7분입니다. 30문항이 언어·수리·공간·논리 네 영역에 걸쳐 출제되고, 마지막 문항을 풀면 결과가 바로 나옵니다.',
+        },
+        {
+          q: '결과가 실제 IQ와 같나요?',
+          a: '아니요. 표준화된 임상 검사가 아니라 온라인 추정 점수입니다. 같은 문항을 푼 다른 응시자 대비 상대 위치를 알려주는 용도로 보세요.',
+        },
+        {
+          q: '상세 리포트에는 뭐가 들어 있나요?',
+          a: '영역별 점수 그래프, 강점·약점 해석, 틀린 문항 전체 해설, 그리고 PDF 파일을 이메일로 보내드립니다.',
+        },
+        {
+          q: '익명으로 응시되나요?',
+          a: '네. 로그인 없이 익명 세션으로 진행되며, 응답은 통계 목적으로만 저장됩니다.',
+        },
+      ],
+      en: [
+        {
+          q: 'Is the IQ test free?',
+          a: 'Yes — all 30 questions, your estimated IQ and your percentile are free, with no sign-up. Only the detailed report with per-question explanations is paid.',
+        },
+        {
+          q: 'How long does it take?',
+          a: 'About 7 minutes. The 30 questions span verbal, numerical, spatial and logical reasoning, and your score appears the moment you finish.',
+        },
+        {
+          q: 'Is this a real IQ score?',
+          a: 'No. It is an online estimate, not a standardized clinical assessment. Read it as your position relative to other people who took the same questions.',
+        },
+        {
+          q: 'What is in the detailed report?',
+          a: 'A score breakdown by reasoning domain, your strengths and weaknesses, full explanations for every question you missed, and a PDF emailed to you.',
+        },
+        {
+          q: 'Is it anonymous?',
+          a: 'Yes. No account, no email required to take the test — responses are stored for statistics only.',
+        },
+      ],
+    },
   },
 ];
 

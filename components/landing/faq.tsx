@@ -42,11 +42,15 @@ export function Faq() {
                   +
                 </span>
               </button>
-              {isOpen && (
-                <p className="px-4 pb-4 text-sm leading-relaxed text-gray-600">
-                  {item.a}
-                </p>
-              )}
+              {/* Always in the DOM, collapsed with CSS: the FAQPage
+                  JSON-LD marks these answers up, and structured-data
+                  policy requires the marked-up text to be present. */}
+              <p
+                hidden={!isOpen}
+                className="px-4 pb-4 text-sm leading-relaxed text-gray-600"
+              >
+                {item.a}
+              </p>
             </li>
           );
         })}

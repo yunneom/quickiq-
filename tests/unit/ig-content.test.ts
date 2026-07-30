@@ -173,3 +173,87 @@ describe('cinematic background mapping', () => {
     }
   });
 });
+
+describe('copy safety (regressions found by the English audit)', () => {
+  it('no hook or badge leaks the correct answer', () => {
+    for (const b of baitPostsForTest()) {
+      const correct = b.options.find((o) => o.id === b.answer);
+      assert.ok(correct, `${b.id} has no correct option`);
+      const answer = correct.text.toLowerCase().replace(/[^a-z0-9]/g, '');
+      if (answer.length < 5) continue; // numbers collide by chance
+      for (const plan of [b]) {
+        const surfaces = [plan.hook, plan.badge ?? ''].join(' ').toLowerCase();
+        assert.ok(
+          !surfaces.replace(/[^a-z0-9]/g, '').includes(answer),
+          `${b.id} leaks "${correct.text}" in its hook/badge`,
+        );
+      }
+    }
+  });
+
+  it('hooks survive the ASCII badge filter intact', () => {
+    // hookBadge strips non-ASCII, so a curly apostrophe would silently
+    // publish DONT / ISNT / NATURES in 27px caps.
+    for (const b of baitPostsForTest()) {
+      assert.ok(
+        !/[‘’“”]/.test(b.hook),
+        `${b.id} hook uses a curly quote that the badge filter deletes`,
+      );
+    }
+  });
+
+  it('every caption is solvable on its own — sequences included', () => {
+    for (let d = 0; d < 120; d++) {
+      for (const plan of plansForDay(d)) {
+        if (plan.card.scene?.kind !== 'sequence') continue;
+        // Whitespace-insensitive: the caption may render "2 + 3 = 10"
+        // where the tile reads "2+3=10" — same information either way.
+        const flat = plan.caption.replace(/\s+/g, '');
+        for (const tile of plan.card.scene.items.filter((i) => i !== '?')) {
+          assert.ok(
+            flat.includes(tile.replace(/\s+/g, '')),
+            `${plan.key} caption is missing "${tile}" from its sequence`,
+          );
+        }
+      }
+    }
+  });
+
+  it('uses US spelling and time formats', () => {
+    const british = /\b(metres?|maths|favourite|colour|analyse)\b/i;
+    for (const b of baitPostsForTest()) {
+      const all = [b.hook, b.prompt, b.explain, ...b.options.map((o) => o.text)].join(' ');
+      assert.ok(!british.test(all), `${b.id} uses British spelling: ${all.match(british)?.[0]}`);
+      for (const o of b.options) {
+        assert.ok(
+          !/^\s*(after\s+)?\d+\s*h(\s|$|\s*\d)/i.test(o.text),
+          `${b.id} option "${o.text}" uses the "2 h 30" format`,
+        );
+      }
+    }
+  });
+});
+
+describe('Instagram distribution rules', () => {
+  it('stays within the 5-hashtag cap', () => {
+    for (let d = 0; d < 30; d++) {
+      for (const plan of plansForDay(d)) {
+        const tags = plan.caption.match(/#\w+/g) ?? [];
+        assert.ok(
+          tags.length <= 5,
+          `${plan.key} has ${tags.length} hashtags: ${tags.join(' ')}`,
+        );
+      }
+    }
+  });
+
+  it('opens every caption with a searchable phrase, not an emoji', () => {
+    for (let d = 0; d < 20; d++) {
+      for (const plan of plansForDay(d)) {
+        const first = plan.caption.split('\n')[0];
+        assert.ok(/^[A-Za-z]/.test(first), `${plan.key} caption starts with "${first.slice(0, 20)}"`);
+        assert.ok(first.length >= 15, `${plan.key} opening line is too thin`);
+      }
+    }
+  });
+});

@@ -202,7 +202,7 @@ export async function GET(req: Request) {
               }}
             >
               <span style={{ color: '#FFFFFF', fontSize: 52, fontWeight: 800 }}>
-                Now test your REAL IQ
+                Now take the full IQ test
               </span>
               <span
                 style={{
@@ -310,7 +310,7 @@ export async function GET(req: Request) {
                   textAlign: 'center',
                 }}
               >
-                Prove it with the REAL 30-question IQ test
+                Prove it — 30 questions, instant score
               </span>
 
               <div
@@ -362,7 +362,7 @@ export async function GET(req: Request) {
                   marginTop: 36,
                 }}
               >
-                Time&apos;s up — answer reveal right after this
+                Time&apos;s up — the answer drops tomorrow
               </span>
             </div>
           </div>

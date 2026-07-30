@@ -2,6 +2,29 @@ import { notFound } from 'next/navigation';
 import { unstable_setRequestLocale } from 'next-intl/server';
 import { locales, type Locale } from '@/i18n';
 
+export async function generateMetadata({
+  params: { locale },
+}: {
+  params: { locale: string };
+}) {
+  const en = locale === 'en';
+  return {
+    title: en ? 'Privacy Policy | QuickIQ' : '개인정보처리방침 | QuickIQ',
+    description: en
+      ? 'What QuickIQ collects, how long it is kept, and how to have it deleted.'
+      : 'QuickIQ가 수집하는 정보와 보관·파기 방침을 안내합니다.',
+    alternates: {
+      canonical: `/${locale}/privacy`,
+      languages: {
+        ko: '/ko/privacy',
+        en: '/en/privacy',
+        'x-default': '/ko/privacy',
+      },
+    },
+  };
+}
+
+
 const COPY = {
   ko: {
     title: '개인정보처리방침',

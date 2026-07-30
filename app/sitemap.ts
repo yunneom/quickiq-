@@ -35,7 +35,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     // never be missing from the sitemap again (the hand-written list
     // silently dropped 4 of the 10).
     ...TEST_CATALOG.map((t) => ({ path: `/${t.slug}`, priority: 0.9 })),
-    { path: '/test', priority: 0.6 },
+    // '/test' and the per-test runners are noindex — advertising them
+    // here would contradict their own robots directive.
     { path: '/privacy', priority: 0.4 },
     { path: '/terms', priority: 0.4 },
   ];
