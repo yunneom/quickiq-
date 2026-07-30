@@ -43,8 +43,8 @@ https://iq.dailyenterkr.com/en?utm_source=instagram&utm_medium=bio&utm_campaign=
   남은 1개(+실패분 재시도). Vercel Hobby가 크론을 하루 2회로 제한하므로
   한 번 실행에 최대 2개씩, 시간 예산 내에서만 발행하고 나머지는 다음
   실행이 이어받음
-- 릴스 구성(13초, **타이머 없음** — 읽을 시간 부족 피드백 반영):
-  문제 6초 → "천천히 읽어보세요" 3초 → GOT IT? + LINK IN BIO 4초
+- 릴스 구성(30초): 문제 20초(상단 타이머 바가 실시간으로 줄어듦) →
+  광고 6초(QUICK AD BREAK) → GOT IT? + LINK IN BIO 4초
 - 문제마다 **그림 자동 생성**: 찻길+차량(속도/거리), 비교 막대(작업률·
   퍼센트), 숫자 타일(수열). 문제의 숫자에서 그려지므로 새 문제를
   추가하면 그림도 자동
@@ -112,3 +112,41 @@ Invoke-RestMethod -Headers @{ "x-admin-token" = "여기에_ADMIN_TOKEN" } "https
 - **화면 중앙이 비어 있는 구도** — 질문 패널이 가운데를 덮습니다.
 - 상업적 이용이 허용된 라이선스만. 뉴스·다큐 영상 캡처는 **금지**
   (저작권 클레임 → 계정 정지 위험).
+
+
+## 사운드트랙 넣기 (무음 페널티 해제)
+
+무음 릴스는 구조적으로 도달이 깎입니다. API 발행은 인스타 음악
+라이브러리를 못 쓰므로, **MP4 안에 오디오를 굽는 것**이 유일한 자동화
+경로입니다.
+
+### ⚠ 유명곡은 절대 금지
+
+API로 올리는 영상에 유명곡을 넣으면 Rights Manager 매칭 →
+음소거/삭제/계정 제재입니다. 인스타 라이선스 음악은 **앱에서 수동
+게시할 때만** 적용됩니다. 유명곡 트렌드를 타고 싶으면 그 게시물만
+수동으로 올리세요.
+
+### 수노(Suno) 워크플로 — 권장
+
+1. 수노 **유료 플랜**(Pro/Premier)으로 곡 생성 — 유료 플랜이어야 생성곡
+   상업 이용권이 나옵니다. 무료 플랜 곡은 상업 사용 불가.
+2. 프롬프트 예시: "upbeat quirky quiz show background music, playful
+   pizzicato and light percussion, no vocals, loopable" — 보컬 없는
+   BGM이 문제 텍스트와 안 싸웁니다. 3~5곡 뽑으세요.
+3. 곡 페이지에서 MP3 주소 복사 (cdn*.suno.ai 로 시작하는 직링크).
+4. 업로드:
+```powershell
+$h = @{ "x-admin-token" = "ADMIN_TOKEN"; "Content-Type" = "application/json" }
+$body = '{"id":"suno-quiz-1","url":"https://cdn1.suno.ai/....mp3","title":"Quiz Bounce","credit":"Suno (계정명)"}'
+Invoke-RestMethod -Method Post -Headers $h -Body $body "https://iq.dailyenterkr.com/api/admin/audio"
+```
+5. 라이브러리 확인: 같은 주소로 GET. 곡이 1개라도 있으면 다음 빌드부터
+   모든 릴스에 음악이 들어가고, 여러 곡이면 (날짜×슬롯)마다 자동 로테이션.
+
+### 유튜브 계정 아이디어에 대해
+
+릴스에 쓰기 위해 유튜브에 올릴 필요는 없습니다(우리 스토리지에서 바로
+뮤싱). 다만 별도로 유튜브 채널에 곡을 올려두면 ① 곡의 출처 증빙이 남고
+② 나중에 YouTube Shorts 크로스포스팅 채널의 기반이 됩니다 — 원하면
+채널만 만들어두세요. 코드 작업은 필요 없습니다.

@@ -16,6 +16,8 @@ import {
   loadFootage,
 } from './footage';
 import { planForSlot } from './ig-content';
+import { loadAudioTrack, pickTrackId, readAudioManifest } from './audio';
+import { muxAudioIntoVideo } from './mux';
 
 /**
  * Builds the daily reel as an in-memory MP4 — now with a MOVING scene.
@@ -39,8 +41,10 @@ import { planForSlot } from './ig-content';
  * rasterization work. The draining timer bar is drawn here too, since
  * the overlay PNGs are stills.
  *
- * Output: H.264 baseline / yuv420p / 30fps MP4 — accepted by Instagram's
- * REELS ingestion (no audio track; IG treats it as original silent audio).
+ * Output: H.264 baseline / yuv420p / 30fps MP4. When the operator has
+ * loaded soundtracks (/api/admin/audio), the matching track is muxed in
+ * as AAC afterwards — silent reels are structurally down-ranked, so the
+ * music bed matters. No tracks loaded → publishes silent, never blocks.
  */
 
 /**
@@ -197,7 +201,32 @@ export async function buildReelVideo(args: {
 
       encoder.finalize();
       const out = encoder.FS.readFile(encoder.outputFilename);
-      return { ok: true, buffer: Buffer.from(out) };
+      const silent = Buffer.from(out);
+
+      // Soundtrack: deterministic rotation over the operator's library.
+      // Any failure publishes the silent cut instead of failing the post.
+      try {
+        const manifest = await readAudioManifest();
+        const trackId = pickTrackId(
+          args.dayIndex,
+          slot,
+          manifest.tracks.map((t) => t.id),
+        );
+        if (trackId) {
+          const audio = await loadAudioTrack(trackId);
+          if (audio) {
+            const withAudio = await muxAudioIntoVideo(
+              silent,
+              audio,
+              REEL_DURATION_SECONDS,
+            );
+            if (withAudio) return { ok: true, buffer: withAudio };
+          }
+        }
+      } catch {
+        // fall through to the silent cut
+      }
+      return { ok: true, buffer: silent };
     } finally {
       encoder.delete();
     }
