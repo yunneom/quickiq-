@@ -42,6 +42,9 @@ export function extractSunoMp3(html: string, finalUrl: string): string | null {
  * page is unreachable or carries no recognizable audio reference.
  */
 export async function resolveSunoShareUrl(url: string): Promise<string | null> {
+  // /song/<uuid> URLs carry the answer in the URL itself — usable even
+  // when the page fetch fails or is bot-blocked.
+  const direct = url.match(SONG_UUID)?.[1];
   try {
     const res = await fetch(url, {
       cache: 'no-store',
@@ -53,10 +56,12 @@ export async function resolveSunoShareUrl(url: string): Promise<string | null> {
           'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36',
       },
     });
-    if (!res.ok) return null;
+    if (!res.ok) {
+      return direct ? `https://cdn1.suno.ai/${direct}.mp3` : null;
+    }
     const html = await res.text();
     return extractSunoMp3(html, res.url);
   } catch {
-    return null;
+    return direct ? `https://cdn1.suno.ai/${direct}.mp3` : null;
   }
 }

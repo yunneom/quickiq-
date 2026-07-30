@@ -6,6 +6,7 @@ import {
   publishReelPost,
   getPublishingQuota,
 } from '@/lib/social/instagram';
+import { importSeedTracks } from '@/lib/social/audio';
 import { plansForDay, utcDayIndex, type IgPostPlan } from '@/lib/social/ig-content';
 import { buildReelVideo } from '@/lib/social/reel';
 import { uploadPublicMedia, uploadPublicVideo } from '@/lib/social/storage';
@@ -170,6 +171,14 @@ export async function GET(req: Request) {
   const hardDeadline = startedAt + TOTAL_BUDGET_MS;
   const budget = Math.min(MAX_POSTS_PER_RUN, quotaRemaining);
 
+  // Soundtrack seeds: pull up to two still-missing operator tracks into
+  // the library before posting, on a tight leash — the posting budget
+  // owns the rest of the window.
+  const seeds = await importSeedTracks(2, startedAt + 45_000).catch(() => ({
+    imported: [] as string[],
+    pending: 0,
+  }));
+
   const outcomes: PostOutcome[] = [];
   let publishedCount = 0;
 
@@ -206,6 +215,8 @@ export async function GET(req: Request) {
       ok: !anyFailure,
       day,
       published: publishedCount,
+      audioImported: seeds.imported,
+      audioPending: seeds.pending,
       elapsedMs: Date.now() - startedAt,
       outcomes,
     },
