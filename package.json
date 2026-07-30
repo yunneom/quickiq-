@@ -15,7 +15,7 @@
     "verify:sql": "node scripts/verify-sql.mjs"
   },
   "dependencies": {
-    "@react-pdf/renderer": "^3.4.4",
+    "@react-pdf/renderer": "^4.5.1",
     "@sentry/nextjs": "^10.53.1",
     "@supabase/ssr": "^0.10.3",
     "@supabase/supabase-js": "^2.45.4",
