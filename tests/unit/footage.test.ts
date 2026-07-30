@@ -96,3 +96,35 @@ describe('pickTrackId (soundtrack rotation)', () => {
     assert.equal(pickTrackId(5, 0, []), null);
   });
 });
+
+describe('Suno share-link resolution', () => {
+  it('recognizes share and song URLs, rejects others', async () => {
+    const { isSunoShareUrl } = await import('../../lib/social/suno');
+    assert.ok(isSunoShareUrl('https://suno.com/s/sHfm9WzQdTiHVpqk'));
+    assert.ok(isSunoShareUrl('https://www.suno.com/song/12345678-1234-1234-1234-123456789abc'));
+    assert.ok(!isSunoShareUrl('https://cdn1.suno.ai/abc.mp3'));
+    assert.ok(!isSunoShareUrl('https://evil.com/suno.com/s/x'));
+  });
+
+  it('prefers og:audio, then embedded CDN URL, then the song UUID', async () => {
+    const { extractSunoMp3 } = await import('../../lib/social/suno');
+    const og = '<meta property="og:audio" content="https://cdn1.suno.ai/aaaa.mp3"/>';
+    assert.equal(
+      extractSunoMp3(og, 'https://suno.com/s/x'),
+      'https://cdn1.suno.ai/aaaa.mp3',
+    );
+    const embedded = '<script>{"audio_url":"https://cdn2.suno.ai/bbbb-cc.mp3"}</script>';
+    assert.equal(
+      extractSunoMp3(embedded, 'https://suno.com/s/x'),
+      'https://cdn2.suno.ai/bbbb-cc.mp3',
+    );
+    assert.equal(
+      extractSunoMp3(
+        '<html></html>',
+        'https://suno.com/song/12345678-1234-1234-1234-123456789abc',
+      ),
+      'https://cdn1.suno.ai/12345678-1234-1234-1234-123456789abc.mp3',
+    );
+    assert.equal(extractSunoMp3('<html></html>', 'https://suno.com/s/x'), null);
+  });
+});

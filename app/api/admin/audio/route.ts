@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { withErrorHandling } from '@/lib/api/with-error-handling';
 import { readAudioManifest, storeAudioTrack } from '@/lib/social/audio';
+import { isSunoShareUrl, resolveSunoShareUrl } from '@/lib/social/suno';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -12,9 +13,10 @@ const MAX_BYTES = 20 * 1024 * 1024;
 /**
  * Load a soundtrack into the reel audio library.
  *
- * POST body: { id, url, title?, credit? }
- *   id  — [a-z0-9-], stable name like "suno-upbeat-1"
- *   url — direct MP3 URL (Suno's share page exposes a cdn*.suno.ai link)
+ * POST body: { url, id?, title?, credit? }
+ *   url — a Suno SHARE link (suno.com/s/... — resolved to the MP3
+ *         automatically) or any direct MP3 URL
+ *   id  — [a-z0-9-]; optional, derived from the track when omitted
  *
  * Runs on Vercel (open internet). The reel builder rotates through every
  * loaded track deterministically; upload 3-5 tracks and each day's three
@@ -41,21 +43,41 @@ export const POST = withErrorHandling('admin/audio', async (req: Request) => {
     credit?: string;
   };
 
-  const id = body.id?.toLowerCase().replace(/[^a-z0-9-]/g, '') ?? '';
+  if (!body.url || !/^https:\/\//i.test(body.url)) {
+    return NextResponse.json(
+      { error: 'invalid_url', hint: 'Pass a Suno share link or an https MP3 URL.' },
+      { status: 400 },
+    );
+  }
+
+  // A share link is the page, not the song — resolve it to the CDN MP3.
+  let audioUrl = body.url;
+  if (isSunoShareUrl(body.url)) {
+    const resolved = await resolveSunoShareUrl(body.url);
+    if (!resolved) {
+      return NextResponse.json(
+        {
+          error: 'suno_resolve_failed',
+          hint: 'Could not find the MP3 behind this share link. Open the song page, copy the cdn*.suno.ai/....mp3 address, and pass that instead.',
+        },
+        { status: 502 },
+      );
+    }
+    audioUrl = resolved;
+  }
+
+  const givenId = body.id?.toLowerCase().replace(/[^a-z0-9-]/g, '') ?? '';
+  // Derive a stable id from the CDN filename when none is given.
+  const derivedId = `suno-${(audioUrl.match(/([a-z0-9-]+)\.mp3$/i)?.[1] ?? 'track').slice(0, 12).toLowerCase()}`;
+  const id = givenId || derivedId;
   if (!id || id.length > 40) {
     return NextResponse.json(
       { error: 'invalid_id', hint: 'Use [a-z0-9-], max 40 chars.' },
       { status: 400 },
     );
   }
-  if (!body.url || !/^https:\/\//i.test(body.url)) {
-    return NextResponse.json(
-      { error: 'invalid_url', hint: 'Pass an https MP3 URL.' },
-      { status: 400 },
-    );
-  }
 
-  const res = await fetch(body.url, {
+  const res = await fetch(audioUrl, {
     cache: 'no-store',
     signal: AbortSignal.timeout(30_000),
   });
@@ -84,7 +106,7 @@ export const POST = withErrorHandling('admin/audio', async (req: Request) => {
   const stored = await storeAudioTrack(id, mp3, {
     title: body.title,
     credit: body.credit,
-    sourceUrl: body.url,
+    sourceUrl: audioUrl,
   });
   if (!stored.ok) {
     return NextResponse.json({ error: stored.reason }, { status: 500 });

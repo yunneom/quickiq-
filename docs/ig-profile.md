@@ -134,13 +134,15 @@ API로 올리는 영상에 유명곡을 넣으면 Rights Manager 매칭 →
 2. 프롬프트 예시: "upbeat quirky quiz show background music, playful
    pizzicato and light percussion, no vocals, loopable" — 보컬 없는
    BGM이 문제 텍스트와 안 싸웁니다. 3~5곡 뽑으세요.
-3. 곡 페이지에서 MP3 주소 복사 (cdn*.suno.ai 로 시작하는 직링크).
+3. 곡의 **공유 링크**(suno.com/s/...)를 그대로 복사 — 서버가 MP3를
+   알아서 찾습니다. (cdn*.suno.ai 직링크도 그대로 동작)
 4. 업로드:
 ```powershell
 $h = @{ "x-admin-token" = "ADMIN_TOKEN"; "Content-Type" = "application/json" }
-$body = '{"id":"suno-quiz-1","url":"https://cdn1.suno.ai/....mp3","title":"Quiz Bounce","credit":"Suno (계정명)"}'
+$body = '{"url":"https://suno.com/s/공유코드","id":"suno-quiz-1","title":"Quiz Bounce"}'
 Invoke-RestMethod -Method Post -Headers $h -Body $body "https://iq.dailyenterkr.com/api/admin/audio"
 ```
+   `id`는 생략하면 곡에서 자동 생성됩니다.
 5. 라이브러리 확인: 같은 주소로 GET. 곡이 1개라도 있으면 다음 빌드부터
    모든 릴스에 음악이 들어가고, 여러 곡이면 (날짜×슬롯)마다 자동 로테이션.
 
