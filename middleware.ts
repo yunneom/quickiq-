@@ -54,6 +54,6 @@ export const config = {
   // (which derives its own locale from the resolved session) from i18n
   // middleware.
   matcher: [
-    '/((?!api|_next|_vercel|opengraph-image|story-image|feed-image|icon|apple-icon|manifest|r/|.*\\.png|.*\\.jpg|.*\\..*).*)',
+    '/((?!api|_next|_vercel|admin|opengraph-image|story-image|feed-image|icon|apple-icon|manifest|r/|.*\\.png|.*\\.jpg|.*\\..*).*)',
   ],
 };
