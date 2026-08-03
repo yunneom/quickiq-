@@ -35,6 +35,52 @@ export const POST = withErrorHandling('admin/clips', async (req: Request) => {
     return new NextResponse('Not Found', { status: 404 });
   }
 
+  // Direct file upload (multipart): works even when the stock host
+  // refuses server-side fetches — the browser already has the bytes.
+  if (req.headers.get('content-type')?.includes('multipart/form-data')) {
+    const fd = await req.formData().catch(() => null);
+    const file = fd?.get('file');
+    const scene = SCENES.find((s) => s === String(fd?.get('scene') ?? ''));
+    if (!fd || !(file instanceof File) || file.size === 0 || !scene) {
+      return NextResponse.json(
+        { error: 'bad_upload', hint: 'Send `file` (video) and `scene` form fields.' },
+        { status: 400 },
+      );
+    }
+    if (file.size > MAX_CLIP_BYTES) {
+      return NextResponse.json(
+        { error: 'too_large', bytes: file.size, maxBytes: MAX_CLIP_BYTES },
+        { status: 413 },
+      );
+    }
+    const video = Buffer.from(await file.arrayBuffer());
+    const size = await probeClip(video);
+    if (!size) {
+      return NextResponse.json({ error: 'not_decodable' }, { status: 415 });
+    }
+    if (!clipResolutionOk(size)) {
+      return NextResponse.json(
+        { error: 'resolution_too_low', ...size, hint: 'Short side must be ≥ 540px.' },
+        { status: 415 },
+      );
+    }
+    const id = `manual-${scene}-${hash(file.name + file.size)}`;
+    const stored = await storeClip(
+      {
+        id,
+        scene,
+        credit: String(fd.get('credit') ?? '') || undefined,
+        license: String(fd.get('license') ?? '') || undefined,
+        requiresAttribution: false,
+      },
+      video,
+    );
+    if (!stored.ok) {
+      return NextResponse.json({ error: stored.reason }, { status: 500 });
+    }
+    return NextResponse.json({ ok: true, id, scene, bytes: video.length, ...size });
+  }
+
   const body = (await req.json().catch(() => ({}))) as {
     action?: string;
     scene?: string;
@@ -101,7 +147,7 @@ export const POST = withErrorHandling('admin/clips', async (req: Request) => {
   }
   if (!clipResolutionOk(size)) {
     return NextResponse.json(
-      { error: 'resolution_too_low', ...size, hint: 'Short side must be ≥ 700px.' },
+      { error: 'resolution_too_low', ...size, hint: 'Short side must be ≥ 540px.' },
       { status: 415 },
     );
   }

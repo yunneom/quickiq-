@@ -125,9 +125,12 @@ const SEED_MAX_BYTES = 20 * 1024 * 1024;
 export async function importSeedTracks(
   maxImports: number,
   deadlineAt: number,
-): Promise<{ imported: string[]; pending: number }> {
+): Promise<{ imported: string[]; pending: number; notes: string[] }> {
   const imported: string[] = [];
-  if (!isSupabaseConfigured()) return { imported, pending: 0 };
+  const notes: string[] = [];
+  if (!isSupabaseConfigured()) {
+    return { imported, pending: 0, notes: ['supabase_not_configured'] };
+  }
 
   const manifest = await readAudioManifest();
   const have = new Set(manifest.tracks.map((t) => t.id));
@@ -139,18 +142,30 @@ export async function importSeedTracks(
       const audioUrl = isSunoShareUrl(seed.url)
         ? await resolveSunoShareUrl(seed.url)
         : seed.url;
-      if (!audioUrl) continue;
+      if (!audioUrl) {
+        notes.push(`${seed.id}: resolve_failed`);
+        continue;
+      }
 
       const res = await fetch(audioUrl, {
         cache: 'no-store',
         signal: AbortSignal.timeout(20_000),
       });
-      if (!res.ok) continue;
+      if (!res.ok) {
+        notes.push(`${seed.id}: http_${res.status}`);
+        continue;
+      }
       const type = res.headers.get('content-type') ?? '';
-      if (!/audio\/|octet-stream/.test(type)) continue;
+      if (!/audio\/|octet-stream/.test(type)) {
+        notes.push(`${seed.id}: not_audio_${type.split(';')[0] || 'unknown'}`);
+        continue;
+      }
 
       const mp3 = Buffer.from(await res.arrayBuffer());
-      if (mp3.length === 0 || mp3.length > SEED_MAX_BYTES) continue;
+      if (mp3.length === 0 || mp3.length > SEED_MAX_BYTES) {
+        notes.push(`${seed.id}: bad_size_${mp3.length}`);
+        continue;
+      }
 
       const stored = await storeAudioTrack(seed.id, mp3, {
         title: seed.title,
@@ -158,13 +173,18 @@ export async function importSeedTracks(
         sourceUrl: audioUrl,
       });
       if (stored.ok) imported.push(seed.id);
-    } catch {
-      // Retried on the next run.
+      else notes.push(`${seed.id}: store_${stored.reason}`);
+    } catch (err) {
+      // Retried on the next run — but leave the reason in the snapshot.
+      notes.push(
+        `${seed.id}: error_${err instanceof Error ? err.name : 'unknown'}`,
+      );
     }
   }
 
   return {
     imported,
     pending: missing.length - imported.length,
+    notes,
   };
 }

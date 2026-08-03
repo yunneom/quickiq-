@@ -111,8 +111,9 @@ export async function probeClip(
 
 /** Minimum source size we accept — below this the crop upscales visibly. */
 export function clipResolutionOk(size: { width: number; height: number }): boolean {
-  // Portrait ≥ ~720×1280 or landscape ≥ ~1280×720. The crop scales the
-  // short side up to 1920 at worst, which 720p survives; anything
-  // smaller looks like a compression artifact behind the quiz panel.
-  return Math.min(size.width, size.height) >= 700;
+  // 720p-class is ideal; 540p-class is the floor. The heavy scrim over
+  // the footage hides most upscale softness, and real motion at 540p
+  // still stops a thumb better than a drawn background. Below that the
+  // background reads as a compression artifact.
+  return Math.min(size.width, size.height) >= 540;
 }

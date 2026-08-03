@@ -183,6 +183,43 @@ export default function MediaAdminPage() {
     }
   }
 
+  async function uploadFile(
+    endpoint: '/api/admin/audio' | '/api/admin/clips',
+    file: File,
+    extra: Record<string, string>,
+    successMsg: string,
+  ) {
+    setBusy(true);
+    setErr(null);
+    setNotice(null);
+    try {
+      const fd = new FormData();
+      fd.set('file', file);
+      for (const [k, v] of Object.entries(extra)) if (v) fd.set(k, v);
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'x-admin-token': token },
+        body: fd,
+      });
+      const data = (await res.json()) as {
+        ok?: boolean;
+        id?: string;
+        error?: string;
+        hint?: string;
+      };
+      if (!res.ok || !data.ok) {
+        setErr(`${data.error ?? `HTTP ${res.status}`}${data.hint ? ` — ${data.hint}` : ''}`);
+        return;
+      }
+      setNotice(`${successMsg}: ${data.id}`);
+      await refresh(token);
+    } catch (e) {
+      setErr(String(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function runClipImport() {
     setBusy(true);
     setErr(null);
@@ -336,6 +373,23 @@ export default function MediaAdminPage() {
           {busy ? '등록 중…' : '이 곡 릴스에 사용하기'}
         </button>
 
+        <label className="mt-3 block">
+          <span className="text-xs text-gray-500">
+            링크 등록이 실패하면: 수노 앱에서 MP3를 기기에 저장한 뒤 파일을 직접 올리세요.
+          </span>
+          <input
+            type="file"
+            accept="audio/*"
+            disabled={busy}
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) void uploadFile('/api/admin/audio', f, {}, '곡 업로드 완료');
+              e.target.value = '';
+            }}
+            className="mt-1 block w-full text-sm text-gray-600 file:mr-3 file:rounded-lg file:border-0 file:bg-gray-100 file:px-3 file:py-2 file:text-sm file:font-medium"
+          />
+        </label>
+
         <div className="mt-5 border-t border-gray-100 pt-4">
           <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-400">
             등록된 곡 {tracks.length}개
@@ -413,6 +467,29 @@ export default function MediaAdminPage() {
           >
             {busy ? '등록 중…' : '이 영상 배경으로 사용하기'}
           </button>
+
+          <label className="mt-3 block">
+            <span className="text-xs text-gray-500">
+              또는 기기에 받아둔 영상 파일을 직접 업로드 (위에서 고른 씬으로 들어갑니다):
+            </span>
+            <input
+              type="file"
+              accept="video/*"
+              disabled={busy}
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f)
+                  void uploadFile(
+                    '/api/admin/clips',
+                    f,
+                    { scene: clipScene, credit: clipCredit.trim() },
+                    '영상 업로드 완료',
+                  );
+                e.target.value = '';
+              }}
+              className="mt-1 block w-full text-sm text-gray-600 file:mr-3 file:rounded-lg file:border-0 file:bg-gray-100 file:px-3 file:py-2 file:text-sm file:font-medium"
+            />
+          </label>
         </div>
 
         <div className="mt-5 border-t border-gray-100 pt-4">

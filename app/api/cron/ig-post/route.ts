@@ -6,8 +6,10 @@ import {
   publishReelPost,
   getPublishingQuota,
 } from '@/lib/social/instagram';
-import { importSeedTracks } from '@/lib/social/audio';
+import { importSeedTracks, readAudioManifest } from '@/lib/social/audio';
 import { importClips } from '@/lib/social/clip-sources';
+import { readClipManifest } from '@/lib/social/clips';
+import { writeStatusSnapshot } from '@/lib/social/status';
 import { plansForDay, utcDayIndex, type IgPostPlan } from '@/lib/social/ig-content';
 import { buildReelVideo } from '@/lib/social/reel';
 import { uploadPublicMedia, uploadPublicVideo } from '@/lib/social/storage';
@@ -178,6 +180,7 @@ export async function GET(req: Request) {
   const seeds = await importSeedTracks(2, startedAt + 45_000).catch(() => ({
     imported: [] as string[],
     pending: 0,
+    notes: ['import_crashed'],
   }));
 
   // Background footage: top up the clip pool (search → license filter →
@@ -221,21 +224,74 @@ export async function GET(req: Request) {
   }
 
   const anyFailure = outcomes.some((o) => o.status === 'failed');
-  return NextResponse.json(
-    {
-      ok: !anyFailure,
-      day,
-      published: publishedCount,
-      audioImported: seeds.imported,
-      audioPending: seeds.pending,
-      clipsImported: clips.imported,
-      clipScenesShort: clips.scenesShort,
-      clipNotes: clips.notes,
-      elapsedMs: Date.now() - startedAt,
-      outcomes,
-    },
-    { status: anyFailure && publishedCount === 0 ? 502 : 200 },
-  );
+  const summary = {
+    ok: !anyFailure,
+    day,
+    published: publishedCount,
+    audioImported: seeds.imported,
+    audioPending: seeds.pending,
+    audioNotes: seeds.notes,
+    clipsImported: clips.imported,
+    clipScenesShort: clips.scenesShort,
+    clipNotes: clips.notes,
+    elapsedMs: Date.now() - startedAt,
+    outcomes,
+  };
+
+  // Flight recorder: park the run summary + pool/ledger state at a
+  // public URL so a misbehaving run can be diagnosed without Vercel
+  // access. Never blocks or fails the response.
+  await writeStatusSnapshot({
+    at: new Date().toISOString(),
+    ...summary,
+    pools: await poolCounts(),
+    recentLedger: await recentLedger(),
+  }).catch(() => {});
+
+  return NextResponse.json(summary, {
+    status: anyFailure && publishedCount === 0 ? 502 : 200,
+  });
+}
+
+/** Current media-library fill state, for the status snapshot. */
+async function poolCounts(): Promise<object> {
+  try {
+    const [audio, clips] = await Promise.all([
+      readAudioManifest(),
+      readClipManifest(),
+    ]);
+    const clipsByScene: Record<string, number> = {};
+    for (const c of clips.clips) {
+      clipsByScene[c.scene] = (clipsByScene[c.scene] ?? 0) + 1;
+    }
+    return { audioTracks: audio.tracks.length, clipsByScene };
+  } catch {
+    return { error: 'pool_read_failed' };
+  }
+}
+
+/** Last few ledger rows — shows whether recent posts were reels or images. */
+async function recentLedger(): Promise<object[]> {
+  if (!isSupabaseConfigured()) return [];
+  try {
+    const admin = createSupabaseAdmin();
+    const { data } = await admin
+      .from('ig_posts')
+      .select('post_key,status,error,image_url,created_at')
+      .order('created_at', { ascending: false })
+      .limit(6);
+    return (data ?? []).map((r) => ({
+      ...r,
+      // The media URL's extension tells reel (.mp4) from fallback (.jpg).
+      kind: r.image_url?.endsWith('.mp4')
+        ? 'reel'
+        : r.image_url
+          ? 'image'
+          : 'unknown',
+    }));
+  } catch {
+    return [];
+  }
 }
 
 function buildPostKey(

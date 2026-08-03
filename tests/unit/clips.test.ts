@@ -101,6 +101,18 @@ describe('commonsPageToCandidate', () => {
     page.videoinfo[0].size = 500_000_000;
     assert.equal(commonsPageToCandidate(page, 'rails'), null);
   });
+
+  it('falls back to the best SD rendition when nothing reaches 700p', () => {
+    const page = structuredClone(basePage);
+    page.videoinfo[0].derivatives = [
+      { src: 'https://upload.wikimedia.org/240p.webm', type: 'video/webm', width: 426, height: 240 },
+      { src: 'https://upload.wikimedia.org/480p.webm', type: 'video/webm', width: 854, height: 480 },
+      { src: 'https://upload.wikimedia.org/576p.webm', type: 'video/webm', width: 1024, height: 576 },
+    ];
+    const c = commonsPageToCandidate(page, 'rails');
+    assert.ok(c);
+    assert.equal(c!.url, 'https://upload.wikimedia.org/576p.webm');
+  });
 });
 
 describe('pexelsVideoToCandidate', () => {

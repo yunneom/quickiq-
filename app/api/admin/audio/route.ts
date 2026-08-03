@@ -36,6 +36,48 @@ export const POST = withErrorHandling('admin/audio', async (req: Request) => {
     return new NextResponse('Not Found', { status: 404 });
   }
 
+  // Direct file upload (multipart): the browser sends the MP3 itself, so
+  // this path works even when Suno's CDN refuses server-side fetches.
+  if (req.headers.get('content-type')?.includes('multipart/form-data')) {
+    const fd = await req.formData().catch(() => null);
+    const file = fd?.get('file');
+    if (!fd || !(file instanceof File) || file.size === 0) {
+      return NextResponse.json(
+        { error: 'no_file', hint: 'Send the MP3 as the `file` form field.' },
+        { status: 400 },
+      );
+    }
+    if (file.size > MAX_BYTES) {
+      return NextResponse.json(
+        { error: 'too_large', bytes: file.size, max: MAX_BYTES },
+        { status: 413 },
+      );
+    }
+    const rawId = String(fd.get('id') ?? '') || file.name.replace(/\.[a-z0-9]+$/i, '');
+    const id = rawId.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/^-+|-+$/g, '').slice(0, 40);
+    if (!id) {
+      return NextResponse.json(
+        { error: 'invalid_id', hint: 'Use [a-z0-9-], max 40 chars.' },
+        { status: 400 },
+      );
+    }
+    const stored = await storeAudioTrack(id, Buffer.from(await file.arrayBuffer()), {
+      title: String(fd.get('title') ?? '') || file.name,
+      credit: String(fd.get('credit') ?? '') || 'Suno',
+    });
+    if (!stored.ok) {
+      return NextResponse.json({ error: stored.reason }, { status: 500 });
+    }
+    const manifest = await readAudioManifest();
+    return NextResponse.json({
+      ok: true,
+      id,
+      bytes: file.size,
+      librarysize: manifest.tracks.length,
+      note: 'Every reel from the next build on carries a soundtrack, rotating across loaded tracks.',
+    });
+  }
+
   const body = (await req.json().catch(() => ({}))) as {
     id?: string;
     url?: string;
