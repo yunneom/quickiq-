@@ -32,7 +32,6 @@ jobs:
           done
 
   verify:
-  verify:
     name: Lint · Typecheck · Build
     runs-on: ubuntu-latest
     timeout-minutes: 10
