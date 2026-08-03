@@ -20,7 +20,7 @@
 
 import { createSupabaseAdmin, isSupabaseConfigured } from '@/lib/supabase/server';
 import { AUDIO_SEED } from './audio-seed';
-import { isSunoShareUrl, resolveSunoShareUrl } from './suno';
+import { isRealSunoTrackUrl, isSunoShareUrl, resolveSunoShareUrl } from './suno';
 
 const BUCKET = 'ig-media';
 const DIR = 'audio';
@@ -132,7 +132,39 @@ export async function importSeedTracks(
     return { imported, pending: 0, notes: ['supabase_not_configured'] };
   }
 
-  const manifest = await readAudioManifest();
+  let manifest = await readAudioManifest();
+
+  // One-time repair: an earlier resolver bug imported Suno's silence
+  // placeholder (sil-100.mp3) as every seed's "track". Purge anything
+  // whose source is a Suno URL that is not a real track file, so the
+  // loop below re-imports those seeds properly.
+  const bogus = manifest.tracks.filter(
+    (t) => t.sourceUrl && !isRealSunoTrackUrl(t.sourceUrl),
+  );
+  if (bogus.length > 0) {
+    try {
+      const admin = createSupabaseAdmin();
+      await admin.storage
+        .from(BUCKET)
+        .remove(bogus.map((t) => pathFor(t.id)))
+        .catch(() => {});
+      const kept = manifest.tracks.filter(
+        (t) => !bogus.some((b) => b.id === t.id),
+      );
+      await admin.storage
+        .from(BUCKET)
+        .upload(
+          MANIFEST_PATH,
+          Buffer.from(JSON.stringify({ tracks: kept }, null, 2)),
+          { contentType: 'application/json', upsert: true },
+        );
+      manifest = { tracks: kept };
+      notes.push(`purged_placeholders: ${bogus.map((t) => t.id).join(',')}`);
+    } catch {
+      notes.push('purge_failed');
+    }
+  }
+
   const have = new Set(manifest.tracks.map((t) => t.id));
   const missing = AUDIO_SEED.filter((seed) => !have.has(seed.id));
 
@@ -144,6 +176,10 @@ export async function importSeedTracks(
         : seed.url;
       if (!audioUrl) {
         notes.push(`${seed.id}: resolve_failed`);
+        continue;
+      }
+      if (!isRealSunoTrackUrl(audioUrl)) {
+        notes.push(`${seed.id}: resolved_to_placeholder`);
         continue;
       }
 

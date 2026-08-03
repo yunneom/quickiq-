@@ -13,11 +13,25 @@
  * can be unit-tested without network access.
  */
 
-const CDN_MP3 = /https:\/\/cdn\d*\.suno\.ai\/[A-Za-z0-9-]+\.mp3/;
+// Real Suno tracks live at cdn*.suno.ai/<song-uuid>.mp3. The share
+// page's JS bundle ALSO embeds junk mp3s (a silence placeholder named
+// sil-100.mp3 among them) — matching any cdn mp3 once shipped three
+// days of reels with a silent "soundtrack". UUID filenames only.
+const UUID = '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}';
+const CDN_MP3 = new RegExp(`https://cdn\\d*\\.suno\\.ai/${UUID}\\.mp3`, 'i');
 const OG_AUDIO =
   /<meta[^>]+(?:property|name)="(?:og:audio|twitter:player:stream)"[^>]+content="([^"]+)"/;
-const SONG_UUID =
-  /\/song\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i;
+const SONG_UUID = new RegExp(`/song/(${UUID})`, 'i');
+
+/**
+ * True when a URL points at an actual Suno track file rather than a
+ * player asset. Used both at resolve time and to purge previously
+ * mis-imported placeholders from the library.
+ */
+export function isRealSunoTrackUrl(url: string): boolean {
+  if (!/\bsuno\.ai\//i.test(url)) return true; // non-Suno hosts: not ours to judge
+  return new RegExp(`/${UUID}\\.mp3$`, 'i').test(url);
+}
 
 export function isSunoShareUrl(url: string): boolean {
   return /^https:\/\/(?:www\.)?suno\.com\/(?:s|song)\//i.test(url);
@@ -28,11 +42,14 @@ export function extractSunoMp3(html: string, finalUrl: string): string | null {
   const og = html.match(OG_AUDIO)?.[1];
   if (og && CDN_MP3.test(og)) return og.match(CDN_MP3)![0];
 
+  // A share short-link (suno.com/s/…) redirects to the canonical
+  // /song/<uuid> URL — the redirected URL alone identifies the track,
+  // which is more reliable than scraping the JS shell.
+  const uuid = (finalUrl.match(SONG_UUID) ?? html.match(SONG_UUID))?.[1];
+  if (uuid) return `https://cdn1.suno.ai/${uuid.toLowerCase()}.mp3`;
+
   const embedded = html.match(CDN_MP3)?.[0];
   if (embedded) return embedded;
-
-  const uuid = (finalUrl.match(SONG_UUID) ?? html.match(SONG_UUID))?.[1];
-  if (uuid) return `https://cdn1.suno.ai/${uuid}.mp3`;
 
   return null;
 }

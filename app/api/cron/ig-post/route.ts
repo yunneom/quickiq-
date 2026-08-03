@@ -177,7 +177,9 @@ export async function GET(req: Request) {
   // Soundtrack seeds: pull up to two still-missing operator tracks into
   // the library before posting, on a tight leash — the posting budget
   // owns the rest of the window.
-  const seeds = await importSeedTracks(2, startedAt + 45_000).catch(() => ({
+  // Up to 4 per run (the 45s leash is the real bound) so the library
+  // refills fast after the placeholder purge.
+  const seeds = await importSeedTracks(4, startedAt + 45_000).catch(() => ({
     imported: [] as string[],
     pending: 0,
     notes: ['import_crashed'],

@@ -106,26 +106,40 @@ describe('Suno share-link resolution', () => {
     assert.ok(!isSunoShareUrl('https://evil.com/suno.com/s/x'));
   });
 
-  it('prefers og:audio, then embedded CDN URL, then the song UUID', async () => {
+  it('accepts only UUID track files: og:audio, redirected /song URL, embedded', async () => {
     const { extractSunoMp3 } = await import('../../lib/social/suno');
-    const og = '<meta property="og:audio" content="https://cdn1.suno.ai/aaaa.mp3"/>';
-    assert.equal(
-      extractSunoMp3(og, 'https://suno.com/s/x'),
-      'https://cdn1.suno.ai/aaaa.mp3',
-    );
-    const embedded = '<script>{"audio_url":"https://cdn2.suno.ai/bbbb-cc.mp3"}</script>';
-    assert.equal(
-      extractSunoMp3(embedded, 'https://suno.com/s/x'),
-      'https://cdn2.suno.ai/bbbb-cc.mp3',
-    );
+    const UUID_MP3 = 'https://cdn1.suno.ai/12345678-1234-1234-1234-123456789abc.mp3';
+    const og = `<meta property="og:audio" content="${UUID_MP3}"/>`;
+    assert.equal(extractSunoMp3(og, 'https://suno.com/s/x'), UUID_MP3);
+    const embedded = `<script>{"audio_url":"${UUID_MP3}"}</script>`;
+    assert.equal(extractSunoMp3(embedded, 'https://suno.com/s/x'), UUID_MP3);
     assert.equal(
       extractSunoMp3(
         '<html></html>',
         'https://suno.com/song/12345678-1234-1234-1234-123456789abc',
       ),
-      'https://cdn1.suno.ai/12345678-1234-1234-1234-123456789abc.mp3',
+      UUID_MP3,
     );
     assert.equal(extractSunoMp3('<html></html>', 'https://suno.com/s/x'), null);
+  });
+
+  it('never mistakes the silence placeholder for a track (3-day silent-reel bug)', async () => {
+    const { extractSunoMp3, isRealSunoTrackUrl } = await import('../../lib/social/suno');
+    // The share page's JS shell embeds sil-100.mp3 — must NOT match.
+    const shell = '<script>preload("https://cdn1.suno.ai/sil-100.mp3")</script>';
+    assert.equal(extractSunoMp3(shell, 'https://suno.com/s/x'), null);
+    // …but a redirect to the canonical song URL still resolves.
+    assert.equal(
+      extractSunoMp3(shell, 'https://suno.com/song/12345678-1234-1234-1234-123456789abc'),
+      'https://cdn1.suno.ai/12345678-1234-1234-1234-123456789abc.mp3',
+    );
+    assert.equal(isRealSunoTrackUrl('https://cdn1.suno.ai/sil-100.mp3'), false);
+    assert.equal(
+      isRealSunoTrackUrl('https://cdn1.suno.ai/12345678-1234-1234-1234-123456789abc.mp3'),
+      true,
+    );
+    // Non-Suno hosts are the operator's own assertion — left alone.
+    assert.equal(isRealSunoTrackUrl('https://example.com/mytrack.mp3'), true);
   });
 });
 
