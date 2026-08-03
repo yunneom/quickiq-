@@ -1,7 +1,11 @@
 import { NextResponse } from 'next/server';
 import { withErrorHandling } from '@/lib/api/with-error-handling';
 import { readAudioManifest, storeAudioTrack } from '@/lib/social/audio';
-import { isSunoShareUrl, resolveSunoShareUrl } from '@/lib/social/suno';
+import {
+  isRealSunoTrackUrl,
+  isSunoShareUrl,
+  resolveSunoShareUrl,
+} from '@/lib/social/suno';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -106,6 +110,15 @@ export const POST = withErrorHandling('admin/audio', async (req: Request) => {
       );
     }
     audioUrl = resolved;
+  }
+  if (!isRealSunoTrackUrl(audioUrl)) {
+    return NextResponse.json(
+      {
+        error: 'placeholder_not_a_track',
+        hint: 'This resolved to a Suno player asset, not a song. Use the share link of the song itself, or upload the MP3 file directly.',
+      },
+      { status: 422 },
+    );
   }
 
   const givenId = body.id?.toLowerCase().replace(/[^a-z0-9-]/g, '') ?? '';
