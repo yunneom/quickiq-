@@ -127,18 +127,22 @@ export function commonsPageToCandidate(
   const derivatives = (info.derivatives ?? []).filter(
     (d) => d.src && /video\/(webm|mp4)/.test(d.type ?? ''),
   );
-  const scored = derivatives
-    .map((d) => ({ src: d.src!, h: Math.min(d.width ?? 0, d.height ?? 0) }))
-    .filter((d) => d.h >= 700)
-    // Smallest rendition that still survives the crop → smallest download.
-    .sort((a, b) => a.h - b.h);
-  let url = scored[0]?.src;
+  const scored = derivatives.map((d) => ({
+    src: d.src!,
+    h: Math.min(d.width ?? 0, d.height ?? 0),
+  }));
+  // Smallest rendition that still survives the crop → smallest download.
+  const sharpEnough = scored.filter((d) => d.h >= 700).sort((a, b) => a.h - b.h);
+  // Much of Commons is SD-only. 540p under our heavy scrim still beats a
+  // drawn background, so accept the best sub-700 rendition as a fallback.
+  const acceptable = scored.filter((d) => d.h >= 540).sort((a, b) => b.h - a.h);
+  let url = sharpEnough[0]?.src ?? acceptable[0]?.src;
   if (!url) {
     const originalOk =
       info.url &&
       /video\/(webm|mp4)/.test(info.mime ?? '') &&
       (info.size ?? Infinity) <= MAX_CLIP_BYTES &&
-      Math.min(info.width ?? 0, info.height ?? 0) >= 700;
+      Math.min(info.width ?? 0, info.height ?? 0) >= 540;
     if (!originalOk) return null;
     url = info.url!;
   }
@@ -159,29 +163,36 @@ export function commonsPageToCandidate(
 }
 
 async function searchCommons(scene: BgScene, query: string): Promise<ClipCandidate[]> {
-  const params = new URLSearchParams({
-    action: 'query',
-    format: 'json',
-    formatversion: '2',
-    generator: 'search',
-    gsrsearch: `${query} filetype:video`,
-    gsrnamespace: '6',
-    gsrlimit: '20',
-    prop: 'videoinfo|imageinfo',
-    viprop: 'url|size|mime|derivatives|extmetadata',
-    iiprop: 'url|size|mime|extmetadata',
-  });
-  const res = await fetch(`https://commons.wikimedia.org/w/api.php?${params}`, {
-    cache: 'no-store',
-    signal: AbortSignal.timeout(15_000),
-    headers: { 'User-Agent': 'QuickIQ-reel-bot/1.0 (contact: site admin)' },
-  });
-  if (!res.ok) return [];
-  const data = (await res.json()) as { query?: { pages?: CommonsPage[] } };
-  const pages = data.query?.pages ?? [];
-  return pages
-    .map((p) => commonsPageToCandidate(p, scene))
-    .filter((c): c is ClipCandidate => c !== null);
+  // Two search dialects: `filetype:` is the documented CirrusSearch file
+  // filter, `filemime:` is the older one. Whichever hits first wins —
+  // guards against either keyword regressing on Commons' side.
+  for (const gsrsearch of [`${query} filetype:video`, `${query} filemime:video/webm`]) {
+    const params = new URLSearchParams({
+      action: 'query',
+      format: 'json',
+      formatversion: '2',
+      generator: 'search',
+      gsrsearch,
+      gsrnamespace: '6',
+      gsrlimit: '20',
+      prop: 'videoinfo|imageinfo',
+      viprop: 'url|size|mime|derivatives|extmetadata',
+      iiprop: 'url|size|mime|extmetadata',
+    });
+    const res = await fetch(`https://commons.wikimedia.org/w/api.php?${params}`, {
+      cache: 'no-store',
+      signal: AbortSignal.timeout(15_000),
+      headers: { 'User-Agent': 'QuickIQ-reel-bot/1.0 (contact: site admin)' },
+    });
+    if (!res.ok) continue;
+    const data = (await res.json()) as { query?: { pages?: CommonsPage[] } };
+    const pages = data.query?.pages ?? [];
+    const candidates = pages
+      .map((p) => commonsPageToCandidate(p, scene))
+      .filter((c): c is ClipCandidate => c !== null);
+    if (candidates.length > 0) return candidates;
+  }
+  return [];
 }
 
 // ---------------------------------------------------------------------------
@@ -344,6 +355,7 @@ export async function importClips(
     if (imported.length >= maxImports || Date.now() > deadlineAt) break;
 
     let candidates: ClipCandidate[] = [];
+    const perQuery: string[] = [];
     for (const query of SCENE_QUERIES[scene]) {
       if (Date.now() > deadlineAt) break;
       const [pexels, pixabay, commons] = await Promise.all([
@@ -351,11 +363,14 @@ export async function importClips(
         searchPixabay(scene, query).catch(() => []),
         searchCommons(scene, query).catch(() => []),
       ]);
+      perQuery.push(
+        `"${query}" px=${pexels.length} pb=${pixabay.length} cm=${commons.length}`,
+      );
       candidates = [...pexels, ...pixabay, ...commons].filter((c) => !have.has(c.id));
       if (candidates.length > 0) break;
     }
     if (candidates.length === 0) {
-      notes.push(`${scene}: no_candidates`);
+      notes.push(`${scene}: no_candidates [${perQuery.join(' | ')}]`);
       continue;
     }
 

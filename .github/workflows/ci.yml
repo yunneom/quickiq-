@@ -5,8 +5,32 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  # Manual run doubles as a production health probe (see prod-health).
+  workflow_dispatch:
 
 jobs:
+  # Reads PUBLIC production URLs only (media manifests + the cron's
+  # status snapshot) and prints them to the job log, so pipeline issues
+  # can be diagnosed without Vercel/Supabase dashboard access. Runs on
+  # manual dispatch and after merges to main; skipped on PR pushes.
+  prod-health:
+    name: Production media health
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Fetch public status + manifests
+        run: |
+          BASE="https://wprgqtzmddtwepmeukgn.supabase.co/storage/v1/object/public/ig-media"
+          for p in "status/last-run.json" \
+                   "footage/clips/manifest.json" \
+                   "audio/manifest.json" \
+                   "footage/manifest.json"; do
+            echo "===== $p ====="
+            curl -sS --max-time 20 "$BASE/$p" || echo "(unreachable)"
+            echo ""
+          done
+
   verify:
     name: Lint · Typecheck · Build
     runs-on: ubuntu-latest
