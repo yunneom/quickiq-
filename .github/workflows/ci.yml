@@ -12,10 +12,10 @@ jobs:
   # Reads PUBLIC production URLs only (media manifests + the cron's
   # status snapshot) and prints them to the job log, so pipeline issues
   # can be diagnosed without Vercel/Supabase dashboard access. Runs on
-  # manual dispatch and after merges to main; skipped on PR pushes.
+  # every event (~10s) — a PR push is the cheapest way to take a fresh
+  # reading, since this repo's integration cannot dispatch or re-run.
   prod-health:
     name: Production media health
-    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
