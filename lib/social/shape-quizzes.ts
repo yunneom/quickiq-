@@ -185,6 +185,28 @@ export function markTileSvg(
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 170 170">${body}</svg>`;
 }
 
+/**
+ * A–D drawn as stroke paths, centered on origin in a ±20 box. The card
+ * pipeline rasterizes figure SVGs with resvg WITHOUT fonts, so <text>
+ * silently renders nothing — every glyph must be geometry.
+ */
+const LETTER_PATHS: Record<string, string> = {
+  A: 'M -13 18 L 0 -18 L 13 18 M -7 6 L 7 6',
+  B: 'M -10 -18 L -10 18 M -10 -18 L 2 -18 C 16 -18 16 0 2 0 L -10 0 M 2 0 C 17 0 17 18 2 18 L -10 18',
+  C: 'M 13 -12 C 4 -22 -13 -18 -13 0 C -13 18 4 22 13 12',
+  D: 'M -10 -18 L -10 18 M -10 -18 L 0 -18 C 15 -14 15 14 0 18 L -10 18',
+};
+
+/** A question mark as strokes, same reason. */
+const QUESTION_PATH =
+  'M -14 -18 C -14 -34 16 -34 16 -16 C 16 -4 2 -4 2 8 M 2 22 L 2 26';
+
+function letterBadge(letter: string, cx: number, cy: number): string {
+  const path = LETTER_PATHS[letter];
+  if (!path) return '';
+  return `<g transform="translate(${cx} ${cy})"><circle r="26" fill="rgba(255,255,255,0.14)"/><path d="${path}" transform="scale(0.85)" fill="none" stroke="${INK}" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></g>`;
+}
+
 function markTile(
   path: string,
   x: number,
@@ -197,11 +219,9 @@ function markTile(
   const box = `<rect x="${x}" y="${y}" width="${size}" height="${size}" rx="18" fill="rgba(255,255,255,0.08)" stroke="${
     opts.unknown ? GOLD : INK_SOFT
   }" stroke-width="4"${opts.unknown ? ' stroke-dasharray="14 12"' : ''}/>`;
-  const label = opts.label
-    ? `<text x="${x + half}" y="${y + size + 44}" text-anchor="middle" font-family="sans-serif" font-size="36" font-weight="700" fill="${INK}">${opts.label}</text>`
-    : '';
+  const label = opts.label ? letterBadge(opts.label, x + half, y + size + 40) : '';
   if (opts.unknown) {
-    return `${box}<text x="${x + half}" y="${y + half + 22}" text-anchor="middle" font-family="sans-serif" font-size="64" font-weight="800" fill="${GOLD}">?</text>${label}`;
+    return `${box}<g transform="translate(${x + half} ${y + half}) scale(${(size / 170).toFixed(3)})"><path d="${QUESTION_PATH}" fill="none" stroke="${GOLD}" stroke-width="9" stroke-linecap="round"/></g>${label}`;
   }
   const scale = (size / 170).toFixed(3);
   const transform = `translate(${x + half} ${y + half}) scale(${scale})${
@@ -324,7 +344,7 @@ function rotationFigure(spec: RotationSpec): { svg: string; aspect: number } {
     );
   });
 
-  return svgDoc(optY + tile + 62, parts.join(''));
+  return svgDoc(optY + tile + 78, parts.join(''));
 }
 
 // ---------------------------------------------------------------------------

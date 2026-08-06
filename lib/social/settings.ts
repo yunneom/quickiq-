@@ -42,6 +42,20 @@ export async function writeSettings(
   }
   const admin = createSupabaseAdmin();
   await admin.storage.createBucket(BUCKET, { public: false }).catch(() => {});
+  // createBucket's "already exists" error is swallowed above, so VERIFY:
+  // if the bucket somehow exists as public (manual creation, console
+  // default), key material would be world-readable at a predictable URL.
+  // Force it private; refuse to store secrets if that cannot be proven.
+  try {
+    const { data: bucket } = await admin.storage.getBucket(BUCKET);
+    if (!bucket) return { ok: false, reason: 'bucket_unverifiable' };
+    if (bucket.public) {
+      const { error } = await admin.storage.updateBucket(BUCKET, { public: false });
+      if (error) return { ok: false, reason: 'bucket_public_unfixable' };
+    }
+  } catch {
+    return { ok: false, reason: 'bucket_unverifiable' };
+  }
   const current = await readSettings();
   const next: OperatorSettings = { ...current };
   // Only overwrite fields the patch actually provides (empty string clears).
