@@ -352,17 +352,6 @@ export const MIRROR_SPECS: MirrorSpec[] = [
     answer: 'C',
   },
   {
-    id: 'mirror-ell-1',
-    mark: 'ell',
-    tiles: [
-      { rotation: 45, mirror: true },
-      { rotation: 0 },
-      { rotation: 90 },
-      { rotation: 225 },
-    ],
-    answer: 'A',
-  },
-  {
     id: 'mirror-arrow-1',
     mark: 'arrow',
     tiles: [
@@ -372,6 +361,17 @@ export const MIRROR_SPECS: MirrorSpec[] = [
       { rotation: 300, mirror: true },
     ],
     answer: 'D',
+  },
+  {
+    id: 'mirror-ell-1',
+    mark: 'ell',
+    tiles: [
+      { rotation: 45, mirror: true },
+      { rotation: 0 },
+      { rotation: 90 },
+      { rotation: 225 },
+    ],
+    answer: 'A',
   },
   {
     id: 'mirror-flag-2',
@@ -385,17 +385,6 @@ export const MIRROR_SPECS: MirrorSpec[] = [
     answer: 'B',
   },
   {
-    id: 'mirror-ell-2',
-    mark: 'ell',
-    tiles: [
-      { rotation: 180 },
-      { rotation: 270 },
-      { rotation: 315, mirror: true },
-      { rotation: 90 },
-    ],
-    answer: 'C',
-  },
-  {
     id: 'mirror-arrow-2',
     mark: 'arrow',
     tiles: [
@@ -405,6 +394,17 @@ export const MIRROR_SPECS: MirrorSpec[] = [
       { rotation: 330 },
     ],
     answer: 'A',
+  },
+  {
+    id: 'mirror-ell-2',
+    mark: 'ell',
+    tiles: [
+      { rotation: 180 },
+      { rotation: 270 },
+      { rotation: 315, mirror: true },
+      { rotation: 90 },
+    ],
+    answer: 'C',
   },
 ];
 

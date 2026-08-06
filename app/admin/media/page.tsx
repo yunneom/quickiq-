@@ -58,6 +58,8 @@ export default function MediaAdminPage() {
   const [clipUrl, setClipUrl] = useState('');
   const [clipScene, setClipScene] = useState('rails');
   const [clipCredit, setClipCredit] = useState('');
+  const [pexelsKey, setPexelsKey] = useState('');
+  const [pexelsConfigured, setPexelsConfigured] = useState(false);
 
   useEffect(() => {
     const saved = window.localStorage.getItem(TOKEN_KEY);
@@ -71,7 +73,7 @@ export default function MediaAdminPage() {
     setBusy(true);
     setErr(null);
     try {
-      const [audioRes, footageRes, clipsRes] = await Promise.all([
+      const [audioRes, footageRes, clipsRes, settingsRes] = await Promise.all([
         fetch('/api/admin/audio', {
           headers: { 'x-admin-token': t },
           cache: 'no-store',
@@ -81,6 +83,10 @@ export default function MediaAdminPage() {
           cache: 'no-store',
         }),
         fetch('/api/admin/clips', {
+          headers: { 'x-admin-token': t },
+          cache: 'no-store',
+        }),
+        fetch('/api/admin/settings', {
           headers: { 'x-admin-token': t },
           cache: 'no-store',
         }),
@@ -100,6 +106,12 @@ export default function MediaAdminPage() {
       setScenes(footage.scenes ?? []);
       setClipScenes(clips.scenes ?? []);
       setClipTarget(clips.target ?? 3);
+      if (settingsRes.ok) {
+        const settings = (await settingsRes.json()) as {
+          pexelsConfigured?: boolean;
+        };
+        setPexelsConfigured(Boolean(settings.pexelsConfigured));
+      }
       setAuthed(true);
       window.localStorage.setItem(TOKEN_KEY, t);
     } catch (e) {
@@ -213,6 +225,41 @@ export default function MediaAdminPage() {
       }
       setNotice(`${successMsg}: ${data.id}`);
       await refresh(token);
+    } catch (e) {
+      setErr(String(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function savePexelsKey() {
+    setBusy(true);
+    setErr(null);
+    setNotice(null);
+    try {
+      const res = await fetch('/api/admin/settings', {
+        method: 'POST',
+        headers: {
+          'x-admin-token': token,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ pexelsApiKey: pexelsKey.trim() }),
+      });
+      const data = (await res.json()) as {
+        ok?: boolean;
+        pexelsConfigured?: boolean;
+        error?: string;
+        hint?: string;
+      };
+      if (!res.ok || !data.ok) {
+        setErr(`${data.error ?? `HTTP ${res.status}`}${data.hint ? ` — ${data.hint}` : ''}`);
+        return;
+      }
+      setPexelsConfigured(Boolean(data.pexelsConfigured));
+      setPexelsKey('');
+      setNotice(
+        'Pexels 키 저장 완료. 이제 "영상 자동 수집 실행"을 누르면 고화질 스톡에서 바로 수집합니다.',
+      );
     } catch (e) {
       setErr(String(e));
     } finally {
@@ -412,6 +459,34 @@ export default function MediaAdminPage() {
             </ul>
           )}
         </div>
+      </section>
+
+      {/* ------------------------------------------------ 스톡 API 키 */}
+      <section className="mt-6 rounded-2xl border border-gray-200 bg-white p-5">
+        <h2 className="text-lg font-bold text-gray-900">🔑 Pexels API 키</h2>
+        <p className="mt-1 text-xs leading-relaxed text-gray-500">
+          키를 저장하면 자동 수집기가 Pexels의 고화질 실사 영상(기차·야간 도로 등)을
+          제한 없이 가져옵니다. 출처 표기도 필요 없습니다. 키는 비공개 저장소에만
+          보관되고 화면에 다시 표시되지 않습니다.
+        </p>
+        <p className={`mt-2 text-sm font-semibold ${pexelsConfigured ? 'text-green-600' : 'text-amber-600'}`}>
+          {pexelsConfigured ? '✅ 키 등록됨 — 수집기 사용 중' : '아직 등록 안 됨'}
+        </p>
+        <input
+          type="password"
+          value={pexelsKey}
+          onChange={(e) => setPexelsKey(e.target.value)}
+          placeholder="Pexels API 키 붙여넣기"
+          className="mt-3 w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:border-brand-500 focus:outline-none"
+        />
+        <button
+          type="button"
+          onClick={() => void savePexelsKey()}
+          disabled={busy || !pexelsKey.trim()}
+          className="mt-3 w-full rounded-xl bg-brand-600 px-4 py-3 text-sm font-semibold text-white disabled:opacity-50"
+        >
+          {busy ? '저장 중…' : '키 저장'}
+        </button>
       </section>
 
       {/* ------------------------------------------------ 영상 배경 */}
