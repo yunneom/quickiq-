@@ -44,15 +44,17 @@ describe('plansForDay', () => {
     }
   });
 
-  it('walks the bait pool without repeating until it is exhausted', () => {
+  it('walks the text-bait pool without repeating until it is exhausted', () => {
+    // Text baits now hold one slot every other day (shape puzzles took
+    // the rest), so a full pool cycle spans 2 × poolSize days.
     const keys: string[] = [];
-    const days = Math.ceil(baitPoolSize() / (SLOTS_PER_DAY - 1));
-    for (let d = 0; d < days; d++) {
+    for (let d = 0; keys.length < baitPoolSize(); d++) {
       for (let slot = 0; slot < SLOTS_PER_DAY - 1; slot++) {
         const plan = planForSlot(d, slot);
         assert.ok(plan);
-        keys.push(plan.key);
+        if (!plan.key.startsWith('bait-shape-')) keys.push(plan.key);
       }
+      assert.ok(d < baitPoolSize() * 4, 'text baits stopped appearing');
     }
     assert.equal(new Set(keys).size, baitPoolSize());
   });
