@@ -246,7 +246,7 @@ describe('every option tile is visually distinct (rasterized)', () => {
 });
 
 describe('publishing mix', () => {
-  it('shape puzzles take 50% of bait slots (1.5 of 3 posts/day avg)', () => {
+  it('shape puzzles take 75% of daily slots (9 of every 12 across a 4-day cycle)', () => {
     let shape = 0;
     let total = 0;
     for (let day = 20000; day < 20028; day++) {
@@ -256,7 +256,8 @@ describe('publishing mix', () => {
       }
     }
     assert.equal(total, 28 * 3);
-    assert.equal(shape, 42, `expected 42 shape posts in 28 days, got ${shape}`);
+    // 28 days = exactly 7 full 4-day cycles, 9 shape slots each.
+    assert.equal(shape, 63, `expected 63 shape posts in 28 days, got ${shape}`);
   });
 
   it('consecutive shape slots never repeat a puzzle', () => {

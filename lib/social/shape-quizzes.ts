@@ -2,7 +2,7 @@
  * Shape/visual puzzle pool — the "figure" half of the bait rotation.
  *
  * Visual puzzles stop a thumb harder than text (you can attempt one
- * without reading), so they get ~50% of the publishing slots. Every
+ * without reading), so they get ~75% of the publishing slots. Every
  * figure is GENERATED from parameters and its answer is derived from the
  * same parameters — never hand-counted — so a miscounted figure cannot
  * ship: the unit tests recompute each answer from the geometry.

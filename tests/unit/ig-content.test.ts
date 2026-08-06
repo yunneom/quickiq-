@@ -31,30 +31,57 @@ describe('plansForDay', () => {
     }
   });
 
-  it('ends each day with a real test question, bait before it', () => {
-    for (let d = 0; d < 20; d++) {
+  it('runs the 4-day mix: slots 0/1 always shape, slot 2 cycles question/text/question/shape', () => {
+    // The single source of truth for this contract is planForSlot's
+    // SLOT2_KIND table; this test pins its observable behavior so a
+    // future retune notices it changed the publishing mix.
+    const SLOT2_BY_R = ['q', 'text', 'q', 'shape'] as const;
+    for (let d = 0; d < 40; d++) {
       const plans = plansForDay(d);
+      const r = d % 4;
       plans.forEach((plan, slot) => {
-        if (slot === SLOTS_PER_DAY - 1) {
-          assert.match(plan.key, /^q-/, `day ${d} slot ${slot} should be a question`);
+        if (slot < SLOTS_PER_DAY - 1) {
+          assert.match(plan.key, /^bait-shape-/, `day ${d} slot ${slot} should be a shape puzzle`);
+          return;
+        }
+        const kind = SLOT2_BY_R[r];
+        if (kind === 'q') {
+          assert.match(plan.key, /^q-/, `day ${d} slot 2 (r=${r}) should be a real question`);
+        } else if (kind === 'text') {
+          assert.match(
+            plan.key,
+            /^bait-(?!shape-)/,
+            `day ${d} slot 2 (r=${r}) should be text bait`,
+          );
         } else {
-          assert.match(plan.key, /^bait-/, `day ${d} slot ${slot} should be bait`);
+          assert.match(plan.key, /^bait-shape-/, `day ${d} slot 2 (r=${r}) should be a shape puzzle`);
         }
       });
     }
   });
 
-  it('walks the text-bait pool without repeating until it is exhausted', () => {
-    // Text baits now hold one slot every other day (shape puzzles took
-    // the rest), so a full pool cycle spans 2 × poolSize days.
+  it('shape puzzles land at exactly 75% of daily slots over a full cycle', () => {
+    let shape = 0;
+    let total = 0;
+    for (let d = 0; d < 4; d++) {
+      for (const plan of plansForDay(d)) {
+        total += 1;
+        if (plan.key.startsWith('bait-shape-')) shape += 1;
+      }
+    }
+    assert.equal(total, 12);
+    assert.equal(shape, 9, `expected 9/12 shape slots per 4-day cycle, got ${shape}`);
+  });
+
+  it('walks the text-bait pool (slot 2, one every 4th day) without repeating until exhausted', () => {
     const keys: string[] = [];
     for (let d = 0; keys.length < baitPoolSize(); d++) {
-      for (let slot = 0; slot < SLOTS_PER_DAY - 1; slot++) {
-        const plan = planForSlot(d, slot);
-        assert.ok(plan);
-        if (!plan.key.startsWith('bait-shape-')) keys.push(plan.key);
+      const plan = planForSlot(d, SLOTS_PER_DAY - 1);
+      assert.ok(plan);
+      if (!plan.key.startsWith('bait-shape-') && !plan.key.startsWith('q-')) {
+        keys.push(plan.key);
       }
-      assert.ok(d < baitPoolSize() * 4, 'text baits stopped appearing');
+      assert.ok(d < baitPoolSize() * 6, 'text baits stopped appearing');
     }
     assert.equal(new Set(keys).size, baitPoolSize());
   });
@@ -125,9 +152,9 @@ describe('bait pool integrity', () => {
     }
   });
 
-  it('is big enough to run 2 bait posts a day for a month without repeats', () => {
+  it('is big enough to run text bait (1 per 4 days) for a quarter without repeats', () => {
     assert.ok(
-      baitPoolSize() >= 30 * (SLOTS_PER_DAY - 1) - 20,
+      baitPoolSize() >= Math.floor(90 / 4),
       `bait pool is only ${baitPoolSize()}`,
     );
   });

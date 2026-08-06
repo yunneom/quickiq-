@@ -8,18 +8,20 @@ import { SHAPE_POSTS, type ShapePost } from './shape-quizzes';
 /**
  * Content plan for the global (English) Instagram account.
  *
- * Two post families, mixed by the daily rotation:
+ * Three post families, mixed by the daily rotation (see planForSlot):
  *
- *  1. BAIT posts — hand-crafted comment-bait: speed/distance races, work
+ *  1. SHAPE posts — generated visual puzzles (lib/social/shape-quizzes.ts).
+ *     Outperform text on a muted autoplay feed since they can be attempted
+ *     without reading, so they carry 75% of the daily slots.
+ *  2. BAIT posts — hand-crafted comment-bait: speed/distance races, work
  *     rates, percentage traps, number sequences, spelling traps. Most
  *     carry a `scene`, an illustration generated from the question's own
- *     numbers (cars on a road, bars, number tiles), because a wall of
- *     text does not stop a scrolling thumb.
- *  2. QUESTION posts — real items from the EN test pool, which double as
+ *     numbers (cars on a road, bars, number tiles).
+ *  3. QUESTION posts — real items from the EN test pool, which double as
  *     a product preview. Only text-based questions are eligible (spatial
  *     items reference figure assets the card renderer can't draw).
  *
- * Three posts go out per day: [bait, bait, real question].
+ * BAIT and QUESTION together make up the remaining 25% ("regular quiz").
  */
 
 export type CardTheme = 'blue' | 'orange' | 'green' | 'purple';
@@ -1407,47 +1409,70 @@ function shapePlan(p: ShapePost): IgPostPlan {
 }
 
 /**
+ * Daily mix runs on a 4-day cycle (12 slots): slot 0 and slot 1 are
+ * ALWAYS a shape puzzle; slot 2 is the "regular" slot — real pool
+ * question on 2 of the 4 days, text bait on 1, and shape on the
+ * remaining day. That lands shape puzzles at 9 of 12 slots = 75%,
+ * regular quiz content (bait + real questions) at 25% — figures
+ * outperform text on a muted autoplay feed, so they carry the account.
+ *
+ * `CYCLE_LEN` days repeat this pattern. `SHAPE_PER_CYCLE` and the
+ * `SLOT2_KIND` table below are the single place that ratio is defined —
+ * change them together to retune the mix.
+ */
+const CYCLE_LEN = 4;
+/** slot-2 content per day-in-cycle: 2 question + 1 text-bait + 1 shape. */
+const SLOT2_KIND: ReadonlyArray<'question' | 'text' | 'shape'> = [
+  'question',
+  'text',
+  'question',
+  'shape',
+];
+/** Shape-slot count for a given day-in-cycle: slots 0+1, plus slot 2 if it's the shape day. */
+function shapeCountOnDay(r: number): number {
+  return 2 + (SLOT2_KIND[r] === 'shape' ? 1 : 0);
+}
+/** Cumulative shape-slot count over days [0, r) of the cycle. */
+const SHAPE_PREFIX: number[] = [0];
+for (let r = 1; r < CYCLE_LEN; r++) {
+  SHAPE_PREFIX.push(SHAPE_PREFIX[r - 1] + shapeCountOnDay(r - 1));
+}
+const SHAPE_PER_CYCLE = SHAPE_PREFIX[CYCLE_LEN - 1] + shapeCountOnDay(CYCLE_LEN - 1);
+
+/**
  * Deterministic rotation: the same (day, slot) always yields the same
  * post, so a retried cron run republishes nothing new and the ledger
  * stays clean. `dayIndex` is days since epoch (UTC).
- *
- * Daily mix: slot 0 is ALWAYS a shape puzzle, slot 1 alternates shape /
- * text bait by day parity, slot 2 is a real pool question. Shape puzzles
- * therefore average 1.5 of the 3 daily posts — the 50% visual share the
- * account is tuned for (figures out-hook text on a muted autoplay feed).
  */
 export function planForSlot(dayIndex: number, slot = 0): IgPostPlan | null {
   const s = Math.min(Math.max(Math.trunc(slot), 0), SLOTS_PER_DAY - 1);
+  const r = dayIndex % CYCLE_LEN;
+  const block = Math.floor(dayIndex / CYCLE_LEN);
+  const slot2Kind = SLOT2_KIND[r];
 
-  if (s === SLOTS_PER_DAY - 1) {
+  if (s === SLOTS_PER_DAY - 1 && slot2Kind !== 'shape') {
+    if (slot2Kind === 'text') {
+      if (BAIT_POSTS.length === 0) return null;
+      // One text-bait slot per 4-day cycle walks the pool at 1/4 pace.
+      const ordinal = block;
+      const stride = coprimeStride(BAIT_POSTS.length);
+      return baitPlan(BAIT_POSTS[(ordinal * stride) % BAIT_POSTS.length]);
+    }
     const pool = eligibleQuestions();
     if (pool.length === 0) return null;
+    // Two question slots per cycle (day-in-cycle r=0 and r=2).
+    const ordinal = block * 2 + (r === 2 ? 1 : 0);
     return questionPlan(
-      pool[dayIndex % pool.length],
+      pool[ordinal % pool.length],
       HOOKS[dayIndex % HOOKS.length],
     );
   }
 
-  const shapeSlot = s === 0 || (s === 1 && dayIndex % 2 === 1);
-  if (shapeSlot) {
-    if (SHAPE_POSTS.length === 0) return null;
-    // Ordinal counts shape slots over time: one on even days (slot 0),
-    // two on odd days (slots 0 and 1) — floor(3d/2) before day d, then
-    // +1 within an odd day's second slot.
-    const ordinal = Math.floor((dayIndex * 3) / 2) + (s === 1 ? 1 : 0);
-    const stride = coprimeStride(SHAPE_POSTS.length);
-    return shapePlan(SHAPE_POSTS[(ordinal * stride) % SHAPE_POSTS.length]);
-  }
-
-  if (BAIT_POSTS.length === 0) return null;
-  // One text-bait slot every other day walks the pool at half pace.
-  const ordinal = Math.floor(dayIndex / 2);
-  // Stride instead of walking in order: the pool is grouped by kind, so
-  // consecutive posts would otherwise both be, say, percentage puzzles.
-  // A stride coprime with the pool length still visits every entry once
-  // per cycle, it just interleaves the kinds.
-  const stride = coprimeStride(BAIT_POSTS.length);
-  return baitPlan(BAIT_POSTS[(ordinal * stride) % BAIT_POSTS.length]);
+  // Slots 0, 1 are always shape; slot 2 joins them on the cycle's shape day.
+  if (SHAPE_POSTS.length === 0) return null;
+  const ordinal = block * SHAPE_PER_CYCLE + SHAPE_PREFIX[r] + s;
+  const stride = coprimeStride(SHAPE_POSTS.length);
+  return shapePlan(SHAPE_POSTS[(ordinal * stride) % SHAPE_POSTS.length]);
 }
 
 /** Largest of a few candidate strides that is coprime with `len`. */
