@@ -44,8 +44,20 @@ export const SCENE_QUERIES: Record<BgScene, string[]> = {
   rails: ['train approaching camera', 'train arriving station', 'railway cab view'],
   road: ['night highway headlights', 'driving at night', 'city traffic night'],
   chalk: ['writing on chalkboard', 'chalkboard classroom', 'blackboard math'],
-  slate: ['ink in water black', 'dark smoke abstract', 'abstract particles dark'],
+  // Calm dark backdrops that actually EXIST on Commons — the abstract
+  // stock phrases ("ink in water") return zero there.
+  slate: ['night sky stars timelapse', 'ocean waves night', 'aurora borealis timelapse'],
 };
+
+/**
+ * Titles that must never become a quiz background, whatever their
+ * license: real-world violence, death, crime footage. Commons carries
+ * plenty of public-domain news/bodycam video, and a search for "train
+ * arriving" has surfaced shooting footage before. A quiz account posts
+ * NOTHING from this list — full stop.
+ */
+export const TITLE_BLOCKLIST =
+  /shoot|shot\b|gun\b|weapon|kill|dead|death|fatal|victim|injur|accident|crash|collision|derail|disaster|suicide|police|officer|arrest|patrol|border|riot|protest|war\b|combat|attack|assault|blood|violen|explos|bomb\b|murder|crime|terror|funeral|memorial|rescue|emergency/i;
 
 // ---------------------------------------------------------------------------
 // License filter — pure, unit-tested.
@@ -113,6 +125,9 @@ export function commonsPageToCandidate(
 ): ClipCandidate | null {
   const info = page.videoinfo?.[0] ?? page.imageinfo?.[0];
   if (!info) return null;
+
+  // Content safety BEFORE license: no violent/news footage behind a quiz.
+  if (TITLE_BLOCKLIST.test(page.title ?? '')) return null;
 
   const license = commonsLicenseAllowed(info.extmetadata?.LicenseShortName?.value);
   if (!license.allowed) return null;
@@ -182,7 +197,7 @@ async function searchCommons(scene: BgScene, query: string): Promise<ClipCandida
     const res = await fetch(`https://commons.wikimedia.org/w/api.php?${params}`, {
       cache: 'no-store',
       signal: AbortSignal.timeout(15_000),
-      headers: { 'User-Agent': 'QuickIQ-reel-bot/1.0 (contact: site admin)' },
+      headers: { 'User-Agent': 'QuickIQBot/1.0 (https://iq.dailyenterkr.com; media pipeline; contact via site)' },
     });
     if (!res.ok) continue;
     const data = (await res.json()) as { query?: { pages?: CommonsPage[] } };
@@ -375,18 +390,30 @@ export async function importClips(
     }
 
     let stored = false;
+    let rateLimited = false;
     for (const candidate of candidates.slice(0, 4)) {
       if (Date.now() > deadlineAt) break;
-      const ok = await downloadValidateStore(candidate, deadlineAt, notes);
-      if (ok) {
+      const result = await downloadValidateStore(candidate, deadlineAt, notes);
+      if (result === 'stored') {
         imported.push(candidate.id);
         have.add(candidate.id);
         countByScene.set(scene, (countByScene.get(scene) ?? 0) + 1);
         stored = true;
         break;
       }
+      if (result === 'rate_limited') {
+        rateLimited = true;
+        break;
+      }
     }
     if (!stored) notes.push(`${scene}: all_candidates_failed`);
+    if (rateLimited) {
+      // 429 means the host wants us gone NOW. Hammering the remaining
+      // scenes both prolongs the ban and burns the posting budget (one
+      // slow run already cost a publish slot). Stop; retry next run.
+      notes.push('rate_limited_backing_off_until_next_run');
+      break;
+    }
   }
 
   const scenesShort = (Object.keys(SCENE_QUERIES) as BgScene[]).filter(
@@ -399,7 +426,7 @@ async function downloadValidateStore(
   candidate: ClipCandidate,
   deadlineAt: number,
   notes: string[],
-): Promise<boolean> {
+): Promise<'stored' | 'failed' | 'rate_limited'> {
   try {
     // The download must not overrun the caller's window: a fetch started
     // 1s before the deadline gets ~1s, not a fresh 60s.
@@ -407,27 +434,34 @@ async function downloadValidateStore(
     const res = await fetch(candidate.url, {
       cache: 'no-store',
       signal: AbortSignal.timeout(timeout),
-      headers: { 'User-Agent': 'QuickIQ-reel-bot/1.0 (contact: site admin)' },
+      headers: {
+        'User-Agent':
+          'QuickIQBot/1.0 (https://iq.dailyenterkr.com; media pipeline; contact via site)',
+      },
     });
+    if (res.status === 429) {
+      notes.push(`${candidate.id}: http_429`);
+      return 'rate_limited';
+    }
     if (!res.ok) {
       notes.push(`${candidate.id}: http_${res.status}`);
-      return false;
+      return 'failed';
     }
     const declared = Number(res.headers.get('content-length') ?? 0);
     if (declared > MAX_CLIP_BYTES) {
       notes.push(`${candidate.id}: too_large_declared`);
-      return false;
+      return 'failed';
     }
     const video = Buffer.from(await res.arrayBuffer());
     if (video.length === 0 || video.length > MAX_CLIP_BYTES) {
       notes.push(`${candidate.id}: too_large`);
-      return false;
+      return 'failed';
     }
 
     const size = await probeClip(video);
     if (!size || !clipResolutionOk(size)) {
       notes.push(`${candidate.id}: probe_failed`);
-      return false;
+      return 'failed';
     }
 
     const stored = await storeClip(
@@ -444,11 +478,11 @@ async function downloadValidateStore(
     );
     if (!stored.ok) {
       notes.push(`${candidate.id}: store_${stored.reason}`);
-      return false;
+      return 'failed';
     }
-    return true;
+    return 'stored';
   } catch {
     notes.push(`${candidate.id}: download_error`);
-    return false;
+    return 'failed';
   }
 }
