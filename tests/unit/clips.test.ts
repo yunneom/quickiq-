@@ -1,4 +1,4 @@
-import { describe, it } from 'node:test';
+import { describe, it, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { pickClipForSlot, type ClipEntry } from '../../lib/social/clips';
 import {
@@ -9,6 +9,7 @@ import {
   stripHtml,
   SCENE_QUERIES,
   TITLE_BLOCKLIST,
+  importClips,
 } from '../../lib/social/clip-sources';
 import type { BgScene } from '../../lib/social/reel-bg';
 
@@ -247,5 +248,97 @@ describe('scene queries and helpers', () => {
   it('stripHtml flattens Commons artist markup', () => {
     assert.equal(stripHtml('<a href="x"><b>Jane</b> Doe</a>'), 'Jane Doe');
     assert.equal(stripHtml(undefined), '');
+  });
+});
+
+describe('importClips: a Commons rate-limit must not abort other scenes', () => {
+  // Regression for a real production incident: the very first scene's
+  // Commons download hit HTTP 429, and the collector used to treat that
+  // as "abort the whole run" — silently starving every OTHER scene even
+  // though a working Pexels key could have served them. A rate limit is
+  // per-host, not global: only Commons should back off.
+  let originalFetch: typeof fetch;
+  const DOWNLOAD_URL = 'https://fixture.test/clip-429.webm';
+
+  beforeEach(() => {
+    originalFetch = globalThis.fetch;
+  });
+  afterEach(() => {
+    globalThis.fetch = originalFetch;
+  });
+
+  it('skips Commons for the rest of the run but still attempts every scene', async () => {
+    let commonsSearchCalls = 0;
+    let downloadCalls = 0;
+
+    globalThis.fetch = (async (url: string | URL | Request) => {
+      const href = typeof url === 'string' ? url : url.toString();
+
+      if (href.includes('commons.wikimedia.org/w/api.php')) {
+        commonsSearchCalls += 1;
+        // Only the FIRST Commons search (for the first scene processed)
+        // returns a candidate — enough to trigger one download attempt.
+        const body =
+          commonsSearchCalls === 1
+            ? {
+                query: {
+                  pages: [
+                    {
+                      title: 'File:Rails fixture.webm',
+                      videoinfo: [
+                        {
+                          url: DOWNLOAD_URL,
+                          mime: 'video/webm',
+                          size: 1_000_000,
+                          width: 1280,
+                          height: 720,
+                          duration: 20,
+                          derivatives: [],
+                          extmetadata: { LicenseShortName: { value: 'CC0' } },
+                        },
+                      ],
+                    },
+                  ],
+                },
+              }
+            : { query: { pages: [] } };
+        return new Response(JSON.stringify(body), { status: 200 });
+      }
+
+      if (href === DOWNLOAD_URL) {
+        downloadCalls += 1;
+        return new Response(null, { status: 429 });
+      }
+
+      throw new Error(`unexpected fetch in test: ${href}`);
+    }) as typeof fetch;
+
+    // No PEXELS_API_KEY/PIXABAY_API_KEY and no Supabase in this test
+    // process, so both stock providers short-circuit to [] without
+    // making any request — isolating the Commons-only path.
+    const result = await importClips(4, Date.now() + 30_000);
+
+    // The 429 was hit exactly once (only the scene that got a candidate
+    // ever reaches the download step) — proof the backoff took effect
+    // immediately rather than retrying into the same ban.
+    assert.equal(downloadCalls, 1, 'should not retry a 429 host');
+
+    const scenes: BgScene[] = ['rails', 'road', 'chalk', 'slate'];
+    for (const scene of scenes) {
+      assert.ok(
+        result.notes.some((n) => n.startsWith(`${scene}:`)),
+        `scene "${scene}" was never attempted — the run aborted early`,
+      );
+    }
+
+    // Every scene AFTER the one that hit the 429 must show the backoff
+    // took effect (Commons skipped, not silently retried into the ban).
+    const skippedNotes = result.notes.filter((n) =>
+      n.includes('commons skipped: rate-limited earlier this run'),
+    );
+    assert.ok(
+      skippedNotes.length >= scenes.length - 1,
+      `expected ${scenes.length - 1} scenes to note the Commons skip, got: ${JSON.stringify(result.notes)}`,
+    );
   });
 });

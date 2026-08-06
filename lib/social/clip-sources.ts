@@ -377,6 +377,12 @@ export async function importClips(
     // before any scene gets variety.
     .sort((a, b) => (countByScene.get(a) ?? 0) - (countByScene.get(b) ?? 0));
 
+  // Once Commons 429s us, EVERY remaining Commons candidate this run will
+  // too (same host, same limit) — but that must not stop us from trying
+  // Pexels/Pixabay for the OTHER scenes. Scoped per-host, not a global
+  // abort: a Commons ban must never block a working Pexels key.
+  let commonsBackoff = false;
+
   for (const scene of scenes) {
     if (imported.length >= maxImports || Date.now() > deadlineAt) break;
 
@@ -387,7 +393,7 @@ export async function importClips(
       const [pexels, pixabay, commons] = await Promise.all([
         searchPexels(scene, query, keys.pexels).catch(() => []),
         searchPixabay(scene, query, keys.pixabay).catch(() => []),
-        searchCommons(scene, query).catch(() => []),
+        commonsBackoff ? Promise.resolve([]) : searchCommons(scene, query).catch(() => []),
       ]);
       perQuery.push(
         `"${query}" px=${pexels.length} pb=${pixabay.length} cm=${commons.length}`,
@@ -396,12 +402,13 @@ export async function importClips(
       if (candidates.length > 0) break;
     }
     if (candidates.length === 0) {
-      notes.push(`${scene}: no_candidates [${perQuery.join(' | ')}]`);
+      notes.push(
+        `${scene}: no_candidates [${perQuery.join(' | ')}]${commonsBackoff ? ' (commons skipped: rate-limited earlier this run)' : ''}`,
+      );
       continue;
     }
 
     let stored = false;
-    let rateLimited = false;
     for (const candidate of candidates.slice(0, 4)) {
       if (Date.now() > deadlineAt) break;
       const result = await downloadValidateStore(candidate, deadlineAt, notes);
@@ -413,18 +420,15 @@ export async function importClips(
         break;
       }
       if (result === 'rate_limited') {
-        rateLimited = true;
+        // Every candidate after this one in the array is also a Commons
+        // entry (Pexels/Pixabay are ordered first), so further attempts
+        // this scene would just 429 again — stop here, not mid-array.
+        if (!commonsBackoff) notes.push('commons_rate_limited_skipping_for_rest_of_run');
+        commonsBackoff = true;
         break;
       }
     }
     if (!stored) notes.push(`${scene}: all_candidates_failed`);
-    if (rateLimited) {
-      // 429 means the host wants us gone NOW. Hammering the remaining
-      // scenes both prolongs the ban and burns the posting budget (one
-      // slow run already cost a publish slot). Stop; retry next run.
-      notes.push('rate_limited_backing_off_until_next_run');
-      break;
-    }
   }
 
   const scenesShort = (Object.keys(SCENE_QUERIES) as BgScene[]).filter(
