@@ -10,9 +10,10 @@
  *   · Wikimedia Commons — keyless API. Only CC0 / Public domain / plain
  *     CC BY are accepted (BY gets an automatic caption credit).
  *     ShareAlike, NonCommercial, GFDL and anything ambiguous is dropped.
- *   · Pexels / Pixabay — enabled when PEXELS_API_KEY / PIXABAY_API_KEY
- *     are set. Their native licenses allow commercial use without
- *     attribution.
+ *   · Pexels / Pixabay — enabled when an API key is present, either as
+ *     PEXELS_API_KEY / PIXABAY_API_KEY env vars or pasted once into
+ *     /admin/media (stored in the private settings bucket). Their
+ *     native licenses allow commercial use without attribution.
  *
  * Never added here: news/documentary footage, YouTube rips, anything
  * rights-managed — a Rights Manager match mutes the reel or strikes the
@@ -22,6 +23,7 @@
 import type { BgScene } from './reel-bg';
 import { MAX_CLIP_BYTES, readClipManifest, storeClip } from './clips';
 import { clipResolutionOk, probeClip } from './clip-frames';
+import { getStockKeys } from './settings';
 
 /** How many clips we aim to hold per scene before the collector idles. */
 export const CLIPS_PER_SCENE_TARGET = 3;
@@ -248,8 +250,11 @@ export function pexelsVideoToCandidate(
   };
 }
 
-async function searchPexels(scene: BgScene, query: string): Promise<ClipCandidate[]> {
-  const key = process.env.PEXELS_API_KEY?.trim();
+async function searchPexels(
+  scene: BgScene,
+  query: string,
+  key: string | undefined,
+): Promise<ClipCandidate[]> {
   if (!key) return [];
   const params = new URLSearchParams({ query, per_page: '15' });
   const res = await fetch(`https://api.pexels.com/videos/search?${params}`, {
@@ -300,8 +305,11 @@ export function pixabayHitToCandidate(
   return null;
 }
 
-async function searchPixabay(scene: BgScene, query: string): Promise<ClipCandidate[]> {
-  const key = process.env.PIXABAY_API_KEY?.trim();
+async function searchPixabay(
+  scene: BgScene,
+  query: string,
+  key: string | undefined,
+): Promise<ClipCandidate[]> {
   if (!key) return [];
   const params = new URLSearchParams({
     key,
@@ -353,6 +361,9 @@ export async function importClips(
 ): Promise<ClipImportResult> {
   const notes: string[] = [];
   const imported: string[] = [];
+  // Resolve once per run: env vars first, then the operator-pasted keys
+  // in the private settings bucket.
+  const keys = await getStockKeys();
   const manifest = await readClipManifest();
   const have = new Set(manifest.clips.map((c) => c.id));
   const countByScene = new Map<BgScene, number>();
@@ -374,8 +385,8 @@ export async function importClips(
     for (const query of SCENE_QUERIES[scene]) {
       if (Date.now() > deadlineAt) break;
       const [pexels, pixabay, commons] = await Promise.all([
-        searchPexels(scene, query).catch(() => []),
-        searchPixabay(scene, query).catch(() => []),
+        searchPexels(scene, query, keys.pexels).catch(() => []),
+        searchPixabay(scene, query, keys.pixabay).catch(() => []),
         searchCommons(scene, query).catch(() => []),
       ]);
       perQuery.push(
