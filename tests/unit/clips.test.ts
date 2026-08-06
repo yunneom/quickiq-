@@ -8,6 +8,7 @@ import {
   pixabayHitToCandidate,
   stripHtml,
   SCENE_QUERIES,
+  TITLE_BLOCKLIST,
 } from '../../lib/social/clip-sources';
 import type { BgScene } from '../../lib/social/reel-bg';
 
@@ -184,6 +185,54 @@ describe('pickClipForSlot', () => {
       }
     }
     assert.equal(pickClipForSlot('chalk', 0, 0, pool), null);
+  });
+});
+
+describe('content safety blocklist', () => {
+  it('blocks violent/news titles that a train search really surfaced', () => {
+    for (const title of [
+      'File:U.S. Border Patrol agent shoots man smuggling.webm',
+      'File:California officer saves man from oncoming train.webm',
+      'File:Train crash compilation.webm',
+      'File:Fatal accident at crossing.ogv',
+      'File:Police arrest at station.webm',
+      'File:War combat footage 1944.webm',
+    ]) {
+      assert.ok(TITLE_BLOCKLIST.test(title), `should block: ${title}`);
+    }
+  });
+
+  it('lets ordinary scenic titles through', () => {
+    for (const title of [
+      'File:Steam train arriving at station.webm',
+      'File:Night traffic timelapse.webm',
+      'File:Aurora borealis over Norway.webm',
+      'File:Writing on a chalkboard.webm',
+      'File:Ocean waves at dusk.webm',
+    ]) {
+      assert.ok(!TITLE_BLOCKLIST.test(title), `should allow: ${title}`);
+    }
+  });
+
+  it('is enforced inside the Commons candidate gate', () => {
+    const page = {
+      title: 'File:Officer shoots near train station.webm',
+      videoinfo: [
+        {
+          url: 'https://upload.wikimedia.org/x.webm',
+          mime: 'video/webm',
+          size: 10_000_000,
+          width: 1280,
+          height: 720,
+          duration: 30,
+          derivatives: [
+            { src: 'https://upload.wikimedia.org/720p.webm', type: 'video/webm', width: 1280, height: 720 },
+          ],
+          extmetadata: { LicenseShortName: { value: 'Public domain' } },
+        },
+      ],
+    };
+    assert.equal(commonsPageToCandidate(page, 'rails'), null);
   });
 });
 
