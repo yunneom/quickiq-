@@ -41,7 +41,13 @@ export type Scene =
         /** Shown at the bar's end — given values only, '?' for the unknown. */
         value?: string;
       }>;
-    };
+    }
+  /**
+   * Self-contained SVG figure (shape puzzles). Rendered through an
+   * <img data:> so resvg rasterizes it with FULL SVG support — satori's
+   * JSX limitations (no transforms etc.) don't apply inside.
+   */
+  | { kind: 'figure'; svg: string; aspect: number };
 
 /** Side-view vehicle bodies (Material outlines). */
 const VEHICLE_PATH = {
@@ -303,6 +309,25 @@ function BarsScene({
   );
 }
 
+function FigureScene({
+  scene,
+  width,
+  compact,
+}: { scene: Extract<Scene, { kind: 'figure' }> } & SceneOpts) {
+  // Feed cards are square and tighter — scale the figure down a notch.
+  const w = compact ? Math.round(width * 0.92) : width;
+  const h = Math.round(w * scene.aspect);
+  // satori JSX rendered to a PNG, not DOM — next/image cannot apply here.
+  return (
+    // eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text
+    <img
+      src={`data:image/svg+xml;utf8,${encodeURIComponent(scene.svg)}`}
+      width={w}
+      height={h}
+    />
+  );
+}
+
 /** Returns the illustration for a scene, or null when there is none. */
 export function renderScene(
   scene: Scene | undefined,
@@ -316,6 +341,8 @@ export function renderScene(
       return <SequenceScene scene={scene} {...opts} />;
     case 'bars':
       return <BarsScene scene={scene} {...opts} />;
+    case 'figure':
+      return <FigureScene scene={scene} {...opts} />;
     default:
       return null;
   }

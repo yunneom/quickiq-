@@ -3,6 +3,7 @@ import { extraEnQuestions } from '@/lib/questions/extra-en';
 import type { Question } from '@/lib/questions/types';
 import type { Scene } from './quiz-scene';
 import type { BgScene } from './reel-bg';
+import { SHAPE_POSTS, type ShapePost } from './shape-quizzes';
 
 /**
  * Content plan for the global (English) Instagram account.
@@ -83,7 +84,14 @@ export function eligibleQuestions(): Question[] {
 // without re-deriving it by hand. They are never rendered on the card.
 // ---------------------------------------------------------------------------
 
-type BaitKind = 'speed' | 'rate' | 'percent' | 'sequence' | 'trick' | 'spelling';
+type BaitKind =
+  | 'speed'
+  | 'rate'
+  | 'percent'
+  | 'sequence'
+  | 'trick'
+  | 'spelling'
+  | 'shape';
 
 interface BaitPost {
   /** Stable id — part of the ledger key, never reuse or rename. */
@@ -1173,6 +1181,7 @@ const BAIT_LABEL: Record<BaitKind, string> = {
   sequence: 'PATTERN CHECK',
   trick: 'LOGIC CHECK',
   spelling: 'SPELLING TEST',
+  shape: 'VISUAL PUZZLE',
 };
 
 const BAIT_THEME: Record<BaitKind, CardTheme> = {
@@ -1182,6 +1191,7 @@ const BAIT_THEME: Record<BaitKind, CardTheme> = {
   sequence: 'purple',
   trick: 'orange',
   spelling: 'green',
+  shape: 'purple',
 };
 
 /**
@@ -1197,6 +1207,8 @@ function baitBg(b: BaitPost): BgScene {
     if (/km\/h|car|bus|cyclist|runner|race|drive/i.test(b.prompt)) return 'road';
   }
   if (b.kind === 'spelling') return 'slate';
+  // Figures need the calmest backdrop — the puzzle IS the visual.
+  if (b.kind === 'shape') return 'slate';
   return 'chalk';
 }
 
@@ -1208,6 +1220,7 @@ const KIND_KEYWORD: Record<BaitKind, string> = {
   sequence: 'Number sequence puzzle',
   trick: 'Trick question',
   spelling: 'Spelling test',
+  shape: 'Visual IQ puzzle',
 };
 
 const KIND_TAG: Record<BaitKind, string> = {
@@ -1217,6 +1230,7 @@ const KIND_TAG: Record<BaitKind, string> = {
   sequence: '#numberpuzzle',
   trick: '#trickquestion',
   spelling: '#spellingtest',
+  shape: '#visualpuzzle',
 };
 
 // ---------------------------------------------------------------------------
@@ -1377,13 +1391,30 @@ function questionPlan(q: Question, hook: string): IgPostPlan {
 /** Posts published per day, spread across the day's cron runs. */
 export const SLOTS_PER_DAY = 3;
 
+/** A shape puzzle as a plan — same shell as text baits, kind 'shape'. */
+function shapePlan(p: ShapePost): IgPostPlan {
+  return baitPlan({
+    id: `shape-${p.id}`,
+    kind: 'shape',
+    hook: p.hook,
+    badge: p.badge,
+    prompt: p.prompt,
+    options: p.options,
+    scene: { kind: 'figure', svg: p.svg, aspect: p.aspect },
+    answer: p.answer,
+    explain: p.explain,
+  });
+}
+
 /**
  * Deterministic rotation: the same (day, slot) always yields the same
  * post, so a retried cron run republishes nothing new and the ledger
  * stays clean. `dayIndex` is days since epoch (UTC).
  *
- * Each day publishes [bait, bait, real question]: bait drives reach, the
- * real question keeps the product visible.
+ * Daily mix: slot 0 is ALWAYS a shape puzzle, slot 1 alternates shape /
+ * text bait by day parity, slot 2 is a real pool question. Shape puzzles
+ * therefore average 1.5 of the 3 daily posts — the 50% visual share the
+ * account is tuned for (figures out-hook text on a muted autoplay feed).
  */
 export function planForSlot(dayIndex: number, slot = 0): IgPostPlan | null {
   const s = Math.min(Math.max(Math.trunc(slot), 0), SLOTS_PER_DAY - 1);
@@ -1397,9 +1428,20 @@ export function planForSlot(dayIndex: number, slot = 0): IgPostPlan | null {
     );
   }
 
+  const shapeSlot = s === 0 || (s === 1 && dayIndex % 2 === 1);
+  if (shapeSlot) {
+    if (SHAPE_POSTS.length === 0) return null;
+    // Ordinal counts shape slots over time: one on even days (slot 0),
+    // two on odd days (slots 0 and 1) — floor(3d/2) before day d, then
+    // +1 within an odd day's second slot.
+    const ordinal = Math.floor((dayIndex * 3) / 2) + (s === 1 ? 1 : 0);
+    const stride = coprimeStride(SHAPE_POSTS.length);
+    return shapePlan(SHAPE_POSTS[(ordinal * stride) % SHAPE_POSTS.length]);
+  }
+
   if (BAIT_POSTS.length === 0) return null;
-  // Two bait slots a day walk the pool without repeating inside a cycle.
-  const ordinal = dayIndex * (SLOTS_PER_DAY - 1) + s;
+  // One text-bait slot every other day walks the pool at half pace.
+  const ordinal = Math.floor(dayIndex / 2);
   // Stride instead of walking in order: the pool is grouped by kind, so
   // consecutive posts would otherwise both be, say, percentage puzzles.
   // A stride coprime with the pool length still visits every entry once
@@ -1432,6 +1474,11 @@ export function utcDayIndex(now = new Date()): number {
 /** Exposed for tests: the hand-written pool behind the bait slots. */
 export function baitPoolSize(): number {
   return BAIT_POSTS.length;
+}
+
+/** Exposed for tests: the generated shape-puzzle pool. */
+export function shapePoolSize(): number {
+  return SHAPE_POSTS.length;
 }
 
 /** Exposed for tests: verify every bait answer/option pair is coherent. */
