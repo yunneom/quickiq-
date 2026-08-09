@@ -16,19 +16,32 @@ import { createSupabaseAdmin, isSupabaseConfigured } from '@/lib/supabase/server
 
 const BUCKET = 'ig-media';
 const PATH = 'status/last-run.json';
+/** Same idea, for on-demand admin actions (e.g. the manual collect button) —
+ *  those responses go straight to the operator's browser and vanish, so an
+ *  operator-relayed error message is the only way to diagnose one. Parking
+ *  it here too means it's inspectable without asking anyone to copy-paste. */
+const MANUAL_PATH = 'status/last-manual-clip-import.json';
 
-export async function writeStatusSnapshot(snapshot: object): Promise<void> {
+async function write(path: string, snapshot: object): Promise<void> {
   if (!isSupabaseConfigured()) return;
   try {
     const admin = createSupabaseAdmin();
     await admin.storage.createBucket(BUCKET, { public: true }).catch(() => {});
     await admin.storage
       .from(BUCKET)
-      .upload(PATH, Buffer.from(JSON.stringify(snapshot, null, 2)), {
+      .upload(path, Buffer.from(JSON.stringify(snapshot, null, 2)), {
         contentType: 'application/json',
         upsert: true,
       });
   } catch {
     // The recorder must never break the flight.
   }
+}
+
+export async function writeStatusSnapshot(snapshot: object): Promise<void> {
+  await write(PATH, snapshot);
+}
+
+export async function writeManualClipImportSnapshot(snapshot: object): Promise<void> {
+  await write(MANUAL_PATH, snapshot);
 }

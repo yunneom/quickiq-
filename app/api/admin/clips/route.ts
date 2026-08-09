@@ -7,6 +7,7 @@ import {
   importClips,
 } from '@/lib/social/clip-sources';
 import type { BgScene } from '@/lib/social/reel-bg';
+import { writeManualClipImportSnapshot } from '@/lib/social/status';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -101,6 +102,13 @@ export const POST = withErrorHandling('admin/clips', async (req: Request) => {
   if (body.action === 'import') {
     const max = Math.min(8, Math.max(1, Math.trunc(body.max ?? 6)));
     const result = await importClips(max, Date.now() + 270_000);
+    // The browser response evaporates the moment the operator navigates
+    // away — park it too, so a failed manual click can be diagnosed
+    // without asking them to relay the on-screen text.
+    await writeManualClipImportSnapshot({
+      at: new Date().toISOString(),
+      ...result,
+    }).catch(() => {});
     return NextResponse.json({ ok: true, ...result });
   }
 
