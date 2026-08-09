@@ -54,13 +54,13 @@ export const POST = withErrorHandling('admin/clips', async (req: Request) => {
       );
     }
     const video = Buffer.from(await file.arrayBuffer());
-    const size = await probeClip(video);
-    if (!size) {
-      return NextResponse.json({ error: 'not_decodable' }, { status: 415 });
+    const probe = await probeClip(video);
+    if (!probe.ok) {
+      return NextResponse.json({ error: 'not_decodable', reason: probe.reason }, { status: 415 });
     }
-    if (!clipResolutionOk(size)) {
+    if (!clipResolutionOk(probe)) {
       return NextResponse.json(
-        { error: 'resolution_too_low', ...size, hint: 'Short side must be ≥ 540px.' },
+        { error: 'resolution_too_low', width: probe.width, height: probe.height, hint: 'Short side must be ≥ 540px.' },
         { status: 415 },
       );
     }
@@ -78,7 +78,14 @@ export const POST = withErrorHandling('admin/clips', async (req: Request) => {
     if (!stored.ok) {
       return NextResponse.json({ error: stored.reason }, { status: 500 });
     }
-    return NextResponse.json({ ok: true, id, scene, bytes: video.length, ...size });
+    return NextResponse.json({
+      ok: true,
+      id,
+      scene,
+      bytes: video.length,
+      width: probe.width,
+      height: probe.height,
+    });
   }
 
   const body = (await req.json().catch(() => ({}))) as {
@@ -141,13 +148,13 @@ export const POST = withErrorHandling('admin/clips', async (req: Request) => {
     );
   }
 
-  const size = await probeClip(video);
-  if (!size) {
-    return NextResponse.json({ error: 'not_decodable' }, { status: 415 });
+  const probe = await probeClip(video);
+  if (!probe.ok) {
+    return NextResponse.json({ error: 'not_decodable', reason: probe.reason }, { status: 415 });
   }
-  if (!clipResolutionOk(size)) {
+  if (!clipResolutionOk(probe)) {
     return NextResponse.json(
-      { error: 'resolution_too_low', ...size, hint: 'Short side must be ≥ 540px.' },
+      { error: 'resolution_too_low', width: probe.width, height: probe.height, hint: 'Short side must be ≥ 540px.' },
       { status: 415 },
     );
   }
@@ -172,7 +179,8 @@ export const POST = withErrorHandling('admin/clips', async (req: Request) => {
     id,
     scene,
     bytes: video.length,
-    ...size,
+    width: probe.width,
+    height: probe.height,
     note: 'Next reel for this scene rotates through its clip pool.',
   });
 });

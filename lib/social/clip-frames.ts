@@ -78,32 +78,66 @@ export async function extractClipFrames(args: {
   }
 }
 
+export type ProbeResult =
+  | { ok: true; width: number; height: number }
+  | { ok: false; reason: string };
+
+/**
+ * Truncate + collapse whitespace so a diagnostic fits in one status-log
+ * line. ffmpeg's actual error ("Invalid data found...", "Unknown
+ * decoder...") is the LAST thing it prints before exiting — the first
+ * ~15 lines of stderr are always the same version/config banner — so
+ * this keeps the tail, not the head.
+ */
+function shortReason(prefix: string, detail: unknown): string {
+  const text =
+    detail && typeof detail === 'object' && 'stderr' in detail && typeof (detail as { stderr?: unknown }).stderr === 'string'
+      ? (detail as { stderr: string }).stderr
+      : detail instanceof Error
+        ? detail.message
+        : String(detail);
+  const collapsed = text.replace(/\s+/g, ' ').trim();
+  return `${prefix}: ${collapsed.slice(-180)}`;
+}
+
 /**
  * Cheap sanity pass used before storing a downloaded clip: can ffmpeg
  * decode it, and is it big enough to survive a 1080×1920 crop without
- * turning to mush? Returns the probed frame size, or null.
+ * turning to mush?
+ *
+ * Returns a reason on failure (not just null) — a uniform "probe_failed"
+ * across every candidate is useless for diagnosing whether the problem
+ * is a bad video, a codec ffmpeg-static can't decode, or the binary
+ * itself being unreachable in this runtime.
  */
-export async function probeClip(
-  clip: Buffer,
-): Promise<{ width: number; height: number } | null> {
-  if (!ffmpegPath) return null;
+export async function probeClip(clip: Buffer): Promise<ProbeResult> {
+  if (!ffmpegPath) return { ok: false, reason: 'ffmpeg_binary_unresolved' };
   let dir: string | null = null;
   try {
     dir = await mkdtemp(join(tmpdir(), 'clip-probe-'));
     const inPath = join(dir, 'clip.bin');
     const outPath = join(dir, 'probe.jpg');
     await writeFile(inPath, clip);
-    await execFileAsync(
-      ffmpegPath,
-      ['-y', '-i', inPath, '-frames:v', '1', outPath],
-      { timeout: 30_000, maxBuffer: 16 * 1024 * 1024 },
-    );
-    const sharp = (await import('sharp')).default;
-    const meta = await sharp(await readFile(outPath)).metadata();
-    if (!meta.width || !meta.height) return null;
-    return { width: meta.width, height: meta.height };
-  } catch {
-    return null;
+    try {
+      await execFileAsync(
+        ffmpegPath,
+        ['-y', '-i', inPath, '-frames:v', '1', outPath],
+        { timeout: 30_000, maxBuffer: 16 * 1024 * 1024 },
+      );
+    } catch (err) {
+      return { ok: false, reason: shortReason('ffmpeg_decode', err) };
+    }
+    let meta;
+    try {
+      const sharp = (await import('sharp')).default;
+      meta = await sharp(await readFile(outPath)).metadata();
+    } catch (err) {
+      return { ok: false, reason: shortReason('jpeg_read', err) };
+    }
+    if (!meta.width || !meta.height) return { ok: false, reason: 'no_dimensions_in_probe_frame' };
+    return { ok: true, width: meta.width, height: meta.height };
+  } catch (err) {
+    return { ok: false, reason: shortReason('unexpected', err) };
   } finally {
     if (dir) await rm(dir, { recursive: true, force: true }).catch(() => {});
   }

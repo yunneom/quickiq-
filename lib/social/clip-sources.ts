@@ -473,9 +473,13 @@ async function downloadValidateStore(
       return 'failed';
     }
 
-    const size = await probeClip(video);
-    if (!size || !clipResolutionOk(size)) {
-      notes.push(`${candidate.id}: probe_failed`);
+    const probe = await probeClip(video);
+    if (!probe.ok) {
+      notes.push(`${candidate.id}: ${probe.reason}`);
+      return 'failed';
+    }
+    if (!clipResolutionOk(probe)) {
+      notes.push(`${candidate.id}: resolution_too_low_${probe.width}x${probe.height}`);
       return 'failed';
     }
 

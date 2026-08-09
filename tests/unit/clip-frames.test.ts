@@ -80,15 +80,21 @@ describe('extractClipFrames', () => {
 
 describe('probeClip / clipResolutionOk', () => {
   it('probes the real dimensions of a valid clip', async () => {
-    const size = await probeClip(clip);
-    assert.ok(size);
-    assert.equal(size!.width, 1280);
-    assert.equal(size!.height, 720);
-    assert.equal(clipResolutionOk(size!), true);
+    const probe = await probeClip(clip);
+    assert.equal(probe.ok, true);
+    assert.equal((probe as { width: number }).width, 1280);
+    assert.equal((probe as { height: number }).height, 720);
+    assert.equal(clipResolutionOk(probe as { width: number; height: number }), true);
   });
 
-  it('rejects garbage and low-res sources', async () => {
-    assert.equal(await probeClip(Buffer.from('nope')), null);
+  it('rejects garbage with a diagnostic reason instead of a bare null', async () => {
+    const probe = await probeClip(Buffer.from('nope'));
+    assert.equal(probe.ok, false);
+    assert.ok(
+      typeof (probe as { reason: string }).reason === 'string' &&
+        (probe as { reason: string }).reason.length > 0,
+      'failure must carry a non-empty diagnostic reason',
+    );
     assert.equal(clipResolutionOk({ width: 640, height: 360 }), false);
     assert.equal(clipResolutionOk({ width: 720, height: 1280 }), true);
   });
