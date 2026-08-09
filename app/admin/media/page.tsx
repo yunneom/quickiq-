@@ -58,6 +58,7 @@ export default function MediaAdminPage() {
   const [clipUrl, setClipUrl] = useState('');
   const [clipScene, setClipScene] = useState('rails');
   const [clipCredit, setClipCredit] = useState('');
+  const [importNotes, setImportNotes] = useState<string[]>([]);
   const [pexelsKey, setPexelsKey] = useState('');
   const [pexelsConfigured, setPexelsConfigured] = useState(false);
 
@@ -271,6 +272,7 @@ export default function MediaAdminPage() {
     setBusy(true);
     setErr(null);
     setNotice(null);
+    setImportNotes([]);
     try {
       const res = await fetch('/api/admin/clips', {
         method: 'POST',
@@ -284,6 +286,7 @@ export default function MediaAdminPage() {
         ok?: boolean;
         imported?: string[];
         scenesShort?: string[];
+        notes?: string[];
         error?: string;
       };
       if (!res.ok || !data.ok) {
@@ -300,6 +303,9 @@ export default function MediaAdminPage() {
               data.scenesShort?.length ? data.scenesShort.join(', ') : '없음 — 풀이 가득 찼습니다'
             }`,
       );
+      // The whole point of collecting: WHY each candidate failed. Without
+      // this, "수집 안 됨" is all the operator can ever report back.
+      setImportNotes(data.notes ?? []);
       await refresh(token);
     } catch (e) {
       setErr(String(e));
@@ -505,6 +511,17 @@ export default function MediaAdminPage() {
         >
           {busy ? '수집 중… (몇 분 걸릴 수 있음)' : '영상 자동 수집 실행'}
         </button>
+
+        {importNotes.length > 0 && (
+          <div className="mt-3 rounded-xl bg-gray-50 p-3">
+            <p className="text-xs font-semibold text-gray-500">
+              시도 상세 (실패 이유 — 캡처해서 공유하면 진단이 빨라집니다)
+            </p>
+            <pre className="mt-1 max-h-48 overflow-y-auto whitespace-pre-wrap break-all font-mono text-[11px] leading-relaxed text-gray-600">
+              {importNotes.join('\n')}
+            </pre>
+          </div>
+        )}
 
         <div className="mt-4 border-t border-gray-100 pt-4">
           <p className="text-xs leading-relaxed text-gray-500">
