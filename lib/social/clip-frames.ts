@@ -90,14 +90,37 @@ export type ProbeResult =
  * this keeps the tail, not the head.
  */
 function shortReason(prefix: string, detail: unknown): string {
+  // Node sets `.stderr` to '' by default even when the child process never
+  // produced any output — e.g. spawn itself failed (ENOENT/EACCES) before
+  // ffmpeg ran at all, or it was killed (timeout/OOM) before writing
+  // anything. An empty stderr must NOT shadow `.message`, `.code` and
+  // `.signal` — that is where a spawn/timeout/OOM failure's real
+  // explanation lives, and stderr being blank is itself informative
+  // (rules out "ffmpeg ran and rejected the file").
+  const d = (detail ?? {}) as {
+    stderr?: unknown;
+    message?: unknown;
+    code?: unknown;
+    signal?: unknown;
+    killed?: unknown;
+  };
+  const stderr = typeof d.stderr === 'string' ? d.stderr : '';
+  const meta = [
+    d.code ? `code=${d.code}` : null,
+    d.signal ? `signal=${d.signal}` : null,
+    d.killed ? 'killed=true' : null,
+  ]
+    .filter(Boolean)
+    .join(' ');
   const text =
-    detail && typeof detail === 'object' && 'stderr' in detail && typeof (detail as { stderr?: unknown }).stderr === 'string'
-      ? (detail as { stderr: string }).stderr
+    stderr.trim().length > 0
+      ? stderr
       : detail instanceof Error
         ? detail.message
         : String(detail);
   const collapsed = text.replace(/\s+/g, ' ').trim();
-  return `${prefix}: ${collapsed.slice(-180)}`;
+  const body = collapsed.slice(-180) || '(no message)';
+  return `${prefix}: ${meta ? `[${meta}] ` : ''}${body}`;
 }
 
 /**
