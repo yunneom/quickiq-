@@ -23,6 +23,7 @@ jobs:
         run: |
           BASE="https://wprgqtzmddtwepmeukgn.supabase.co/storage/v1/object/public/ig-media"
           for p in "status/last-run.json" \
+                   "status/last-manual-clip-import.json" \
                    "footage/clips/manifest.json" \
                    "audio/manifest.json" \
                    "footage/manifest.json"; do
