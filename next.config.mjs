@@ -56,14 +56,28 @@ const securityHeaders = [
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  // ffmpeg-static's binary is loaded via a path (not require()), so the
-  // file tracer can't see it — include it explicitly for the routes that
-  // mux reel soundtracks.
   experimental: {
+    // ffmpeg-static's binary is loaded via a path (not require()), so the
+    // file tracer can't see it — include it explicitly for the routes that
+    // mux reel soundtracks or probe clip videos.
     outputFileTracingIncludes: {
       '/api/cron/ig-post': ['./node_modules/ffmpeg-static/ffmpeg'],
       '/api/admin/clips': ['./node_modules/ffmpeg-static/ffmpeg'],
     },
+    // ffmpeg-static computes its binary path as `path.join(__dirname,
+    // 'ffmpeg')` AT MODULE LOAD, relative to wherever the file physically
+    // sits. Left to Next's default webpack bundling, that file gets
+    // concatenated into a shared server chunk (e.g.
+    // .next/server/chunks/<n>.js), and __dirname then resolves to that
+    // chunk's directory — nowhere near the real node_modules/ffmpeg-static
+    // folder outputFileTracingIncludes copied in. Result: every ffmpeg
+    // spawn fails with ENOENT (production-confirmed:
+    // "spawn /var/task/.next/server/chunks/ffmpeg ENOENT"), even though
+    // the file genuinely exists a few directories over.
+    // Marking it external skips webpack bundling for this package —
+    // Node's normal require() resolves it from its real on-disk location
+    // instead, where __dirname is correct.
+    serverComponentsExternalPackages: ['ffmpeg-static'],
   },
   async headers() {
     return [
