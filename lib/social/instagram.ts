@@ -306,3 +306,47 @@ export async function publishReelPost(args: {
   }
   return { ok: false, reason: `publish:${published.reason}` };
 }
+
+/**
+ * Post one first-party comment on a published post.
+ *
+ * A brand-new account's posts sit at 0 comments, which itself suppresses
+ * reach (an empty comment section reads as "nobody engages here" to both
+ * viewers and the ranking algorithm) — so every publish seeds its own
+ * comment thread the way an editor's own "first!" comment does on any
+ * platform: from OUR account, openly, nudging real replies rather than
+ * impersonating anyone.
+ *
+ * Unlike the publish flow, comments are non-critical — a failure here
+ * must never fail the post itself, so callers should swallow the error.
+ */
+export async function postComment(
+  mediaId: string,
+  message: string,
+): Promise<IgResult<{ id: string }>> {
+  if (!IG_ACCESS_TOKEN) return { ok: false, reason: 'instagram_not_configured' };
+  const body = new URLSearchParams({ message, access_token: IG_ACCESS_TOKEN });
+  try {
+    const res = await fetch(`${GRAPH}/${mediaId}/comments`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body,
+      cache: 'no-store',
+      signal: AbortSignal.timeout(15_000),
+    });
+    const raw: unknown = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg =
+        (raw as { error?: { message?: string } })?.error?.message ??
+        `http_${res.status}`;
+      return { ok: false, reason: msg, raw };
+    }
+    return { ok: true, data: raw as { id: string } };
+  } catch (err) {
+    Sentry.captureException(err, { tags: { area: 'instagram', step: 'comment' } });
+    return {
+      ok: false,
+      reason: err instanceof Error ? err.message : 'fetch_failed',
+    };
+  }
+}
