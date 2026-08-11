@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { withErrorHandling } from '@/lib/api/with-error-handling';
 import { getStockKeys, readSettings, writeSettings } from '@/lib/social/settings';
+import { isTikTokAppConfigured } from '@/lib/social/tiktok';
+import { isYouTubeAppConfigured } from '@/lib/social/youtube';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -9,8 +11,11 @@ export const maxDuration = 30;
 /**
  * Operator settings (stock API keys) without touching Vercel env.
  *
- * POST { pexelsApiKey?, pixabayApiKey? } — set a key ('' clears it).
- * GET → configured/not per key; NEVER returns key material.
+ * POST { pexelsApiKey?, pixabayApiKey?, disconnect?: 'tiktok'|'youtube' }
+ *   — set a key ('' clears it), or disconnect a cross-post platform.
+ * GET → configured/not per key/platform; NEVER returns token/key material,
+ *   only non-secret identifiers (TikTok open_id, YouTube channel title)
+ *   so the operator can confirm the right account connected.
  *
  * Auth: ADMIN_TOKEN via `x-admin-token`, 404 on mismatch like the other
  * admin routes so the endpoint stays invisible.
@@ -24,7 +29,15 @@ export const POST = withErrorHandling('admin/settings', async (req: Request) => 
   const body = (await req.json().catch(() => ({}))) as {
     pexelsApiKey?: unknown;
     pixabayApiKey?: unknown;
+    disconnect?: unknown;
   };
+
+  if (body.disconnect === 'tiktok' || body.disconnect === 'youtube') {
+    const stored = await writeSettings({ [body.disconnect]: null });
+    if (!stored.ok) return NextResponse.json({ error: stored.reason }, { status: 500 });
+    return NextResponse.json({ ok: true, disconnected: body.disconnect });
+  }
+
   const clean = (v: unknown): string | undefined => {
     if (typeof v !== 'string') return undefined;
     const t = v.trim();
@@ -77,6 +90,18 @@ export const GET = withErrorHandling('admin/settings', async (req: Request) => {
         : stored.pixabayApiKey
           ? 'stored'
           : null,
+    },
+    crosspost: {
+      tiktok: {
+        appConfigured: isTikTokAppConfigured(),
+        connected: Boolean(stored.tiktok),
+        openId: stored.tiktok?.openId,
+      },
+      youtube: {
+        appConfigured: isYouTubeAppConfigured(),
+        connected: Boolean(stored.youtube),
+        channelTitle: stored.youtube?.channelTitle,
+      },
     },
   });
 });
