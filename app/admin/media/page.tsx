@@ -62,12 +62,41 @@ export default function MediaAdminPage() {
   const [pexelsKey, setPexelsKey] = useState('');
   const [pexelsConfigured, setPexelsConfigured] = useState(false);
 
+  const [crosspost, setCrosspost] = useState<{
+    tiktok: { appConfigured: boolean; connected: boolean; openId?: string };
+    youtube: { appConfigured: boolean; connected: boolean; channelTitle?: string };
+  }>({
+    tiktok: { appConfigured: false, connected: false },
+    youtube: { appConfigured: false, connected: false },
+  });
+
   useEffect(() => {
     const saved = window.localStorage.getItem(TOKEN_KEY);
     if (saved) {
       setToken(saved);
       void refresh(saved);
     }
+
+    // The OAuth callbacks redirect back here with ?tiktok=... / ?youtube=...
+    // — surface the result once, then scrub the URL so a page refresh
+    // doesn't re-show a stale message.
+    const params = new URLSearchParams(window.location.search);
+    const platformLabel: Record<string, string> = { tiktok: '틱톡', youtube: '유튜브' };
+    for (const platform of ['tiktok', 'youtube']) {
+      const result = params.get(platform);
+      if (result === 'connected') {
+        setNotice(`${platformLabel[platform]} 연결 완료 — 다음 발행부터 자동으로 함께 올라갑니다.`);
+      } else if (result === 'error') {
+        setErr(`${platformLabel[platform]} 연결 실패: ${params.get('reason') ?? 'unknown'}`);
+      }
+    }
+    if (params.has('tiktok') || params.has('youtube')) {
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+    // Mount-only by design: `refresh` is redefined every render (not
+    // memoized), so listing it here would either re-run on every render
+    // or need a useCallback purely to satisfy the linter.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function refresh(t: string) {
@@ -110,8 +139,10 @@ export default function MediaAdminPage() {
       if (settingsRes.ok) {
         const settings = (await settingsRes.json()) as {
           pexelsConfigured?: boolean;
+          crosspost?: typeof crosspost;
         };
         setPexelsConfigured(Boolean(settings.pexelsConfigured));
+        if (settings.crosspost) setCrosspost(settings.crosspost);
       }
       setAuthed(true);
       window.localStorage.setItem(TOKEN_KEY, t);
@@ -268,6 +299,37 @@ export default function MediaAdminPage() {
     }
   }
 
+  function connectUrl(platform: 'tiktok' | 'youtube'): string {
+    return `/api/auth/${platform}?token=${encodeURIComponent(token)}`;
+  }
+
+  async function disconnectPlatform(platform: 'tiktok' | 'youtube') {
+    setBusy(true);
+    setErr(null);
+    setNotice(null);
+    try {
+      const res = await fetch('/api/admin/settings', {
+        method: 'POST',
+        headers: {
+          'x-admin-token': token,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ disconnect: platform }),
+      });
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || !data.ok) {
+        setErr(data.error ?? `HTTP ${res.status}`);
+        return;
+      }
+      setNotice(`${platform === 'tiktok' ? '틱톡' : '유튜브'} 연결 해제 완료.`);
+      await refresh(token);
+    } catch (e) {
+      setErr(String(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function runClipImport() {
     setBusy(true);
     setErr(null);
@@ -397,6 +459,91 @@ export default function MediaAdminPage() {
           {err}
         </p>
       )}
+
+      {/* ------------------------------------------------ 크로스포스팅 */}
+      <section className="mt-8 rounded-2xl border border-gray-200 bg-white p-5">
+        <h2 className="text-lg font-bold text-gray-900">📤 틱톡 · 유튜브 쇼츠 동시 업로드</h2>
+        <p className="mt-1 text-xs leading-relaxed text-gray-500">
+          한 번 연결해두면, 인스타에 올라가는 릴스가 같은 영상 그대로 틱톡·유튜브 쇼츠에도
+          자동으로 올라갑니다. 연결은 각 플랫폼 로그인 화면으로 이동해 한 번만 승인하면 끝입니다.
+        </p>
+
+        <div className="mt-4 space-y-3">
+          <div className="flex items-center justify-between rounded-xl border border-gray-100 px-4 py-3">
+            <div>
+              <p className="text-sm font-semibold text-gray-800">틱톡</p>
+              <p className="mt-0.5 text-xs text-gray-500">
+                {!crosspost.tiktok.appConfigured
+                  ? '앱 설정 필요 (Vercel에 TIKTOK_CLIENT_KEY/SECRET)'
+                  : crosspost.tiktok.connected
+                    ? `연결됨${crosspost.tiktok.openId ? ` (${crosspost.tiktok.openId.slice(0, 10)}…)` : ''} — 심사 전이면 비공개로만 올라갑니다`
+                    : '연결 안 됨'}
+              </p>
+            </div>
+            {crosspost.tiktok.connected ? (
+              <button
+                type="button"
+                onClick={() => void disconnectPlatform('tiktok')}
+                disabled={busy}
+                className="rounded-lg border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-500 disabled:opacity-50"
+              >
+                연결 해제
+              </button>
+            ) : (
+              <a
+                href={crosspost.tiktok.appConfigured ? connectUrl('tiktok') : undefined}
+                aria-disabled={!crosspost.tiktok.appConfigured}
+                className={`rounded-lg px-3 py-2 text-xs font-semibold text-white ${
+                  crosspost.tiktok.appConfigured ? 'bg-brand-600' : 'pointer-events-none bg-gray-300'
+                }`}
+              >
+                틱톡 연결
+              </a>
+            )}
+          </div>
+
+          <div className="flex items-center justify-between rounded-xl border border-gray-100 px-4 py-3">
+            <div>
+              <p className="text-sm font-semibold text-gray-800">유튜브 쇼츠</p>
+              <p className="mt-0.5 text-xs text-gray-500">
+                {!crosspost.youtube.appConfigured
+                  ? '앱 설정 필요 (Vercel에 YOUTUBE_CLIENT_ID/SECRET)'
+                  : crosspost.youtube.connected
+                    ? `연결됨${crosspost.youtube.channelTitle ? ` (${crosspost.youtube.channelTitle})` : ''}`
+                    : '연결 안 됨'}
+              </p>
+            </div>
+            {crosspost.youtube.connected ? (
+              <button
+                type="button"
+                onClick={() => void disconnectPlatform('youtube')}
+                disabled={busy}
+                className="rounded-lg border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-500 disabled:opacity-50"
+              >
+                연결 해제
+              </button>
+            ) : (
+              <a
+                href={crosspost.youtube.appConfigured ? connectUrl('youtube') : undefined}
+                aria-disabled={!crosspost.youtube.appConfigured}
+                className={`rounded-lg px-3 py-2 text-xs font-semibold text-white ${
+                  crosspost.youtube.appConfigured ? 'bg-brand-600' : 'pointer-events-none bg-gray-300'
+                }`}
+              >
+                유튜브 연결
+              </a>
+            )}
+          </div>
+        </div>
+
+        <p className="mt-3 text-[11px] leading-relaxed text-gray-400">
+          &ldquo;앱 설정 필요&rdquo;라고 뜨면 개발자 포털에서 앱을 먼저 만들어야 합니다 — 방법은 담당자에게
+          안내받은 설정 가이드를 참고하세요. 틱톡은 신규 앱이 심사받기 전까지 게시물이 본인만
+          보이는 비공개로 올라갑니다(틱톡 정책, 코드로 바꿀 수 없음). 심사가 끝나면 그 이후에
+          새로 올라가는 게시물부터 공개로 전환되고, 심사 전에 이미 올라간 건 그대로 비공개로
+          남습니다.
+        </p>
+      </section>
 
       {/* ------------------------------------------------ 음악 */}
       <section className="mt-8 rounded-2xl border border-gray-200 bg-white p-5">

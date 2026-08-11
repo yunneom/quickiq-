@@ -8,6 +8,8 @@ import {
   postComment,
 } from '@/lib/social/instagram';
 import { pickComments } from '@/lib/social/comments';
+import { publishVideoToTikTok } from '@/lib/social/tiktok';
+import { uploadYouTubeShort } from '@/lib/social/youtube';
 import { importSeedTracks, readAudioManifest } from '@/lib/social/audio';
 import { importClips } from '@/lib/social/clip-sources';
 import { readClipManifest } from '@/lib/social/clips';
@@ -54,6 +56,8 @@ type PostOutcome = {
   reason?: string;
   commentsPosted?: number;
   commentNotes?: string[];
+  crossPosted?: string[];
+  crossPostNotes?: string[];
 };
 
 /**
@@ -460,6 +464,30 @@ async function publishSlot(args: {
     else commentNotes.push(result.reason);
   }
 
+  // Cross-post the SAME reel to TikTok/YouTube Shorts — only when we
+  // actually have a video (not the image fallback) and only best-effort,
+  // exactly like comments: a cross-post failure never fails the post.
+  const crossPosted: string[] = [];
+  const crossPostNotes: string[] = [];
+  if (kind === 'reel' && reel.ok) {
+    const tiktokResult = await publishVideoToTikTok({
+      videoUrl: mediaUrl,
+      title: plan.caption,
+      deadlineAt,
+    }).catch((err) => ({ ok: false as const, reason: String(err) }));
+    if (tiktokResult.ok) crossPosted.push('tiktok');
+    else crossPostNotes.push(`tiktok: ${tiktokResult.reason}`);
+
+    const youtubeResult = await uploadYouTubeShort({
+      video: reel.buffer,
+      title: plan.caption.split('\n')[0].slice(0, 100),
+      description: `${plan.caption}\n\n#Shorts`,
+      deadlineAt,
+    }).catch((err) => ({ ok: false as const, reason: String(err) }));
+    if (youtubeResult.ok) crossPosted.push('youtube');
+    else crossPostNotes.push(`youtube: ${youtubeResult.reason}`);
+  }
+
   return {
     slot,
     postKey,
@@ -468,6 +496,8 @@ async function publishSlot(args: {
     mediaId: published.data.id,
     commentsPosted,
     ...(commentNotes.length ? { commentNotes } : {}),
+    ...(crossPosted.length ? { crossPosted } : {}),
+    ...(crossPostNotes.length ? { crossPostNotes } : {}),
   };
 }
 

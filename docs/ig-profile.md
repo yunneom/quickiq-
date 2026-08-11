@@ -170,6 +170,47 @@ Invoke-RestMethod -Method Post -Headers $h -Body $body "https://iq.dailyenterkr.
 ### 유튜브 계정 아이디어에 대해
 
 릴스에 쓰기 위해 유튜브에 올릴 필요는 없습니다(우리 스토리지에서 바로
-뮤싱). 다만 별도로 유튜브 채널에 곡을 올려두면 ① 곡의 출처 증빙이 남고
-② 나중에 YouTube Shorts 크로스포스팅 채널의 기반이 됩니다 — 원하면
-채널만 만들어두세요. 코드 작업은 필요 없습니다.
+뮤싱). 다만 별도로 유튜브 채널에 곡을 올려두면 곡의 출처 증빙이 남고,
+아래 크로스포스팅에도 그대로 쓰입니다.
+
+## 틱톡 · 유튜브 쇼츠 동시 업로드
+
+인스타에 올라가는 릴스가 같은 mp4 그대로 틱톡·유튜브 쇼츠에도
+자동으로 올라갑니다. 앱 등록(1회, 개발자 계정 필요) + 계정 연결(1회,
+버튼 클릭)만 하면 그 다음부터는 완전 자동입니다.
+
+### 틱톡 설정
+
+1. [developers.tiktok.com](https://developers.tiktok.com) → 앱 생성 →
+   **Content Posting API** 제품 추가.
+2. 그 제품 설정에서 **이 배포 도메인을 등록·인증**하세요
+   (`iq.dailyenterkr.com`) — 이게 안 되어 있으면 모든 업로드 시도가
+   거부됩니다(URL로 영상을 넘기는 방식이라 도메인 인증이 필수).
+3. 앱의 **Client Key / Client Secret**을 Vercel 환경변수
+   `TIKTOK_CLIENT_KEY` / `TIKTOK_CLIENT_SECRET`에 등록 → 재배포.
+4. `iq.dailyenterkr.com/admin/media` 에서 **"틱톡 연결"** 클릭 → 본인
+   틱톡 계정으로 로그인·승인.
+5. ⚠ **신규 앱은 심사 전까지 게시물이 본인만 보이는 비공개로
+   올라갑니다** — 틱톡 정책이라 코드로 바꿀 수 없습니다. 심사는 틱톡
+   개발자 포털에서 앱 검토 신청으로 진행하세요 (Content Posting API,
+   공개 게시 권한). 심사 완료 후에는 새로 올라가는 게시물부터 공개로
+   전환됩니다.
+
+### 유튜브 설정
+
+1. [console.cloud.google.com](https://console.cloud.google.com) → 새
+   프로젝트 → **YouTube Data API v3** 사용 설정.
+2. OAuth 동의 화면 만들기 — External, **Testing 상태로 둬도 됩니다**
+   (본인 채널만 쓸 거라 구글 심사 불필요). 테스트 사용자에 본인 구글
+   계정 추가.
+3. OAuth 클라이언트 만들기 (유형: **웹 애플리케이션**) — 승인된 리디렉션
+   URI에 `https://iq.dailyenterkr.com/api/auth/youtube/callback` 추가.
+4. 클라이언트 ID/Secret을 Vercel 환경변수 `YOUTUBE_CLIENT_ID` /
+   `YOUTUBE_CLIENT_SECRET`에 등록 → 재배포.
+5. `/admin/media`에서 **"유튜브 연결"** 클릭 → 본인 채널로 로그인·승인.
+   바로 공개로 업로드됩니다(틱톡과 달리 심사 대기 없음).
+
+### 확인
+
+연결 후 다음 발행부터 `/admin/media`의 각 플랫폼 상태에 연결된 계정
+이름이 뜨고, 실패하면(토큰 만료 등) 원인이 그대로 상태 로그에 남습니다.

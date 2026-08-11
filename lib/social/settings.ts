@@ -1,15 +1,17 @@
 /**
  * Operator settings that must not live in the repo (it is public) and
  * are annoying to put in Vercel env (dashboard + redeploy): stock-media
- * API keys, pasted once into /admin/media.
+ * API keys and cross-post platform OAuth tokens, both set once from
+ * /admin/media.
  *
  * Stored in a PRIVATE Supabase bucket — the media bucket (`ig-media`)
  * is public by design, so secrets get their own bucket that only the
- * service role can read. Environment variables still win when set, so
- * an operator who prefers Vercel env loses nothing.
+ * service role can read. Environment variables still win for the stock
+ * keys when set, so an operator who prefers Vercel env loses nothing.
  *
- * Never log or return key material: the admin GET reports only
- * "configured / not configured".
+ * Never log or return token/key material: admin GETs report only
+ * "configured / not configured" plus non-secret identifiers (channel
+ * name, open_id) useful for confirming the right account is connected.
  */
 
 import { createSupabaseAdmin, isSupabaseConfigured } from '@/lib/supabase/server';
@@ -17,9 +19,28 @@ import { createSupabaseAdmin, isSupabaseConfigured } from '@/lib/supabase/server
 const BUCKET = 'ig-private';
 const PATH = 'settings.json';
 
+/** A platform's OAuth grant — enough to refresh and to call its API. */
+export interface OAuthTokenSet {
+  accessToken: string;
+  refreshToken?: string;
+  /** Epoch ms; undefined means "treat as expired, refresh before use". */
+  expiresAt?: number;
+}
+
+export interface TikTokTokens extends OAuthTokenSet {
+  openId: string;
+}
+
+export interface YouTubeTokens extends OAuthTokenSet {
+  channelId?: string;
+  channelTitle?: string;
+}
+
 export interface OperatorSettings {
   pexelsApiKey?: string;
   pixabayApiKey?: string;
+  tiktok?: TikTokTokens;
+  youtube?: YouTubeTokens;
 }
 
 export async function readSettings(): Promise<OperatorSettings> {
@@ -34,18 +55,15 @@ export async function readSettings(): Promise<OperatorSettings> {
   }
 }
 
-export async function writeSettings(
-  patch: OperatorSettings,
+async function ensurePrivateBucket(
+  admin: ReturnType<typeof createSupabaseAdmin>,
 ): Promise<{ ok: true } | { ok: false; reason: string }> {
-  if (!isSupabaseConfigured()) {
-    return { ok: false, reason: 'supabase_not_configured' };
-  }
-  const admin = createSupabaseAdmin();
   await admin.storage.createBucket(BUCKET, { public: false }).catch(() => {});
   // createBucket's "already exists" error is swallowed above, so VERIFY:
   // if the bucket somehow exists as public (manual creation, console
-  // default), key material would be world-readable at a predictable URL.
-  // Force it private; refuse to store secrets if that cannot be proven.
+  // default), token/key material would be world-readable at a
+  // predictable URL. Force it private; refuse to store secrets if that
+  // cannot be proven.
   try {
     const { data: bucket } = await admin.storage.getBucket(BUCKET);
     if (!bucket) return { ok: false, reason: 'bucket_unverifiable' };
@@ -53,18 +71,36 @@ export async function writeSettings(
       const { error } = await admin.storage.updateBucket(BUCKET, { public: false });
       if (error) return { ok: false, reason: 'bucket_public_unfixable' };
     }
+    return { ok: true };
   } catch {
     return { ok: false, reason: 'bucket_unverifiable' };
   }
-  const current = await readSettings();
-  const next: OperatorSettings = { ...current };
-  // Only overwrite fields the patch actually provides (empty string clears).
-  for (const key of ['pexelsApiKey', 'pixabayApiKey'] as const) {
-    const v = patch[key];
-    if (v === undefined) continue;
-    if (v === '') delete next[key];
-    else next[key] = v;
+}
+
+/**
+ * Patch settings. Top-level keys are shallow-merged; an explicit `null`
+ * (not `undefined`) deletes a key — lets callers clear a stored value
+ * (e.g. an empty-string API key input, or "disconnect" for a platform)
+ * without needing a separate delete method.
+ */
+export async function writeSettings(
+  patch: Partial<Record<keyof OperatorSettings, unknown>>,
+): Promise<{ ok: true } | { ok: false; reason: string }> {
+  if (!isSupabaseConfigured()) {
+    return { ok: false, reason: 'supabase_not_configured' };
   }
+  const admin = createSupabaseAdmin();
+  const ready = await ensurePrivateBucket(admin);
+  if (!ready.ok) return ready;
+
+  const current = await readSettings();
+  const next: Record<string, unknown> = { ...current };
+  for (const [key, value] of Object.entries(patch)) {
+    if (value === undefined) continue;
+    if (value === null || value === '') delete next[key];
+    else next[key] = value;
+  }
+
   const { error } = await admin.storage
     .from(BUCKET)
     .upload(PATH, Buffer.from(JSON.stringify(next)), {
@@ -93,4 +129,20 @@ export async function getStockKeys(): Promise<{
     pexels: envPexels || stored.pexelsApiKey?.trim() || undefined,
     pixabay: envPixabay || stored.pixabayApiKey?.trim() || undefined,
   };
+}
+
+export async function getTikTokTokens(): Promise<TikTokTokens | undefined> {
+  return (await readSettings()).tiktok;
+}
+
+export async function saveTikTokTokens(tokens: TikTokTokens): Promise<void> {
+  await writeSettings({ tiktok: tokens });
+}
+
+export async function getYouTubeTokens(): Promise<YouTubeTokens | undefined> {
+  return (await readSettings()).youtube;
+}
+
+export async function saveYouTubeTokens(tokens: YouTubeTokens): Promise<void> {
+  await writeSettings({ youtube: tokens });
 }
