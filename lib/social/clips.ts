@@ -85,17 +85,35 @@ export async function storeClip(
     });
   if (error) return { ok: false, reason: error.message };
 
-  const manifest = await readClipManifest();
-  const next = manifest.clips.filter((c) => c.id !== entry.id);
-  next.push({ ...entry, bytes: video.length, storedAt: new Date().toISOString() });
-  next.sort((a, b) => a.id.localeCompare(b.id));
-  await admin.storage
-    .from(BUCKET)
-    .upload(MANIFEST_PATH, Buffer.from(JSON.stringify({ clips: next }, null, 2)), {
-      contentType: 'application/json',
-      upsert: true,
-    });
-  return { ok: true };
+  // readClipManifest → mutate → upload is a read-modify-write on a single
+  // shared file with no transaction — two storeClip calls racing (a
+  // manual click landing mid-cron, or a double-click) can both read the
+  // same snapshot, and whichever uploads last silently WINS, discarding
+  // the other's clip entirely (production-confirmed: a scene's storeClip
+  // reported success but the clip was never in the final manifest).
+  // Optimistic-concurrency retry: after writing, verify our entry is
+  // actually there; if a concurrent writer clobbered it, redo the merge
+  // against a fresh read and try again.
+  const record: ClipEntry = { ...entry, bytes: video.length, storedAt: new Date().toISOString() };
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const manifest = await readClipManifest();
+    const next = manifest.clips.filter((c) => c.id !== entry.id);
+    next.push(record);
+    next.sort((a, b) => a.id.localeCompare(b.id));
+    await admin.storage
+      .from(BUCKET)
+      .upload(MANIFEST_PATH, Buffer.from(JSON.stringify({ clips: next }, null, 2)), {
+        contentType: 'application/json',
+        upsert: true,
+      });
+
+    const verify = await readClipManifest();
+    if (verify.clips.some((c) => c.id === entry.id)) return { ok: true };
+    // Lost the race — a short jittered pause before retrying makes it
+    // less likely both writers keep landing in lockstep.
+    await new Promise((r) => setTimeout(r, 200 + Math.floor(Math.random() * 300)));
+  }
+  return { ok: false, reason: 'manifest_write_conflict' };
 }
 
 /** Download a stored clip, or null when missing. */

@@ -5,7 +5,9 @@ import {
   publishImagePost,
   publishReelPost,
   getPublishingQuota,
+  postComment,
 } from '@/lib/social/instagram';
+import { pickComments } from '@/lib/social/comments';
 import { importSeedTracks, readAudioManifest } from '@/lib/social/audio';
 import { importClips } from '@/lib/social/clip-sources';
 import { readClipManifest } from '@/lib/social/clips';
@@ -50,6 +52,8 @@ type PostOutcome = {
   kind?: 'reel' | 'image';
   mediaId?: string;
   reason?: string;
+  commentsPosted?: number;
+  commentNotes?: string[];
 };
 
 /**
@@ -445,12 +449,25 @@ async function publishSlot(args: {
     return { slot, postKey, status: 'failed', reason: published.reason };
   }
 
+  // Seed engagement — best-effort, must never fail the post itself.
+  const commentNotes: string[] = [];
+  let commentsPosted = 0;
+  for (const message of pickComments(day, slot)) {
+    const result = await postComment(published.data.id, message).catch(
+      (err) => ({ ok: false as const, reason: String(err) }),
+    );
+    if (result.ok) commentsPosted += 1;
+    else commentNotes.push(result.reason);
+  }
+
   return {
     slot,
     postKey,
     status: 'published',
     kind,
     mediaId: published.data.id,
+    commentsPosted,
+    ...(commentNotes.length ? { commentNotes } : {}),
   };
 }
 
