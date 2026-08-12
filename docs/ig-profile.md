@@ -179,22 +179,81 @@ Invoke-RestMethod -Method Post -Headers $h -Body $body "https://iq.dailyenterkr.
 자동으로 올라갑니다. 앱 등록(1회, 개발자 계정 필요) + 계정 연결(1회,
 버튼 클릭)만 하면 그 다음부터는 완전 자동입니다.
 
-### 틱톡 설정
+### 틱톡 설정 (단계별 상세)
 
-1. [developers.tiktok.com](https://developers.tiktok.com) → 앱 생성 →
-   **Content Posting API** 제품 추가.
-2. 그 제품 설정에서 **이 배포 도메인을 등록·인증**하세요
-   (`iq.dailyenterkr.com`) — 이게 안 되어 있으면 모든 업로드 시도가
-   거부됩니다(URL로 영상을 넘기는 방식이라 도메인 인증이 필수).
-3. 앱의 **Client Key / Client Secret**을 Vercel 환경변수
-   `TIKTOK_CLIENT_KEY` / `TIKTOK_CLIENT_SECRET`에 등록 → 재배포.
-4. `iq.dailyenterkr.com/admin/media` 에서 **"틱톡 연결"** 클릭 → 본인
-   틱톡 계정으로 로그인·승인.
-5. ⚠ **신규 앱은 심사 전까지 게시물이 본인만 보이는 비공개로
-   올라갑니다** — 틱톡 정책이라 코드로 바꿀 수 없습니다. 심사는 틱톡
-   개발자 포털에서 앱 검토 신청으로 진행하세요 (Content Posting API,
-   공개 게시 권한). 심사 완료 후에는 새로 올라가는 게시물부터 공개로
-   전환됩니다.
+틱톡은 유튜브보다 등록 단계가 많고, 한 단계라도 빠지면 "연결" 버튼을
+눌렀을 때 애매한 에러가 뜹니다. 순서대로 전부 따라가 주세요.
+
+**1. 개발자 계정 만들기**
+[developers.tiktok.com](https://developers.tiktok.com) 접속 → 본인
+틱톡 계정으로 로그인 → 개발자 계정 등록(이메일 인증 정도만 필요, 별도
+심사 없음).
+
+**2. 앱 생성**
+Manage apps → **Create app**. 입력 항목:
+   - App name: 아무 이름 (예: QuickIQ Cross-post)
+   - Category: 아무거나 (예: Entertainment)
+   - Platform: **Web**
+   - App icon: 아무 정사각 이미지 (로고 없으면 대충 아무거나)
+   - **Terms of Service URL**: `https://iq.dailyenterkr.com/en/terms`
+   - **Privacy Policy URL**: `https://iq.dailyenterkr.com/en/privacy`
+
+**3. 제품 2개 추가** (앱 대시보드 좌측 "Add products")
+   - **Login Kit** — 로그인/연결 버튼이 여기 없으면 아예 작동 안 함.
+     추가 후 설정에서 **Redirect URI**에 정확히 이 주소를 등록:
+     ```
+     https://iq.dailyenterkr.com/api/auth/tiktok/callback
+     ```
+     (마지막 슬래시 없이, 오타 있으면 "연결" 버튼 눌렀을 때
+     `redirect_uri_mismatch` 에러가 뜹니다.)
+   - **Content Posting API** — 추가만 하면 됨, 별도 설정 없음.
+
+**4. Scopes 켜기**
+앱 설정의 Scopes 탭에서 다음 두 개를 **활성화**:
+   - `user.info.basic`
+   - `video.publish`
+   (기본으로 꺼져 있는 경우가 있습니다. 꺼져 있으면 연결 시
+   "invalid scope" 에러가 납니다.)
+
+**5. 도메인 인증** (Content Posting API 설정 안에 있음)
+영상을 "URL로 전달"하는 방식(PULL_FROM_URL)을 쓰기 때문에, 그 URL의
+도메인이 인증돼 있지 않으면 업로드 시도 자체가 전부 거부됩니다.
+   - **URL Properties** 또는 **Domain Verification** 항목에서
+     `iq.dailyenterkr.com` 등록
+   - 인증 방식은 보통 "파일 업로드" 또는 "DNS TXT 레코드" 중 선택 —
+     **파일 업로드 방식을 추천**합니다: 틱톡이 `tiktokXXXXXXXX.txt`
+     같은 파일명과 내용을 보여주는데, **그 파일명 + 내용을 저한테
+     그대로 붙여넣어 주시면 제가 몇 분 안에 배포해서 인증을
+     완료시켜 드립니다.** (DNS TXT 방식은 도메인 등록업체 설정이
+     필요해서 더 번거롭습니다.)
+
+**6. 테스터로 본인 계정 추가 (★ 제일 많이 빠뜨리는 단계)**
+앱이 아직 틱톡 심사를 통과하기 전(Sandbox/Development 상태)에는,
+**앱 대시보드에 "타겟 유저(Target Users)"로 등록된 틱톡 계정만
+로그인·연결이 가능합니다.** 앱 설정 → Target Users (또는 Testers) →
+본인 틱톡 계정의 유저네임을 추가하세요. 이걸 빠뜨리면 "연결" 버튼을
+눌렀을 때 틱톡 로그인 화면에서 바로 막히거나 권한 에러가 납니다.
+
+**7. 키를 Vercel에 등록**
+앱 대시보드에서 **Client Key / Client Secret** 복사 → Vercel
+Environment Variables에 `TIKTOK_CLIENT_KEY` / `TIKTOK_CLIENT_SECRET`로
+등록 → **재배포** (환경변수는 재배포해야 반영됩니다).
+
+**8. 연결**
+`iq.dailyenterkr.com/admin/media` → **"틱톡 연결"** 클릭 → 본인 틱톡
+계정으로 로그인·승인.
+
+**9. ⚠ 심사 전까지는 비공개로 올라갑니다**
+새로 만든 앱은 틱톡이 검토하기 전까지 `privacy_level: SELF_ONLY` —
+즉 게시물이 본인 계정에서만 보이는 비공개 상태로 올라갑니다. 이건
+틱톡 정책이라 코드로 바꿀 수 없습니다. 공개로 전환하려면 개발자
+포털에서 **앱 심사 신청**(Content Posting API, 공개 게시 권한)을
+넣어야 하고, 승인되면 그 이후 올라가는 게시물부터 공개로 전환됩니다.
+심사 기간 동안은 유튜브·인스타만으로 운영하다가, 승인 나면 틱톡도
+같이 켜지는 흐름으로 보시면 됩니다.
+
+**막히는 단계가 있으면 어느 단계에서 무슨 에러 문구가 떴는지 그대로
+알려주세요 — 화면 문구만 있으면 바로 진단됩니다.**
 
 ### 유튜브 설정
 
