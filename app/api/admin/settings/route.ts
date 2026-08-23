@@ -3,6 +3,7 @@ import { withErrorHandling } from '@/lib/api/with-error-handling';
 import { getStockKeys, readSettings, writeSettings } from '@/lib/social/settings';
 import { isTikTokAppConfigured } from '@/lib/social/tiktok';
 import { isYouTubeAppConfigured } from '@/lib/social/youtube';
+import { isThreadsAppConfigured } from '@/lib/social/threads';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -32,7 +33,7 @@ export const POST = withErrorHandling('admin/settings', async (req: Request) => 
     disconnect?: unknown;
   };
 
-  if (body.disconnect === 'tiktok' || body.disconnect === 'youtube') {
+  if (body.disconnect === 'tiktok' || body.disconnect === 'youtube' || body.disconnect === 'threads') {
     const stored = await writeSettings({ [body.disconnect]: null });
     if (!stored.ok) return NextResponse.json({ error: stored.reason }, { status: 500 });
     return NextResponse.json({ ok: true, disconnected: body.disconnect });
@@ -101,6 +102,11 @@ export const GET = withErrorHandling('admin/settings', async (req: Request) => {
         appConfigured: isYouTubeAppConfigured(),
         connected: Boolean(stored.youtube),
         channelTitle: stored.youtube?.channelTitle,
+      },
+      threads: {
+        appConfigured: isThreadsAppConfigured(),
+        connected: Boolean(stored.threads),
+        username: stored.threads?.username,
       },
     },
   });

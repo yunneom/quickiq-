@@ -173,9 +173,9 @@ Invoke-RestMethod -Method Post -Headers $h -Body $body "https://iq.dailyenterkr.
 뮤싱). 다만 별도로 유튜브 채널에 곡을 올려두면 곡의 출처 증빙이 남고,
 아래 크로스포스팅에도 그대로 쓰입니다.
 
-## 틱톡 · 유튜브 쇼츠 동시 업로드
+## 틱톡 · 유튜브 쇼츠 · 쓰레드 동시 업로드
 
-인스타에 올라가는 릴스가 같은 mp4 그대로 틱톡·유튜브 쇼츠에도
+인스타에 올라가는 릴스가 같은 mp4 그대로 틱톡·유튜브 쇼츠·쓰레드에도
 자동으로 올라갑니다. 앱 등록(1회, 개발자 계정 필요) + 계정 연결(1회,
 버튼 클릭)만 하면 그 다음부터는 완전 자동입니다.
 
@@ -268,6 +268,29 @@ Environment Variables에 `TIKTOK_CLIENT_KEY` / `TIKTOK_CLIENT_SECRET`로
    `YOUTUBE_CLIENT_SECRET`에 등록 → 재배포.
 5. `/admin/media`에서 **"유튜브 연결"** 클릭 → 본인 채널로 로그인·승인.
    바로 공개로 업로드됩니다(틱톡과 달리 심사 대기 없음).
+
+### 쓰레드 설정
+
+틱톡·유튜브와 달리 별도 개발자 회원가입이 필요 없습니다 — 인스타
+연동에 쓰는 **같은 메타(Meta) 앱**에 제품 하나만 추가하면 됩니다.
+
+1. [developers.facebook.com/apps](https://developers.facebook.com/apps)
+   → 인스타 연동에 쓰던 앱 선택 (없으면 새로 만들어도 무방) → 좌측
+   **Add Product** → **Threads API** 추가.
+2. Threads API 설정에서 **OAuth Redirect URI**에 정확히 이 주소 등록:
+   ```
+   https://iq.dailyenterkr.com/api/auth/threads/callback
+   ```
+3. **Use cases → Threads API → Settings**에서 본인 쓰레드 계정을
+   **테스터(Tester)**로 추가 — 앱이 심사 전(Development 모드)이면
+   테스터로 등록된 계정만 연결이 가능합니다(틱톡의 6번 단계와 동일한
+   함정).
+4. 앱 대시보드 **App settings → Basic**에서 **App ID / App Secret**
+   복사 → Vercel 환경변수 `THREADS_APP_ID` / `THREADS_APP_SECRET`에
+   등록 → 재배포.
+5. `/admin/media`에서 **"쓰레드 연결"** 클릭 → 본인 쓰레드 계정으로
+   로그인·승인. 본인 계정에 올리는 것이라 별도 앱 심사 없이 바로
+   공개로 올라갑니다(유튜브와 동일, 틱톡만 심사 대기가 있음).
 
 ### 확인
 

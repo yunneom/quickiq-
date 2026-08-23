@@ -86,3 +86,42 @@ describe('YouTube authorize URL + app-configured detection', () => {
     assert.ok(!url.toString().includes('yt-client-secret-000'), 'secret must never leak into the URL');
   });
 });
+
+describe('Threads authorize URL + app-configured detection', () => {
+  const originals = {
+    id: process.env.THREADS_APP_ID,
+    secret: process.env.THREADS_APP_SECRET,
+  };
+  before(() => {
+    process.env.THREADS_APP_ID = 'th-app-id-111';
+    process.env.THREADS_APP_SECRET = 'th-app-secret-222';
+  });
+  after(() => {
+    if (originals.id === undefined) delete process.env.THREADS_APP_ID;
+    else process.env.THREADS_APP_ID = originals.id;
+    if (originals.secret === undefined) delete process.env.THREADS_APP_SECRET;
+    else process.env.THREADS_APP_SECRET = originals.secret;
+  });
+
+  it('reports configured only when both app id and secret are set', async () => {
+    const { isThreadsAppConfigured } = await import('../../lib/social/threads');
+    assert.equal(isThreadsAppConfigured(), true);
+  });
+
+  it('builds an authorize URL carrying the app id, redirect, and state — never the secret', async () => {
+    const { buildThreadsAuthorizeUrl } = await import('../../lib/social/threads');
+    const url = new URL(
+      buildThreadsAuthorizeUrl('https://example.com/api/auth/threads/callback', 'STATE789'),
+    );
+    assert.equal(url.origin + url.pathname, 'https://threads.net/oauth/authorize');
+    assert.equal(url.searchParams.get('client_id'), 'th-app-id-111');
+    assert.equal(
+      url.searchParams.get('redirect_uri'),
+      'https://example.com/api/auth/threads/callback',
+    );
+    assert.equal(url.searchParams.get('state'), 'STATE789');
+    assert.equal(url.searchParams.get('response_type'), 'code');
+    assert.match(url.searchParams.get('scope') ?? '', /threads_content_publish/);
+    assert.ok(!url.toString().includes('th-app-secret-222'), 'secret must never leak into the URL');
+  });
+});

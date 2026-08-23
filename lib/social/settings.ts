@@ -36,11 +36,17 @@ export interface YouTubeTokens extends OAuthTokenSet {
   channelTitle?: string;
 }
 
+export interface ThreadsTokens extends OAuthTokenSet {
+  userId: string;
+  username?: string;
+}
+
 export interface OperatorSettings {
   pexelsApiKey?: string;
   pixabayApiKey?: string;
   tiktok?: TikTokTokens;
   youtube?: YouTubeTokens;
+  threads?: ThreadsTokens;
 }
 
 export async function readSettings(): Promise<OperatorSettings> {
@@ -145,4 +151,12 @@ export async function getYouTubeTokens(): Promise<YouTubeTokens | undefined> {
 
 export async function saveYouTubeTokens(tokens: YouTubeTokens): Promise<void> {
   await writeSettings({ youtube: tokens });
+}
+
+export async function getThreadsTokens(): Promise<ThreadsTokens | undefined> {
+  return (await readSettings()).threads;
+}
+
+export async function saveThreadsTokens(tokens: ThreadsTokens): Promise<void> {
+  await writeSettings({ threads: tokens });
 }

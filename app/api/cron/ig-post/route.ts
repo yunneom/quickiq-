@@ -10,6 +10,7 @@ import {
 import { pickComments } from '@/lib/social/comments';
 import { publishVideoToTikTok } from '@/lib/social/tiktok';
 import { uploadYouTubeShort } from '@/lib/social/youtube';
+import { publishVideoToThreads } from '@/lib/social/threads';
 import { importSeedTracks, readAudioManifest } from '@/lib/social/audio';
 import { importClips } from '@/lib/social/clip-sources';
 import { readClipManifest } from '@/lib/social/clips';
@@ -486,6 +487,14 @@ async function publishSlot(args: {
     }).catch((err) => ({ ok: false as const, reason: String(err) }));
     if (youtubeResult.ok) crossPosted.push('youtube');
     else crossPostNotes.push(`youtube: ${youtubeResult.reason}`);
+
+    const threadsResult = await publishVideoToThreads({
+      videoUrl: mediaUrl,
+      text: plan.caption,
+      deadlineAt,
+    }).catch((err) => ({ ok: false as const, reason: String(err) }));
+    if (threadsResult.ok) crossPosted.push('threads');
+    else crossPostNotes.push(`threads: ${threadsResult.reason}`);
   }
 
   return {
