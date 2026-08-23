@@ -65,9 +65,11 @@ export default function MediaAdminPage() {
   const [crosspost, setCrosspost] = useState<{
     tiktok: { appConfigured: boolean; connected: boolean; openId?: string };
     youtube: { appConfigured: boolean; connected: boolean; channelTitle?: string };
+    threads: { appConfigured: boolean; connected: boolean; username?: string };
   }>({
     tiktok: { appConfigured: false, connected: false },
     youtube: { appConfigured: false, connected: false },
+    threads: { appConfigured: false, connected: false },
   });
 
   useEffect(() => {
@@ -81,8 +83,12 @@ export default function MediaAdminPage() {
     // — surface the result once, then scrub the URL so a page refresh
     // doesn't re-show a stale message.
     const params = new URLSearchParams(window.location.search);
-    const platformLabel: Record<string, string> = { tiktok: '틱톡', youtube: '유튜브' };
-    for (const platform of ['tiktok', 'youtube']) {
+    const platformLabel: Record<string, string> = {
+      tiktok: '틱톡',
+      youtube: '유튜브',
+      threads: '쓰레드',
+    };
+    for (const platform of ['tiktok', 'youtube', 'threads']) {
       const result = params.get(platform);
       if (result === 'connected') {
         setNotice(`${platformLabel[platform]} 연결 완료 — 다음 발행부터 자동으로 함께 올라갑니다.`);
@@ -90,7 +96,7 @@ export default function MediaAdminPage() {
         setErr(`${platformLabel[platform]} 연결 실패: ${params.get('reason') ?? 'unknown'}`);
       }
     }
-    if (params.has('tiktok') || params.has('youtube')) {
+    if (params.has('tiktok') || params.has('youtube') || params.has('threads')) {
       window.history.replaceState({}, '', window.location.pathname);
     }
     // Mount-only by design: `refresh` is redefined every render (not
@@ -299,11 +305,11 @@ export default function MediaAdminPage() {
     }
   }
 
-  function connectUrl(platform: 'tiktok' | 'youtube'): string {
+  function connectUrl(platform: 'tiktok' | 'youtube' | 'threads'): string {
     return `/api/auth/${platform}?token=${encodeURIComponent(token)}`;
   }
 
-  async function disconnectPlatform(platform: 'tiktok' | 'youtube') {
+  async function disconnectPlatform(platform: 'tiktok' | 'youtube' | 'threads') {
     setBusy(true);
     setErr(null);
     setNotice(null);
@@ -321,7 +327,12 @@ export default function MediaAdminPage() {
         setErr(data.error ?? `HTTP ${res.status}`);
         return;
       }
-      setNotice(`${platform === 'tiktok' ? '틱톡' : '유튜브'} 연결 해제 완료.`);
+      const platformLabel: Record<string, string> = {
+        tiktok: '틱톡',
+        youtube: '유튜브',
+        threads: '쓰레드',
+      };
+      setNotice(`${platformLabel[platform]} 연결 해제 완료.`);
       await refresh(token);
     } catch (e) {
       setErr(String(e));
@@ -462,9 +473,9 @@ export default function MediaAdminPage() {
 
       {/* ------------------------------------------------ 크로스포스팅 */}
       <section className="mt-8 rounded-2xl border border-gray-200 bg-white p-5">
-        <h2 className="text-lg font-bold text-gray-900">📤 틱톡 · 유튜브 쇼츠 동시 업로드</h2>
+        <h2 className="text-lg font-bold text-gray-900">📤 틱톡 · 유튜브 쇼츠 · 쓰레드 동시 업로드</h2>
         <p className="mt-1 text-xs leading-relaxed text-gray-500">
-          한 번 연결해두면, 인스타에 올라가는 릴스가 같은 영상 그대로 틱톡·유튜브 쇼츠에도
+          한 번 연결해두면, 인스타에 올라가는 릴스가 같은 영상 그대로 틱톡·유튜브 쇼츠·쓰레드에도
           자동으로 올라갑니다. 연결은 각 플랫폼 로그인 화면으로 이동해 한 번만 승인하면 끝입니다.
         </p>
 
@@ -534,6 +545,39 @@ export default function MediaAdminPage() {
               </a>
             )}
           </div>
+
+          <div className="flex items-center justify-between rounded-xl border border-gray-100 px-4 py-3">
+            <div>
+              <p className="text-sm font-semibold text-gray-800">쓰레드</p>
+              <p className="mt-0.5 text-xs text-gray-500">
+                {!crosspost.threads.appConfigured
+                  ? '앱 설정 필요 (Vercel에 THREADS_APP_ID/SECRET)'
+                  : crosspost.threads.connected
+                    ? `연결됨${crosspost.threads.username ? ` (@${crosspost.threads.username})` : ''}`
+                    : '연결 안 됨'}
+              </p>
+            </div>
+            {crosspost.threads.connected ? (
+              <button
+                type="button"
+                onClick={() => void disconnectPlatform('threads')}
+                disabled={busy}
+                className="rounded-lg border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-500 disabled:opacity-50"
+              >
+                연결 해제
+              </button>
+            ) : (
+              <a
+                href={crosspost.threads.appConfigured ? connectUrl('threads') : undefined}
+                aria-disabled={!crosspost.threads.appConfigured}
+                className={`rounded-lg px-3 py-2 text-xs font-semibold text-white ${
+                  crosspost.threads.appConfigured ? 'bg-brand-600' : 'pointer-events-none bg-gray-300'
+                }`}
+              >
+                쓰레드 연결
+              </a>
+            )}
+          </div>
         </div>
 
         <p className="mt-3 text-[11px] leading-relaxed text-gray-400">
@@ -541,7 +585,7 @@ export default function MediaAdminPage() {
           안내받은 설정 가이드를 참고하세요. 틱톡은 신규 앱이 심사받기 전까지 게시물이 본인만
           보이는 비공개로 올라갑니다(틱톡 정책, 코드로 바꿀 수 없음). 심사가 끝나면 그 이후에
           새로 올라가는 게시물부터 공개로 전환되고, 심사 전에 이미 올라간 건 그대로 비공개로
-          남습니다.
+          남습니다. 쓰레드·유튜브는 본인 계정에 올리는 한 별도 심사 없이 바로 공개로 올라갑니다.
         </p>
       </section>
 
