@@ -737,3 +737,39 @@ function buildPool(): ShapePost[] {
 }
 
 export const SHAPE_POSTS: ShapePost[] = buildPool();
+
+// ---------------------------------------------------------------------------
+// Recolouring for the mural renderer
+// ---------------------------------------------------------------------------
+
+/**
+ * Figures are authored white-on-transparent for the dark card panel. The
+ * mural renderer paints them onto a photographed wall instead, where the
+ * ink has to be the wall's paint colour (dark charcoal on cream plaster,
+ * whitewash on brick, chalk on a blackboard).
+ *
+ * Every colour in a figure comes from one of four places — the two INK
+ * constants, inline `rgba(255,255,255,α)` washes, GOLD (the "?" marker)
+ * and the cube outline — so a token substitution over the finished SVG
+ * string is exact, not a guess. Alpha is preserved: it carries the
+ * figure's depth cues.
+ */
+export function recolorFigureSvg(
+  svg: string,
+  opts: { ink: string; accent: string; outline: string },
+): string {
+  const rgb = parseRgb(opts.ink);
+  return svg
+    // INK, INK_SOFT and every inline white wash share this one form.
+    .replace(/rgba\(255,\s*255,\s*255,\s*([\d.]+)\)/g, (_m, a: string) => `rgba(${rgb}, ${a})`)
+    .replace(new RegExp(GOLD, 'gi'), opts.accent)
+    .replace(/#0B0E14/gi, opts.outline);
+}
+
+/** "#RRGGBB" → "r, g, b". Falls back to white so a bad value can't blank a figure. */
+function parseRgb(hex: string): string {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex.trim());
+  if (!m) return '255, 255, 255';
+  const n = parseInt(m[1], 16);
+  return `${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}`;
+}

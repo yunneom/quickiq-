@@ -12,7 +12,7 @@ export const maxDuration = 30;
 /**
  * Operator settings (stock API keys) without touching Vercel env.
  *
- * POST { pexelsApiKey?, pixabayApiKey?, disconnect?: 'tiktok'|'youtube' }
+ * POST { pexelsApiKey?, pixabayApiKey?, geminiApiKey?, disconnect?: 'tiktok'|'youtube'|'threads' }
  *   — set a key ('' clears it), or disconnect a cross-post platform.
  * GET → configured/not per key/platform; NEVER returns token/key material,
  *   only non-secret identifiers (TikTok open_id, YouTube channel title)
@@ -30,6 +30,7 @@ export const POST = withErrorHandling('admin/settings', async (req: Request) => 
   const body = (await req.json().catch(() => ({}))) as {
     pexelsApiKey?: unknown;
     pixabayApiKey?: unknown;
+    geminiApiKey?: unknown;
     disconnect?: unknown;
   };
 
@@ -50,14 +51,22 @@ export const POST = withErrorHandling('admin/settings', async (req: Request) => 
 
   const pexelsApiKey = clean(body.pexelsApiKey);
   const pixabayApiKey = clean(body.pixabayApiKey);
-  if (pexelsApiKey === undefined && pixabayApiKey === undefined) {
+  const geminiApiKey = clean(body.geminiApiKey);
+  if (
+    pexelsApiKey === undefined &&
+    pixabayApiKey === undefined &&
+    geminiApiKey === undefined
+  ) {
     return NextResponse.json(
-      { error: 'no_valid_keys', hint: 'Pass pexelsApiKey and/or pixabayApiKey.' },
+      {
+        error: 'no_valid_keys',
+        hint: 'Pass pexelsApiKey, pixabayApiKey and/or geminiApiKey.',
+      },
       { status: 400 },
     );
   }
 
-  const stored = await writeSettings({ pexelsApiKey, pixabayApiKey });
+  const stored = await writeSettings({ pexelsApiKey, pixabayApiKey, geminiApiKey });
   if (!stored.ok) {
     return NextResponse.json({ error: stored.reason }, { status: 500 });
   }

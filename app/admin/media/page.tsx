@@ -26,6 +26,13 @@ interface FootageScene {
   storedAt?: string;
 }
 
+interface MuralItem {
+  id: string;
+  style: string;
+  url?: string | null;
+  storedAt: string;
+}
+
 interface ClipSceneStatus {
   scene: string;
   clips: { id: string; credit?: string; license?: string }[];
@@ -61,6 +68,12 @@ export default function MediaAdminPage() {
   const [importNotes, setImportNotes] = useState<string[]>([]);
   const [pexelsKey, setPexelsKey] = useState('');
   const [pexelsConfigured, setPexelsConfigured] = useState(false);
+
+  const [geminiKey, setGeminiKey] = useState('');
+  const [muralConfigured, setMuralConfigured] = useState(false);
+  const [murals, setMurals] = useState<MuralItem[]>([]);
+  const [muralCounts, setMuralCounts] = useState<Record<string, number>>({});
+  const [muralStyles, setMuralStyles] = useState<{ id: string; label: string }[]>([]);
 
   const [crosspost, setCrosspost] = useState<{
     tiktok: { appConfigured: boolean; connected: boolean; openId?: string };
@@ -109,7 +122,7 @@ export default function MediaAdminPage() {
     setBusy(true);
     setErr(null);
     try {
-      const [audioRes, footageRes, clipsRes, settingsRes] = await Promise.all([
+      const [audioRes, footageRes, clipsRes, settingsRes, muralsRes] = await Promise.all([
         fetch('/api/admin/audio', {
           headers: { 'x-admin-token': t },
           cache: 'no-store',
@@ -123,6 +136,10 @@ export default function MediaAdminPage() {
           cache: 'no-store',
         }),
         fetch('/api/admin/settings', {
+          headers: { 'x-admin-token': t },
+          cache: 'no-store',
+        }),
+        fetch('/api/admin/murals', {
           headers: { 'x-admin-token': t },
           cache: 'no-store',
         }),
@@ -149,6 +166,18 @@ export default function MediaAdminPage() {
         };
         setPexelsConfigured(Boolean(settings.pexelsConfigured));
         if (settings.crosspost) setCrosspost(settings.crosspost);
+      }
+      if (muralsRes.ok) {
+        const data = (await muralsRes.json()) as {
+          configured?: boolean;
+          murals?: MuralItem[];
+          counts?: Record<string, number>;
+          styles?: { id: string; label: string }[];
+        };
+        setMuralConfigured(Boolean(data.configured));
+        setMurals(data.murals ?? []);
+        setMuralCounts(data.counts ?? {});
+        setMuralStyles(data.styles ?? []);
       }
       setAuthed(true);
       window.localStorage.setItem(TOKEN_KEY, t);
@@ -333,6 +362,85 @@ export default function MediaAdminPage() {
         threads: '쓰레드',
       };
       setNotice(`${platformLabel[platform]} 연결 해제 완료.`);
+      await refresh(token);
+    } catch (e) {
+      setErr(String(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function saveGeminiKey() {
+    setBusy(true);
+    setErr(null);
+    setNotice(null);
+    try {
+      const res = await fetch('/api/admin/settings', {
+        method: 'POST',
+        headers: { 'x-admin-token': token, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ geminiApiKey: geminiKey.trim() }),
+      });
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || !data.ok) {
+        setErr(data.error ?? `HTTP ${res.status}`);
+        return;
+      }
+      setGeminiKey('');
+      setNotice('Gemini 키 저장 완료. 이제 "벽 배경 생성"을 누르면 됩니다.');
+      await refresh(token);
+    } catch (e) {
+      setErr(String(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function generateMurals() {
+    setBusy(true);
+    setErr(null);
+    setNotice(null);
+    try {
+      const res = await fetch('/api/admin/murals', {
+        method: 'POST',
+        headers: { 'x-admin-token': token, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'generate', perStyle: 1 }),
+      });
+      const data = (await res.json()) as {
+        ok?: boolean;
+        created?: string[];
+        notes?: string[];
+        error?: string;
+        hint?: string;
+      };
+      if (!res.ok || !data.ok) {
+        setErr(`${data.error ?? `HTTP ${res.status}`}${data.hint ? ` — ${data.hint}` : ''}`);
+        return;
+      }
+      setNotice(`벽 ${data.created?.length ?? 0}장 생성 완료.`);
+      setImportNotes(data.notes ?? []);
+      await refresh(token);
+    } catch (e) {
+      setErr(String(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function removeMural(id: string) {
+    setBusy(true);
+    setErr(null);
+    try {
+      const res = await fetch('/api/admin/murals', {
+        method: 'POST',
+        headers: { 'x-admin-token': token, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'delete', id }),
+      });
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || !data.ok) {
+        setErr(data.error ?? `HTTP ${res.status}`);
+        return;
+      }
+      setNotice('삭제 완료.');
       await refresh(token);
     } catch (e) {
       setErr(String(e));
@@ -586,6 +694,84 @@ export default function MediaAdminPage() {
           보이는 비공개로 올라갑니다(틱톡 정책, 코드로 바꿀 수 없음). 심사가 끝나면 그 이후에
           새로 올라가는 게시물부터 공개로 전환되고, 심사 전에 이미 올라간 건 그대로 비공개로
           남습니다. 쓰레드·유튜브는 본인 계정에 올리는 한 별도 심사 없이 바로 공개로 올라갑니다.
+        </p>
+      </section>
+
+      {/* ------------------------------------------------ 벽화 배경 */}
+      <section className="mt-8 rounded-2xl border border-gray-200 bg-white p-5">
+        <h2 className="text-lg font-bold text-gray-900">🧱 벽화 배경 (AI 생성)</h2>
+        <p className="mt-1 text-xs leading-relaxed text-gray-500">
+          &ldquo;사람이 벽 앞에서 문제를 올려다보는&rdquo; 형식의 배경입니다. 여기서 만든 벽 사진에
+          문제·보기·도형이 <b>벽에 칠해진 것처럼</b> 합성되어 발행됩니다. 한 번 만들어두면
+          계속 돌려쓰기 때문에 매번 생성 비용이 들지 않습니다. 풀이 비어 있으면 기존
+          카드 형식으로 자동 발행됩니다.
+        </p>
+
+        <p className={`mt-3 text-sm font-semibold ${muralConfigured ? 'text-green-600' : 'text-amber-600'}`}>
+          {muralConfigured ? '✅ Gemini 키 등록됨' : 'Gemini 키가 아직 없습니다'}
+        </p>
+        {!muralConfigured && (
+          <div className="mt-2 flex gap-2">
+            <input
+              type="password"
+              value={geminiKey}
+              onChange={(e) => setGeminiKey(e.target.value)}
+              placeholder="AIza... (aistudio.google.com/apikey)"
+              className="min-w-0 flex-1 rounded-xl border border-gray-200 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none"
+            />
+            <button
+              type="button"
+              onClick={() => void saveGeminiKey()}
+              disabled={busy || !geminiKey.trim()}
+              className="rounded-xl bg-gray-900 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+            >
+              저장
+            </button>
+          </div>
+        )}
+
+        <div className="mt-4 flex flex-wrap gap-2 text-xs text-gray-600">
+          {muralStyles.map((st) => (
+            <span key={st.id} className="rounded-lg bg-gray-100 px-2.5 py-1.5">
+              {st.label} <b>{muralCounts[st.id] ?? 0}장</b>
+            </span>
+          ))}
+        </div>
+
+        <button
+          type="button"
+          onClick={() => void generateMurals()}
+          disabled={busy || !muralConfigured}
+          className="mt-4 w-full rounded-xl bg-brand-600 px-4 py-3 text-sm font-semibold text-white disabled:opacity-50"
+        >
+          {busy ? '생성 중… (1~2분)' : '벽 배경 생성 (5종 각 1장)'}
+        </button>
+
+        {murals.length > 0 && (
+          <div className="mt-4 grid grid-cols-3 gap-2">
+            {murals.map((m) => (
+              <div key={m.id} className="overflow-hidden rounded-xl border border-gray-100">
+                {m.url && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={m.url} alt={m.style} className="aspect-[9/16] w-full object-cover" />
+                )}
+                <button
+                  type="button"
+                  onClick={() => void removeMural(m.id)}
+                  disabled={busy}
+                  className="w-full px-2 py-1.5 text-[11px] font-semibold text-red-600 disabled:opacity-50"
+                >
+                  삭제
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <p className="mt-3 text-[11px] leading-relaxed text-gray-400">
+          마음에 안 드는 벽(사람이 앞을 보고 있다거나, 벽에 글씨가 생겼다거나)은 삭제하고
+          다시 생성하세요. 실제 발행물 미리보기는 <code className="rounded bg-gray-100 px-1">
+          /api/admin/murals</code> 의 미리보기 기능으로 확인합니다.
         </p>
       </section>
 
