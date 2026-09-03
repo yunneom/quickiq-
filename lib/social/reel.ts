@@ -20,6 +20,8 @@ import { loadAudioTrack, pickTrackId, readAudioManifest } from './audio';
 import { muxAudioIntoVideo } from './mux';
 import { loadClip, pickClipForSlot, readClipManifest } from './clips';
 import { extractClipFrames } from './clip-frames';
+import { MURAL_STYLES, muralEligible, paintMural } from './mural';
+import { loadMural, pickMuralForSlot, readMuralManifest } from './murals';
 
 /**
  * Builds the daily reel as an in-memory MP4 — now with a MOVING scene.
@@ -97,6 +99,128 @@ function overlayIndexAt(second: number): number {
   return schedule[schedule.length - 1].frame;
 }
 
+/**
+ * The chosen wall for this slot with the question already painted into
+ * it, or null when the pool is empty / the wall cannot be loaded. Any
+ * failure returns null so the card pipeline still publishes the post.
+ */
+async function loadMuralLayer(
+  card: Parameters<typeof paintMural>[0]['card'],
+  dayIndex: number,
+  slot: number,
+): Promise<Buffer | null> {
+  try {
+    const { murals } = await readMuralManifest();
+    const entry = pickMuralForSlot(dayIndex, slot, murals);
+    if (!entry) return null;
+    const wall = await loadMural(entry.id);
+    if (!wall) return null;
+    return await paintMural({
+      wall,
+      style: MURAL_STYLES[entry.style],
+      card,
+      handle: '@quickiq',
+    });
+  } catch {
+    return null;
+  }
+}
+
+/** Deterministic soundtrack over the operator's library; silent on any failure. */
+async function attachSoundtrack(
+  silent: Buffer,
+  dayIndex: number,
+  slot: number,
+): Promise<Buffer> {
+  try {
+    const manifest = await readAudioManifest();
+    const trackId = pickTrackId(
+      dayIndex,
+      slot,
+      manifest.tracks.map((t) => t.id),
+    );
+    if (!trackId) return silent;
+    const audio = await loadAudioTrack(trackId);
+    if (!audio) return silent;
+    const withAudio = await muxAudioIntoVideo(silent, audio, REEL_DURATION_SECONDS);
+    return withAudio ?? silent;
+  } catch {
+    return silent;
+  }
+}
+
+/**
+ * Encode a painted wall as the reel: one slow push-in over the still.
+ *
+ * The question is painted at footage resolution BEFORE the crop, so the
+ * letters travel with the wall — crop first and the text would slide
+ * across the bricks, which instantly reads as an overlay rather than
+ * paint.
+ */
+async function buildMuralReel(args: {
+  painted: Buffer;
+  dayIndex: number;
+  slot: number;
+  deadlineAt?: number;
+}): Promise<ReelResult> {
+  const uniqueFrames = REEL_DURATION_SECONDS * BG_FPS;
+  const decoded = await sharp(args.painted).ensureAlpha().raw().toBuffer({
+    resolveWithObject: true,
+  });
+
+  const encoder = await createH264MP4Encoder();
+  encoder.width = REEL.width;
+  encoder.height = REEL.height;
+  encoder.frameRate = REEL.fps;
+  encoder.kbps = 6500;
+  encoder.groupOfPictures = REEL.fps;
+  encoder.speed = 7;
+  encoder.initialize();
+
+  try {
+    const dupe = Math.round(REEL.fps / BG_FPS);
+    const renderFrame = (u: number) => {
+      const t = u / (uniqueFrames - 1);
+      return sharp(decoded.data, {
+        raw: {
+          width: decoded.info.width,
+          height: decoded.info.height,
+          channels: 4,
+        },
+      })
+        .extract(
+          kenBurnsCrop(
+            'chalk',
+            t,
+            { width: decoded.info.width, height: decoded.info.height },
+            { width: REEL.width, height: REEL.height },
+          ),
+        )
+        .resize(REEL.width, REEL.height)
+        .ensureAlpha()
+        .raw()
+        .toBuffer();
+    };
+
+    let pending = renderFrame(0);
+    for (let u = 0; u < uniqueFrames; u++) {
+      if (args.deadlineAt && u % 15 === 0 && Date.now() > args.deadlineAt) {
+        return { ok: false, reason: 'mural_build_deadline_exceeded' };
+      }
+      const raw = await pending;
+      if (u + 1 < uniqueFrames) pending = renderFrame(u + 1);
+      const rgba = new Uint8Array(raw);
+      for (let k = 0; k < dupe; k++) encoder.addFrameRgba(rgba);
+    }
+
+    encoder.finalize();
+    const silent = Buffer.from(encoder.FS.readFile(encoder.outputFilename));
+    return { ok: true, buffer: await attachSoundtrack(silent, args.dayIndex, args.slot) };
+  } finally {
+    encoder.delete();
+  }
+}
+
 export async function buildReelVideo(args: {
   dayIndex: number;
   slot?: number;
@@ -109,6 +233,23 @@ export async function buildReelVideo(args: {
     const plan = planForSlot(args.dayIndex, slot);
     if (!plan) return { ok: false, reason: 'no_plan' };
     const scene = plan.card.bg;
+
+    // A painted wall replaces the whole card treatment — question,
+    // figure and options are all painted into the photograph, so this
+    // path skips the satori overlays and the timer bar entirely. Only
+    // taken when the pool has a wall AND this post is paintable; both
+    // misses fall through to the existing card pipeline untouched.
+    const mural = muralEligible(plan.card)
+      ? await loadMuralLayer(plan.card, args.dayIndex, slot)
+      : null;
+    if (mural) {
+      return buildMuralReel({
+        painted: mural,
+        dayIndex: args.dayIndex,
+        slot,
+        deadlineAt: args.deadlineAt,
+      });
+    }
 
     // Decode each overlay PNG ONCE into raw RGBA: composite() would
     // otherwise re-decode the same PNG on every one of the ~180 frames.
@@ -220,28 +361,11 @@ export async function buildReelVideo(args: {
 
       // Soundtrack: deterministic rotation over the operator's library.
       // Any failure publishes the silent cut instead of failing the post.
-      try {
-        const manifest = await readAudioManifest();
-        const trackId = pickTrackId(
-          args.dayIndex,
-          slot,
-          manifest.tracks.map((t) => t.id),
-        );
-        if (trackId) {
-          const audio = await loadAudioTrack(trackId);
-          if (audio) {
-            const withAudio = await muxAudioIntoVideo(
-              silent,
-              audio,
-              REEL_DURATION_SECONDS,
-            );
-            if (withAudio) return { ok: true, buffer: withAudio, credit };
-          }
-        }
-      } catch {
-        // fall through to the silent cut
-      }
-      return { ok: true, buffer: silent, credit };
+      return {
+        ok: true,
+        buffer: await attachSoundtrack(silent, args.dayIndex, slot),
+        credit,
+      };
     } finally {
       encoder.delete();
     }

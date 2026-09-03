@@ -44,6 +44,8 @@ export interface ThreadsTokens extends OAuthTokenSet {
 export interface OperatorSettings {
   pexelsApiKey?: string;
   pixabayApiKey?: string;
+  /** Google AI Studio key used to generate mural wall photos. */
+  geminiApiKey?: string;
   tiktok?: TikTokTokens;
   youtube?: YouTubeTokens;
   threads?: ThreadsTokens;
@@ -135,6 +137,16 @@ export async function getStockKeys(): Promise<{
     pexels: envPexels || stored.pexelsApiKey?.trim() || undefined,
     pixabay: envPixabay || stored.pixabayApiKey?.trim() || undefined,
   };
+}
+
+/**
+ * Effective Gemini key: environment first, then the value pasted into
+ * /admin/media. Never returned to the browser — only a boolean.
+ */
+export async function getGeminiKey(): Promise<string | undefined> {
+  const env = process.env.GEMINI_API_KEY?.trim();
+  if (env) return env;
+  return (await readSettings()).geminiApiKey?.trim() || undefined;
 }
 
 export async function getTikTokTokens(): Promise<TikTokTokens | undefined> {
