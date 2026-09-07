@@ -4,8 +4,16 @@ import { PERSONALITY_REGISTRY } from '@/lib/personality/registry';
 import { TEST_CATALOG } from '@/lib/tests/catalog';
 import { getSiteUrl } from '@/lib/site-url';
 
-// Evaluated once at build/deploy, not per request.
-const LASTMOD = new Date();
+/**
+ * lastmod is a claim about CONTENT, and Google only keeps trusting it
+ * while it stays true. A build-time clock made every one of the 138 URLs
+ * "modified" on every deploy — several times a day on this repo — which
+ * is indistinguishable from a sitemap that lies, and a crawler that has
+ * stopped believing lastmod has one less reason to come back. So this is
+ * a date, set by hand, bumped only when the pages' content or linking
+ * actually changes (e.g. the type-index grid added to every landing).
+ */
+const LASTMOD = new Date('2026-09-04T00:00:00Z');
 
 /**
  * Sitemap with hreflang alternates so Google serves the right locale.
@@ -22,9 +30,6 @@ const LASTMOD = new Date();
  */
 export default function sitemap(): MetadataRoute.Sitemap {
   const base = getSiteUrl();
-  // Stable lastmod (deploy time, evaluated once per build) — emitting the
-  // request time made every URL look "modified" on every fetch, which
-  // erodes crawler trust in the lastmod signal.
   const now = LASTMOD;
 
   const staticPaths: Array<{ path: string; priority: number }> = [
