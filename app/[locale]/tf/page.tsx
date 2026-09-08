@@ -4,6 +4,7 @@ import { unstable_setRequestLocale } from 'next-intl/server';
 import { Button } from '@/components/ui/button';
 import { locales, type Locale } from '@/i18n';
 import { TestFaq } from '@/components/personality/test-faq';
+import { TypeIndex } from '@/components/personality/type-index';
 import { getTestEntry } from '@/lib/tests/catalog';
 import { makeTestLandingMetadata } from '@/lib/tests/landing-metadata';
 
@@ -102,6 +103,7 @@ export default function TfLanding({
         </p>
 
         {faqs.length > 0 && <TestFaq locale={loc} faqs={faqs} />}
+        <TypeIndex slug="tf" locale={loc} />
       </div>
 
       <div className="sticky bottom-0 mt-10 bg-gradient-to-t from-[#fafafa] via-[#fafafa] to-transparent pb-2 pt-6">
