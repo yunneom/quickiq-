@@ -1,3 +1,5 @@
+import { postOrdinal } from './schedule';
+
 /**
  * First-party seed comments.
  *
@@ -43,7 +45,7 @@ const REACTION_COMMENTS = [
  * DIFFERENT pair (idempotency matches the rest of the pipeline).
  */
 export function pickComments(dayIndex: number, slot: number): [string, string] {
-  const ordinal = dayIndex * 3 + slot;
+  const ordinal = postOrdinal(dayIndex, slot);
   const cta = CTA_COMMENTS[ordinal % CTA_COMMENTS.length];
   // Offset so the two lines don't cycle in lockstep against each other.
   const reaction = REACTION_COMMENTS[(ordinal + 3) % REACTION_COMMENTS.length];

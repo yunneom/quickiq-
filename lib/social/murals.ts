@@ -11,6 +11,7 @@
 
 import { createSupabaseAdmin, isSupabaseConfigured } from '@/lib/supabase/server';
 import { MURAL_STYLES, type MuralStyleId } from './mural';
+import { postOrdinal } from './schedule';
 
 const BUCKET = 'ig-media';
 const DIR = 'footage/murals';
@@ -136,7 +137,7 @@ export function pickMuralForSlot(
 ): MuralEntry | null {
   const pool = [...murals].sort((a, b) => a.id.localeCompare(b.id));
   if (pool.length === 0) return null;
-  return pool[(dayIndex * 3 + slot) % pool.length];
+  return pool[postOrdinal(dayIndex, slot) % pool.length];
 }
 
 /** How many walls each style currently holds — drives the admin summary. */

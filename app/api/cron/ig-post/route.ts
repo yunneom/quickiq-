@@ -40,8 +40,10 @@ const MIN_POST_MS = 145_000;
 // One post never gets more than this — keeps room for a second slot.
 const MAX_POST_WINDOW_MS = 200_000;
 
-// Posts per invocation. Vercel Hobby allows 2 cron schedules/day, so two
-// runs × 2 posts covers the 3 daily slots with room for a retry.
+// Posts per invocation. The cadence is one post a day (lib/social/
+// schedule.ts); the second cron run of the day is the retry that picks
+// up a failed or budget-starved first run, not a second post. The cap
+// stays at 2 so a legacy day (?d= before the epoch) can still be replayed.
 const MAX_POSTS_PER_RUN = 2;
 
 // A 'publishing' row this old belongs to a run that was killed mid-flight

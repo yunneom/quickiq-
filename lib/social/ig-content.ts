@@ -4,6 +4,12 @@ import type { Question } from '@/lib/questions/types';
 import type { Scene } from './quiz-scene';
 import type { BgScene } from './reel-bg';
 import { SHAPE_POSTS, type ShapePost } from './shape-quizzes';
+import {
+  SLOTS_PER_DAY,
+  LEGACY_SLOTS_PER_DAY,
+  ONE_A_DAY_EPOCH,
+  slotsForDay,
+} from './schedule';
 
 /**
  * Content plan for the global (English) Instagram account.
@@ -1390,8 +1396,13 @@ function questionPlan(q: Question, hook: string): IgPostPlan {
   };
 }
 
-/** Posts published per day, spread across the day's cron runs. */
-export const SLOTS_PER_DAY = 3;
+export {
+  SLOTS_PER_DAY,
+  LEGACY_SLOTS_PER_DAY,
+  ONE_A_DAY_EPOCH,
+  slotsForDay,
+  postOrdinal,
+} from './schedule';
 
 /** A shape puzzle as a plan — same shell as text baits, kind 'shape'. */
 function shapePlan(p: ShapePost): IgPostPlan {
@@ -1409,16 +1420,14 @@ function shapePlan(p: ShapePost): IgPostPlan {
 }
 
 /**
- * Daily mix runs on a 4-day cycle (12 slots): slot 0 and slot 1 are
- * ALWAYS a shape puzzle; slot 2 is the "regular" slot — real pool
- * question on 2 of the 4 days, text bait on 1, and shape on the
- * remaining day. That lands shape puzzles at 9 of 12 slots = 75%,
- * regular quiz content (bait + real questions) at 25% — figures
- * outperform text on a muted autoplay feed, so they carry the account.
+ * LEGACY cadence (days before ONE_A_DAY_EPOCH) — 3 slots/day on a 4-day
+ * cycle (12 slots): slot 0 and slot 1 are ALWAYS a shape puzzle; slot 2
+ * is the "regular" slot — real pool question on 2 of the 4 days, text
+ * bait on 1, and shape on the remaining day. 9 of 12 slots = 75% shape.
  *
- * `CYCLE_LEN` days repeat this pattern. `SHAPE_PER_CYCLE` and the
- * `SLOT2_KIND` table below are the single place that ratio is defined —
- * change them together to retune the mix.
+ * Kept byte-for-byte so past days still resolve to the posts that
+ * actually went out (ledger keys, yesterday's retry, ?d= debugging).
+ * The current cadence is `planForSlot` below; this is only its history.
  */
 const CYCLE_LEN = 4;
 /** slot-2 content per day-in-cycle: 2 question + 1 text-bait + 1 shape. */
@@ -1439,18 +1448,25 @@ for (let r = 1; r < CYCLE_LEN; r++) {
 }
 const SHAPE_PER_CYCLE = SHAPE_PREFIX[CYCLE_LEN - 1] + shapeCountOnDay(CYCLE_LEN - 1);
 
-/**
- * Deterministic rotation: the same (day, slot) always yields the same
- * post, so a retried cron run republishes nothing new and the ledger
- * stays clean. `dayIndex` is days since epoch (UTC).
- */
-export function planForSlot(dayIndex: number, slot = 0): IgPostPlan | null {
-  const s = Math.min(Math.max(Math.trunc(slot), 0), SLOTS_PER_DAY - 1);
+/** Legacy pool cursors — how many of each pool the old cadence consumed before day D. */
+function legacyShapeOrdinalAt(D: number): number {
+  return Math.floor(D / CYCLE_LEN) * SHAPE_PER_CYCLE + SHAPE_PREFIX[D % CYCLE_LEN];
+}
+function legacyTextOrdinalAt(D: number): number {
+  return Math.floor(D / CYCLE_LEN) + (D % CYCLE_LEN > 1 ? 1 : 0);
+}
+function legacyQuestionOrdinalAt(D: number): number {
+  const r = D % CYCLE_LEN;
+  return Math.floor(D / CYCLE_LEN) * 2 + (r > 0 ? 1 : 0) + (r > 2 ? 1 : 0);
+}
+
+function legacyPlanForSlot(dayIndex: number, slot: number): IgPostPlan | null {
+  const s = Math.min(Math.max(Math.trunc(slot), 0), LEGACY_SLOTS_PER_DAY - 1);
   const r = dayIndex % CYCLE_LEN;
   const block = Math.floor(dayIndex / CYCLE_LEN);
   const slot2Kind = SLOT2_KIND[r];
 
-  if (s === SLOTS_PER_DAY - 1 && slot2Kind !== 'shape') {
+  if (s === LEGACY_SLOTS_PER_DAY - 1 && slot2Kind !== 'shape') {
     if (slot2Kind === 'text') {
       if (BAIT_POSTS.length === 0) return null;
       // One text-bait slot per 4-day cycle walks the pool at 1/4 pace.
@@ -1475,6 +1491,55 @@ export function planForSlot(dayIndex: number, slot = 0): IgPostPlan | null {
   return shapePlan(SHAPE_POSTS[(ordinal * stride) % SHAPE_POSTS.length]);
 }
 
+/**
+ * CURRENT cadence (from ONE_A_DAY_EPOCH) — one post a day on a 4-day
+ * cycle: three shape days, then one "regular" day. Regular days
+ * alternate real question, real question, text bait, so the 75/25
+ * shape/regular split and the 2:1 question/bait split both survive the
+ * cut from three posts to one.
+ *
+ * Every pool cursor starts where the legacy cadence left it, so nothing
+ * that went out in the last weeks comes straight back — the whole point
+ * of keeping the legacy arithmetic around.
+ */
+const REGULAR_DAY = CYCLE_LEN - 1; // r = 3
+const SHAPE_ORDINAL_BASE = legacyShapeOrdinalAt(ONE_A_DAY_EPOCH);
+const TEXT_ORDINAL_BASE = legacyTextOrdinalAt(ONE_A_DAY_EPOCH);
+const QUESTION_ORDINAL_BASE = legacyQuestionOrdinalAt(ONE_A_DAY_EPOCH);
+
+/**
+ * Deterministic rotation: the same (day, slot) always yields the same
+ * post, so a retried cron run republishes nothing new and the ledger
+ * stays clean. `dayIndex` is days since epoch (UTC).
+ */
+export function planForSlot(dayIndex: number, slot = 0): IgPostPlan | null {
+  if (dayIndex < ONE_A_DAY_EPOCH) return legacyPlanForSlot(dayIndex, slot);
+
+  const n = dayIndex - ONE_A_DAY_EPOCH;
+  const r = n % CYCLE_LEN;
+  const block = Math.floor(n / CYCLE_LEN);
+
+  if (r === REGULAR_DAY) {
+    // Regular-day kinds by cycle: q, q, text, q, q, text, …
+    const textBlocks = Math.floor(block / 3);
+    if (block % 3 === 2) {
+      if (BAIT_POSTS.length === 0) return null;
+      const ordinal = TEXT_ORDINAL_BASE + textBlocks;
+      const stride = coprimeStride(BAIT_POSTS.length);
+      return baitPlan(BAIT_POSTS[(ordinal * stride) % BAIT_POSTS.length]);
+    }
+    const pool = eligibleQuestions();
+    if (pool.length === 0) return null;
+    const ordinal = QUESTION_ORDINAL_BASE + (block - textBlocks);
+    return questionPlan(pool[ordinal % pool.length], HOOKS[dayIndex % HOOKS.length]);
+  }
+
+  if (SHAPE_POSTS.length === 0) return null;
+  const ordinal = SHAPE_ORDINAL_BASE + block * REGULAR_DAY + r;
+  const stride = coprimeStride(SHAPE_POSTS.length);
+  return shapePlan(SHAPE_POSTS[(ordinal * stride) % SHAPE_POSTS.length]);
+}
+
 /** Largest of a few candidate strides that is coprime with `len`. */
 function coprimeStride(len: number): number {
   const gcd = (a: number, b: number): number => (b === 0 ? a : gcd(b, a % b));
@@ -1486,9 +1551,22 @@ function coprimeStride(len: number): number {
 
 /** Every post scheduled for a day, in publishing order. */
 export function plansForDay(dayIndex: number): IgPostPlan[] {
-  return Array.from({ length: SLOTS_PER_DAY }, (_, slot) =>
+  return Array.from({ length: slotsForDay(dayIndex) }, (_, slot) =>
     planForSlot(dayIndex, slot),
   ).filter((p): p is IgPostPlan => p !== null);
+}
+
+/** Exposed for tests: where each pool cursor stood when the cadence changed. */
+export function cadenceSwitchCursorsForTest() {
+  return {
+    epoch: ONE_A_DAY_EPOCH,
+    shape: SHAPE_ORDINAL_BASE,
+    text: TEXT_ORDINAL_BASE,
+    question: QUESTION_ORDINAL_BASE,
+    legacyShapeOrdinalAt,
+    legacyTextOrdinalAt,
+    legacyQuestionOrdinalAt,
+  };
 }
 
 /** Days since Unix epoch in UTC — the rotation cursor. */
