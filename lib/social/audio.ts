@@ -21,6 +21,7 @@
 import { createSupabaseAdmin, isSupabaseConfigured } from '@/lib/supabase/server';
 import { AUDIO_SEED } from './audio-seed';
 import { isRealSunoTrackUrl, isSunoShareUrl, resolveSunoShareUrl } from './suno';
+import { postOrdinal } from './schedule';
 
 const BUCKET = 'ig-media';
 const DIR = 'audio';
@@ -109,7 +110,7 @@ export function pickTrackId(
 ): string | null {
   if (trackIds.length === 0) return null;
   const sorted = [...trackIds].sort();
-  return sorted[(dayIndex * 3 + slot) % sorted.length];
+  return sorted[postOrdinal(dayIndex, slot) % sorted.length];
 }
 
 const SEED_MAX_BYTES = 20 * 1024 * 1024;

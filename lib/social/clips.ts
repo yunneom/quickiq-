@@ -23,6 +23,7 @@
 
 import { createSupabaseAdmin, isSupabaseConfigured } from '@/lib/supabase/server';
 import type { BgScene } from './reel-bg';
+import { postOrdinal } from './schedule';
 
 const BUCKET = 'ig-media';
 const DIR = 'footage/clips';
@@ -144,5 +145,5 @@ export function pickClipForSlot(
     .filter((c) => c.scene === scene)
     .sort((a, b) => a.id.localeCompare(b.id));
   if (pool.length === 0) return null;
-  return pool[(dayIndex * 3 + slot) % pool.length];
+  return pool[postOrdinal(dayIndex, slot) % pool.length];
 }
