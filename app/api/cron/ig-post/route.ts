@@ -14,6 +14,7 @@ import { publishVideoToThreads } from '@/lib/social/threads';
 import { importSeedTracks, readAudioManifest } from '@/lib/social/audio';
 import { importClips } from '@/lib/social/clip-sources';
 import { readClipManifest } from '@/lib/social/clips';
+import { readMuralManifest } from '@/lib/social/murals';
 import { writeStatusSnapshot } from '@/lib/social/status';
 import { plansForDay, utcDayIndex, type IgPostPlan } from '@/lib/social/ig-content';
 import { buildReelVideo } from '@/lib/social/reel';
@@ -55,6 +56,10 @@ type PostOutcome = {
   postKey: string;
   status: 'published' | 'failed' | 'skipped';
   kind?: 'reel' | 'image';
+  /** Why the reel gave way to the still card — kept in the flight
+   *  recorder, not only in Sentry, so the ledger's image rows explain
+   *  themselves. */
+  fallbackReason?: string;
   mediaId?: string;
   reason?: string;
   commentsPosted?: number;
@@ -269,15 +274,16 @@ export async function GET(req: Request) {
 /** Current media-library fill state, for the status snapshot. */
 async function poolCounts(): Promise<object> {
   try {
-    const [audio, clips] = await Promise.all([
+    const [audio, clips, murals] = await Promise.all([
       readAudioManifest(),
       readClipManifest(),
+      readMuralManifest(),
     ]);
     const clipsByScene: Record<string, number> = {};
     for (const c of clips.clips) {
       clipsByScene[c.scene] = (clipsByScene[c.scene] ?? 0) + 1;
     }
-    return { audioTracks: audio.tracks.length, clipsByScene };
+    return { audioTracks: audio.tracks.length, clipsByScene, murals: murals.murals.length };
   } catch {
     return { error: 'pool_read_failed' };
   }
@@ -377,6 +383,7 @@ async function publishSlot(args: {
   const reelDeadline = deadlineAt - FALLBACK_RESERVE_MS;
 
   let kind: 'reel' | 'image' = 'reel';
+  let fallbackReason: string | undefined;
   let mediaUrl = '';
   let published: Awaited<ReturnType<typeof publishReelPost>>;
 
@@ -422,6 +429,7 @@ async function publishSlot(args: {
       extra: { postKey, reason: published.reason },
     });
     kind = 'image';
+    fallbackReason = published.reason;
     // Instagram's documented image format is JPEG; the card route emits
     // PNG (ImageResponse has no JPEG mode). Re-encode into storage and
     // hand IG the stable JPEG URL instead of the PNG route.
@@ -504,6 +512,7 @@ async function publishSlot(args: {
     postKey,
     status: 'published',
     kind,
+    ...(fallbackReason ? { fallbackReason } : {}),
     mediaId: published.data.id,
     commentsPosted,
     ...(commentNotes.length ? { commentNotes } : {}),
