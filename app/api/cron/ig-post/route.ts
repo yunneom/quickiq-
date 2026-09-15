@@ -16,6 +16,13 @@ import { importClips } from '@/lib/social/clip-sources';
 import { readClipManifest } from '@/lib/social/clips';
 import { readMuralManifest } from '@/lib/social/murals';
 import { writeStatusSnapshot } from '@/lib/social/status';
+import {
+  FALLBACK_RESERVE_MS,
+  MAX_POST_WINDOW_MS,
+  MIN_POST_MS,
+  MIN_REEL_PUBLISH_MS,
+  TOTAL_BUDGET_MS,
+} from '@/lib/social/post-budget';
 import { plansForDay, utcDayIndex, type IgPostPlan } from '@/lib/social/ig-content';
 import { buildReelVideo } from '@/lib/social/reel';
 import { uploadPublicMedia, uploadPublicVideo } from '@/lib/social/storage';
@@ -26,25 +33,21 @@ import { isSupabaseConfigured, createSupabaseAdmin } from '@/lib/supabase/server
 export const runtime = 'nodejs';
 // Reel pipeline: render frames + wasm H.264 encode + upload + Instagram
 // video ingestion polling. 300s is the Hobby (fluid) ceiling.
+// Next reads this segment config statically, so it must stay a literal —
+// post-budget.ts mirrors it as MAX_DURATION_S and a unit test keeps the
+// two from drifting apart.
 export const maxDuration = 300;
 
-// Time budget inside maxDuration. Deadlines are absolute epoch-ms.
-const TOTAL_BUDGET_MS = 290_000; // 10s under maxDuration for safety
-// Reserved so a reel that fails still leaves room for the image fallback
-// (container + short poll + publish ≈ 25s) plus the ledger write.
-const FALLBACK_RESERVE_MS = 50_000;
-// A reel publish attempt needs container create + at least a few polls.
-const MIN_REEL_PUBLISH_MS = 45_000;
-// Don't start another post unless a realistic reel path could finish:
-// build ~55s + upload + create + minimum poll + publish + fallback reserve.
-const MIN_POST_MS = 145_000;
-// One post never gets more than this — keeps room for a second slot.
-const MAX_POST_WINDOW_MS = 200_000;
+// Time budget inside maxDuration (lib/social/post-budget.ts — a leaf
+// module, so the arithmetic below is reachable from a unit test).
+// Deadlines are absolute epoch-ms.
 
 // Posts per invocation. The cadence is one post a day (lib/social/
 // schedule.ts); the second cron run of the day is the retry that picks
 // up a failed or budget-starved first run, not a second post. The cap
-// stays at 2 so a legacy day (?d= before the epoch) can still be replayed.
+// stays at 2 so a legacy day (?d= before the epoch) can still be
+// replayed — such a replay takes two invocations whenever its first
+// post runs long, which is the same bargain the scheduled path makes.
 const MAX_POSTS_PER_RUN = 2;
 
 // A 'publishing' row this old belongs to a run that was killed mid-flight
