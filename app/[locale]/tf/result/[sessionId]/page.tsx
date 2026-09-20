@@ -58,6 +58,8 @@ export default async function TfResultPage({
       retakeHref={`/${locale}/tf`}
       slug="tf"
       profileId={profile.id}
+      sessionId={session.id}
+      cachedInsight={session.ai_insight}
     />
   );
 }

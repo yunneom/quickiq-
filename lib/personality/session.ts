@@ -1,12 +1,15 @@
 import { headers } from 'next/headers';
 import { isSupabaseConfigured, createSupabaseAdmin } from '@/lib/supabase/server';
 import type { AxisScoreMap } from './types';
+import type { AiInsightRecord } from '@/lib/ai/insight';
 
 export interface PersonalitySessionRow {
   id: string;
   locale: string;
   profile_id: string | null;
   axis_scores: AxisScoreMap | null;
+  /** 0011: cached AI 개인 해설 (null until first result view). */
+  ai_insight: AiInsightRecord | null;
 }
 
 /**
@@ -27,7 +30,7 @@ export async function fetchPersonalitySession(
   const admin = createSupabaseAdmin();
   const { data, error } = await admin
     .from('test_sessions')
-    .select('id, locale, profile_id, axis_scores')
+    .select('id, locale, profile_id, axis_scores, ai_insight')
     .eq('id', sessionId)
     .eq('test_type', testType)
     .single();

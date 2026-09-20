@@ -58,6 +58,8 @@ export default async function SlangResultPage({
       retakeHref={`/${locale}/slang`}
       slug="slang"
       profileId={profile.id}
+      sessionId={session.id}
+      cachedInsight={session.ai_insight}
     />
   );
 }

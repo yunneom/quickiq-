@@ -58,6 +58,8 @@ export default async function AjaeResultPage({
       retakeHref={`/${locale}/ajae`}
       slug="ajae"
       profileId={profile.id}
+      sessionId={session.id}
+      cachedInsight={session.ai_insight}
     />
   );
 }

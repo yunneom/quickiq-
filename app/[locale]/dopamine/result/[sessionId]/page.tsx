@@ -59,6 +59,8 @@ export default async function DopamineResultPage({
       retakeHref={`/${locale}/dopamine`}
       slug="dopamine"
       profileId={profile.id}
+      sessionId={session.id}
+      cachedInsight={session.ai_insight}
     />
   );
 }
