@@ -14,7 +14,15 @@ import { publishVideoToThreads } from '@/lib/social/threads';
 import { importSeedTracks, readAudioManifest } from '@/lib/social/audio';
 import { importClips } from '@/lib/social/clip-sources';
 import { readClipManifest } from '@/lib/social/clips';
+import { readMuralManifest } from '@/lib/social/murals';
 import { writeStatusSnapshot } from '@/lib/social/status';
+import {
+  FALLBACK_RESERVE_MS,
+  MAX_POST_WINDOW_MS,
+  MIN_POST_MS,
+  MIN_REEL_PUBLISH_MS,
+  TOTAL_BUDGET_MS,
+} from '@/lib/social/post-budget';
 import { plansForDay, utcDayIndex, type IgPostPlan } from '@/lib/social/ig-content';
 import { buildReelVideo } from '@/lib/social/reel';
 import { uploadPublicMedia, uploadPublicVideo } from '@/lib/social/storage';
@@ -25,25 +33,21 @@ import { isSupabaseConfigured, createSupabaseAdmin } from '@/lib/supabase/server
 export const runtime = 'nodejs';
 // Reel pipeline: render frames + wasm H.264 encode + upload + Instagram
 // video ingestion polling. 300s is the Hobby (fluid) ceiling.
+// Next reads this segment config statically, so it must stay a literal —
+// post-budget.ts mirrors it as MAX_DURATION_S and a unit test keeps the
+// two from drifting apart.
 export const maxDuration = 300;
 
-// Time budget inside maxDuration. Deadlines are absolute epoch-ms.
-const TOTAL_BUDGET_MS = 290_000; // 10s under maxDuration for safety
-// Reserved so a reel that fails still leaves room for the image fallback
-// (container + short poll + publish ≈ 25s) plus the ledger write.
-const FALLBACK_RESERVE_MS = 50_000;
-// A reel publish attempt needs container create + at least a few polls.
-const MIN_REEL_PUBLISH_MS = 45_000;
-// Don't start another post unless a realistic reel path could finish:
-// build ~55s + upload + create + minimum poll + publish + fallback reserve.
-const MIN_POST_MS = 145_000;
-// One post never gets more than this — keeps room for a second slot.
-const MAX_POST_WINDOW_MS = 200_000;
+// Time budget inside maxDuration (lib/social/post-budget.ts — a leaf
+// module, so the arithmetic below is reachable from a unit test).
+// Deadlines are absolute epoch-ms.
 
 // Posts per invocation. The cadence is one post a day (lib/social/
 // schedule.ts); the second cron run of the day is the retry that picks
 // up a failed or budget-starved first run, not a second post. The cap
-// stays at 2 so a legacy day (?d= before the epoch) can still be replayed.
+// stays at 2 so a legacy day (?d= before the epoch) can still be
+// replayed — such a replay takes two invocations whenever its first
+// post runs long, which is the same bargain the scheduled path makes.
 const MAX_POSTS_PER_RUN = 2;
 
 // A 'publishing' row this old belongs to a run that was killed mid-flight
@@ -55,6 +59,10 @@ type PostOutcome = {
   postKey: string;
   status: 'published' | 'failed' | 'skipped';
   kind?: 'reel' | 'image';
+  /** Why the reel gave way to the still card — kept in the flight
+   *  recorder, not only in Sentry, so the ledger's image rows explain
+   *  themselves. */
+  fallbackReason?: string;
   mediaId?: string;
   reason?: string;
   commentsPosted?: number;
@@ -269,15 +277,16 @@ export async function GET(req: Request) {
 /** Current media-library fill state, for the status snapshot. */
 async function poolCounts(): Promise<object> {
   try {
-    const [audio, clips] = await Promise.all([
+    const [audio, clips, murals] = await Promise.all([
       readAudioManifest(),
       readClipManifest(),
+      readMuralManifest(),
     ]);
     const clipsByScene: Record<string, number> = {};
     for (const c of clips.clips) {
       clipsByScene[c.scene] = (clipsByScene[c.scene] ?? 0) + 1;
     }
-    return { audioTracks: audio.tracks.length, clipsByScene };
+    return { audioTracks: audio.tracks.length, clipsByScene, murals: murals.murals.length };
   } catch {
     return { error: 'pool_read_failed' };
   }
@@ -377,6 +386,7 @@ async function publishSlot(args: {
   const reelDeadline = deadlineAt - FALLBACK_RESERVE_MS;
 
   let kind: 'reel' | 'image' = 'reel';
+  let fallbackReason: string | undefined;
   let mediaUrl = '';
   let published: Awaited<ReturnType<typeof publishReelPost>>;
 
@@ -422,6 +432,7 @@ async function publishSlot(args: {
       extra: { postKey, reason: published.reason },
     });
     kind = 'image';
+    fallbackReason = published.reason;
     // Instagram's documented image format is JPEG; the card route emits
     // PNG (ImageResponse has no JPEG mode). Re-encode into storage and
     // hand IG the stable JPEG URL instead of the PNG route.
@@ -504,6 +515,7 @@ async function publishSlot(args: {
     postKey,
     status: 'published',
     kind,
+    ...(fallbackReason ? { fallbackReason } : {}),
     mediaId: published.data.id,
     commentsPosted,
     ...(commentNotes.length ? { commentNotes } : {}),
