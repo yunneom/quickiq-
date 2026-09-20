@@ -148,12 +148,21 @@ export function muralPrompt(style: MuralStyle): string {
 // ---------------------------------------------------------------------------
 
 /**
- * Tried in order. The preview model produces the better wall but is not
- * guaranteed to be enabled on every key, so the flash model backs it up —
+ * Tried in order. The premium model produces the better wall but is not
+ * guaranteed to be enabled on every key, so the cheaper ones back it up —
  * a pool that fills with slightly plainer walls beats a pool that stays
- * empty.
+ * empty, and a wall is generated once and then reused for weeks, so the
+ * first choice can afford to be the expensive one.
+ *
+ * Google's own guidance is to move off gemini-2.5-flash-image, so it sits
+ * last as a floor for older keys rather than as the only fallback.
  */
-const IMAGE_MODELS = ['gemini-3-pro-image', 'gemini-2.5-flash-image'];
+const IMAGE_MODELS = [
+  'gemini-3-pro-image', // Nano Banana Pro
+  'gemini-3.1-flash-image', // Nano Banana 2 — the current generalist
+  'gemini-3.1-flash-lite-image', // Nano Banana 2 Lite — fastest, cheapest
+  'gemini-2.5-flash-image', // Nano Banana — legacy, last resort
+];
 const API_ROOT = 'https://generativelanguage.googleapis.com/v1beta/models';
 
 export type GenerateResult =
