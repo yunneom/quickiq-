@@ -1,4 +1,3 @@
-import { generateText } from 'ai';
 import * as Sentry from '@sentry/nextjs';
 import { createSupabaseAdmin, isSupabaseConfigured } from '@/lib/supabase/server';
 import type { PersonalityProfile } from '@/lib/personality/types';
@@ -134,6 +133,8 @@ function underDailyCap(): boolean {
 }
 
 async function generate(input: InsightInput): Promise<AiInsightRecord | null> {
+  // 지연 import: 기능이 꺼진 배포·CI 빌드·유닛 테스트는 ai 패키지를 로드하지 않는다.
+  const { generateText } = await import('ai');
   const model = insightModel();
   const { system, prompt } = buildInsightPrompt(input);
   const { text } = await generateText({
