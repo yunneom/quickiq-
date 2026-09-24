@@ -1,4 +1,4 @@
--- 0011_ig_posts_answer_revealed.sql
+-- 0012_ig_posts_answer_revealed.sql
 -- Next-day answer reveal. The puzzle goes out with no answer anywhere; the
 -- seed comment promises it "in 24h", and the cron keeps that promise by
 -- commenting the correct option + one-line explanation on the previous
