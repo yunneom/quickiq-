@@ -25,6 +25,7 @@ const CTA_COMMENTS = [
   'Full 30-question IQ test is free — link in bio if this hooked you',
   'Comment A, B, C or D — let’s see the split',
   'No skipping — comment your answer first, then scroll for more',
+  'Answer drops in the comments in 24h ⏳ — or find out now, link in bio',
 ];
 
 /** Second comment: reaction/social-proof flavor, still visibly us. */
