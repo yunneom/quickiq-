@@ -16,6 +16,7 @@ import { importClips } from '@/lib/social/clip-sources';
 import { readClipManifest } from '@/lib/social/clips';
 import { readMuralManifest } from '@/lib/social/murals';
 import { writeStatusSnapshot } from '@/lib/social/status';
+import { revealDueAnswers } from '@/lib/social/reveal-run';
 import {
   FALLBACK_RESERVE_MS,
   MAX_POST_WINDOW_MS,
@@ -244,6 +245,19 @@ export async function GET(req: Request) {
     if (outcome.status === 'published') publishedCount += 1;
   }
 
+  // Yesterday's promise. The seed comment says "answer in 24h"; now that
+  // today's post is out, reveal the answers on the last few days' posts
+  // that have not had one yet. Runs last so it can never eat the publish
+  // budget, and never on a test run — a test post gets no public reveal.
+  const answerReveals = testLabel
+    ? { revealed: [] as string[], notes: ['skipped: test run'] }
+    : await revealDueAnswers({ today, deadlineAt: hardDeadline - 10_000 }).catch(
+        (err: unknown) => ({
+          revealed: [] as string[],
+          notes: [err instanceof Error ? err.message : 'reveal_crashed'],
+        }),
+      );
+
   const anyFailure = outcomes.some((o) => o.status === 'failed');
   const summary = {
     ok: !anyFailure,
@@ -257,6 +271,7 @@ export async function GET(req: Request) {
     clipNotes: clips.notes,
     elapsedMs: Date.now() - startedAt,
     outcomes,
+    answerReveals,
   };
 
   // Flight recorder: park the run summary + pool/ledger state at a

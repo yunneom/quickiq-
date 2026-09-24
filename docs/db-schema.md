@@ -140,3 +140,12 @@ npm run seed
 - `status` — publishing / published / failed
 - `media_id`, `image_url`, `error`, `created_at`
 - RLS enable + 정책 없음(service role 전용)
+
+## 0011 — ig_posts.answer_revealed_at (다음날 정답 공개 스탬프)
+
+퍼즐은 카드·캡션 어디에도 정답을 싣지 않고, 시드 댓글이 "answer in 24h"를 약속한다.
+크론이 그 약속을 지킨다: 오늘 게시물을 올린 뒤, 최근 며칠 중 아직 공개 안 된 게시물에
+정답 + 한 줄 해설 댓글을 달고 이 컬럼을 찍는다.
+- `answer_revealed_at timestamptz null` — 공개 댓글이 달린 시각. null이면 아직.
+- 하루 두 번 도는 크론과 재시도 사이에서 **한 게시물에 한 번만** 달리게 하는 멱등 키.
+- `?test=` 게시물은 절대 공개하지 않음(원장 키의 `:test-` 접미사로 식별).
