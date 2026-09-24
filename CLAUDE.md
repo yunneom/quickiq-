@@ -26,6 +26,7 @@
 - **에러**: Sentry 무료 티어
 - **배포**: Vercel (GitHub 연동, push → 자동 배포)
 - **i18n**: next-intl (한국어/영어)
+- **AI 해설**: Vercel AI SDK(`ai`) + AI Gateway — 성격 테스트 결과에 세션별 3줄 개인 해설(`lib/ai/insight.ts`, `components/personality/ai-insight.tsx`). `AI_GATEWAY_API_KEY`(또는 Vercel OIDC) 없으면 섹션 미렌더, 세션당 1회 생성 후 `test_sessions.ai_insight` 캐시(0011). 기본 모델 `anthropic/claude-haiku-4.5`, `AI_INSIGHT_ENABLED=off` 로 대조군 배포. 진단·외모·부정 라벨 금지 프롬프트 + "재미용" 고지 유지.
 
 ## 코딩 컨벤션
 

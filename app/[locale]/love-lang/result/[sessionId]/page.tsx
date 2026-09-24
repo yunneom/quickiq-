@@ -55,6 +55,8 @@ export default async function LoveLangResultPage({
       retakeHref={`/${locale}/love-lang`}
       slug="love-lang"
       profileId={profile.id}
+      sessionId={session.id}
+      cachedInsight={session.ai_insight}
     />
   );
 }

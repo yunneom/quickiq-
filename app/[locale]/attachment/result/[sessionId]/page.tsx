@@ -62,6 +62,8 @@ export default async function AttachmentResultPage({
       retakeHref={`/${locale}/attachment`}
       slug="attachment"
       profileId={profile.id}
+      sessionId={session.id}
+      cachedInsight={session.ai_insight}
     />
   );
 }

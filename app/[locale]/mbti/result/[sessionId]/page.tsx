@@ -81,6 +81,8 @@ export default async function MbtiResultPage({
       retakeHref={`/${locale}/mbti`}
       slug="mbti"
       profileId={profile.id}
+      sessionId={session.id}
+      cachedInsight={session.ai_insight}
     />
   );
 }

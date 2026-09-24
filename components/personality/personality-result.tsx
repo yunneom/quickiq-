@@ -1,10 +1,13 @@
 import Link from 'next/link';
+import { Suspense } from 'react';
 import { Button } from '@/components/ui/button';
 import type { PersonalityProfile } from '@/lib/personality/types';
 import { TEST_CATALOG } from '@/lib/tests/catalog';
 import { PersonalityShare } from '@/components/personality/personality-share';
 import { ResultAd } from '@/components/ads/result-ad';
 import { FunnelBeacon } from '@/components/analytics/funnel-beacon';
+import { AiInsight } from '@/components/personality/ai-insight';
+import { isAiInsightEnabled, type AiInsightRecord } from '@/lib/ai/insight';
 
 export interface ResultBar {
   /** Left-side label (e.g. "외향 E", "인정의 말"). */
@@ -74,6 +77,10 @@ interface Props {
   slug: string;
   /** Resolved profile id (e.g. 'infp') for the type-page deep link. */
   profileId: string;
+  /** Session id — enables the per-session AI insight (cached in test_sessions.ai_insight). */
+  sessionId?: string;
+  /** Previously generated insight from the session row, if any. */
+  cachedInsight?: AiInsightRecord | null;
 }
 
 /**
@@ -91,8 +98,14 @@ export function PersonalityResult({
   retakeHref,
   slug,
   profileId,
+  sessionId,
+  cachedInsight,
 }: Props) {
   const c = COPY[locale] ?? COPY.ko;
+  const aiEnabled = Boolean(sessionId) && isAiInsightEnabled();
+  const testName = TEST_CATALOG.find((t) => t.slug === slug)?.title[locale] ?? slug;
+  // Axis lines exactly as the user sees them, so the model quotes the same numbers.
+  const axisLines = bars.map((b) => (b.rightLabel ? `${b.label} / ${b.rightLabel}` : `${b.label} ${b.pct}%`));
   const typeHref = `/${locale}/${slug}/types/${profileId}`;
   const storyCardUrl = `/${locale}/${slug}/types/${profileId}/story-card`;
   // Cross-promote up to 3 other tests for the exploration loop.
@@ -111,7 +124,7 @@ export function PersonalityResult({
 
   return (
     <div className="mx-auto flex min-h-screen max-w-md flex-col px-5 pb-10 pt-8">
-      <FunnelBeacon event="PT_ResultViewed" params={{ testType: slug, locale }} />
+      <FunnelBeacon event="PT_ResultViewed" params={{ testType: slug, locale, aiInsight: aiEnabled }} />
       {/* Hero */}
       <div
         className={`relative overflow-hidden rounded-3xl bg-gradient-to-br ${gradientClass} px-6 py-8 text-white shadow-lg`}
@@ -151,6 +164,20 @@ export function PersonalityResult({
             ))}
           </div>
         </section>
+      )}
+
+      {/* AI 개인 해설 — 축 비율까지 반영한 3줄. 스트리밍되므로 나머지 페이지를 막지 않는다. */}
+      {aiEnabled && sessionId && (
+        <Suspense fallback={null}>
+          <AiInsight
+            locale={locale}
+            sessionId={sessionId}
+            cached={cachedInsight}
+            testName={testName}
+            profile={profile}
+            axisLines={axisLines}
+          />
+        </Suspense>
       )}
 
       {/* Description */}

@@ -56,6 +56,8 @@ export default async function EnneagramResultPage({
       retakeHref={`/${locale}/enneagram`}
       slug="enneagram"
       profileId={profile.id}
+      sessionId={session.id}
+      cachedInsight={session.ai_insight}
     />
   );
 }

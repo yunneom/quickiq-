@@ -45,7 +45,8 @@ create table test_sessions (
   category_scores jsonb,                         -- { verbal: 85, numerical: 90, ... }
   email           text,                          -- 결제 시점에 입력
   is_paid         boolean default false,
-  paid_at         timestamptz
+  paid_at         timestamptz,
+  ai_insight      jsonb                          -- 0011: AI 개인 해설 캐시 { items[], model, locale, created_at } (성격 테스트만)
 );
 
 create index on test_sessions(email);
