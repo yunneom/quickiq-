@@ -30,10 +30,29 @@ export async function fetchPersonalitySession(
   const admin = createSupabaseAdmin();
   const { data, error } = await admin
     .from('test_sessions')
-    .select('id, locale, profile_id, axis_scores, ai_insight')
+    .select('id, locale, profile_id, axis_scores')
     .eq('id', sessionId)
     .eq('test_type', testType)
     .single();
   if (error || !data) return null;
-  return data as PersonalitySessionRow;
+  // ai_insight (migration 0011) is read separately and tolerantly: until the
+  // operator applies the migration the column doesn't exist, and folding it
+  // into the main select would make *every* result page 404 (PostgREST
+  // rejects the whole query on an unknown column). Missing column → null →
+  // the page renders without the section (and the insight write is skipped
+  // with a warning in lib/ai/insight.ts).
+  let ai_insight: AiInsightRecord | null = null;
+  try {
+    const { data: extra, error: extraErr } = await admin
+      .from('test_sessions')
+      .select('ai_insight')
+      .eq('id', sessionId)
+      .single();
+    if (!extraErr && extra) {
+      ai_insight = (extra as { ai_insight?: AiInsightRecord | null }).ai_insight ?? null;
+    }
+  } catch {
+    ai_insight = null;
+  }
+  return { ...(data as Omit<PersonalitySessionRow, 'ai_insight'>), ai_insight };
 }
