@@ -142,7 +142,7 @@ npm run seed
 - `media_id`, `image_url`, `error`, `created_at`
 - RLS enable + 정책 없음(service role 전용)
 
-## 0011 — ig_posts.answer_revealed_at (다음날 정답 공개 스탬프)
+## 0012 — ig_posts.answer_revealed_at (다음날 정답 공개 스탬프)
 
 퍼즐은 카드·캡션 어디에도 정답을 싣지 않고, 시드 댓글이 "answer in 24h"를 약속한다.
 크론이 그 약속을 지킨다: 오늘 게시물을 올린 뒤, 최근 며칠 중 아직 공개 안 된 게시물에
