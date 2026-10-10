@@ -153,22 +153,28 @@ export async function getTikTokTokens(): Promise<TikTokTokens | undefined> {
   return (await readSettings()).tiktok;
 }
 
-export async function saveTikTokTokens(tokens: TikTokTokens): Promise<void> {
-  await writeSettings({ tiktok: tokens });
+export async function saveTikTokTokens(
+  tokens: TikTokTokens,
+): Promise<{ ok: true } | { ok: false; reason: string }> {
+  return writeSettings({ tiktok: tokens });
 }
 
 export async function getYouTubeTokens(): Promise<YouTubeTokens | undefined> {
   return (await readSettings()).youtube;
 }
 
-export async function saveYouTubeTokens(tokens: YouTubeTokens): Promise<void> {
-  await writeSettings({ youtube: tokens });
+export async function saveYouTubeTokens(
+  tokens: YouTubeTokens,
+): Promise<{ ok: true } | { ok: false; reason: string }> {
+  return writeSettings({ youtube: tokens });
 }
 
 export async function getThreadsTokens(): Promise<ThreadsTokens | undefined> {
   return (await readSettings()).threads;
 }
 
-export async function saveThreadsTokens(tokens: ThreadsTokens): Promise<void> {
-  await writeSettings({ threads: tokens });
+export async function saveThreadsTokens(
+  tokens: ThreadsTokens,
+): Promise<{ ok: true } | { ok: false; reason: string }> {
+  return writeSettings({ threads: tokens });
 }
