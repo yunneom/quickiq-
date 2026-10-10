@@ -9,10 +9,13 @@
  *      operator's own Threads account as a tester (Threads API apps stay
  *      in development mode — same "no review needed for our own
  *      account" situation as Instagram — until public reach is wanted).
- *   3. Copy the app's App ID / App Secret into Vercel as
- *      THREADS_APP_ID / THREADS_APP_SECRET. These are the Meta APP's
- *      credentials, not a per-post secret — same app can also run the
- *      existing Instagram integration.
+ *   3. Copy the THREADS app ID / THREADS app secret shown on the Threads
+ *      use case's Settings page into Vercel as THREADS_APP_ID /
+ *      THREADS_APP_SECRET. Not the App ID from App settings → Basic:
+ *      Threads carries its own id inside the same Meta app, and the
+ *      redirect-URI allowlist from step 2 belongs to that id. With the
+ *      main id, consent fails after login with error_code 1349168
+ *      ("redirect URI is not in the whitelist").
  *   4. In /admin/media, click "Connect Threads" — one-time OAuth consent
  *      as the operator's own Threads account. Tokens are stored via
  *      lib/social/settings.ts, not env vars (per-account, refreshed

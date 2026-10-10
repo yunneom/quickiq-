@@ -320,9 +320,15 @@ Environment Variables에 `TIKTOK_CLIENT_KEY` / `TIKTOK_CLIENT_SECRET`로
    **테스터(Tester)**로 추가 — 앱이 심사 전(Development 모드)이면
    테스터로 등록된 계정만 연결이 가능합니다(틱톡의 6번 단계와 동일한
    함정).
-4. 앱 대시보드 **App settings → Basic**에서 **App ID / App Secret**
-   복사 → Vercel 환경변수 `THREADS_APP_ID` / `THREADS_APP_SECRET`에
-   등록 → 재배포.
+4. **사용 사례 → Access the Threads API → 맞춤 설정 → Settings** 화면에
+   따로 표시되는 **Threads 앱 ID / Threads 앱 시크릿**을 복사 →
+   Vercel 환경변수 `THREADS_APP_ID` / `THREADS_APP_SECRET`에 등록 →
+   재배포.
+   ⚠️ **App settings → Basic의 App ID가 아닙니다.** 쓰레드는 같은 메타 앱
+   안에 별도의 앱 ID를 따로 갖고 있고, 리디렉션 URI 허용 목록도 그
+   Threads 앱 ID에 묶여 있습니다. 기본 App ID를 넣으면 로그인 후
+   "차단된 URL입니다: 리디렉션 URI가 … 화이트리스트에 없으므로"
+   (error_code 1349168)가 뜹니다 — URI를 정확히 등록해 두었어도요.
 5. `/admin/media`에서 **"쓰레드 연결"** 클릭 → 본인 쓰레드 계정으로
    로그인·승인. 본인 계정에 올리는 것이라 별도 앱 심사 없이 바로
    공개로 올라갑니다(유튜브와 동일, 틱톡만 심사 대기가 있음).
