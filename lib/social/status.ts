@@ -21,6 +21,8 @@ const PATH = 'status/last-run.json';
  *  operator-relayed error message is the only way to diagnose one. Parking
  *  it here too means it's inspectable without asking anyone to copy-paste. */
 const MANUAL_PATH = 'status/last-manual-clip-import.json';
+/** Last OAuth connect attempt per platform — outcome + reason only (see connect-log.ts). */
+const OAUTH_PATH = 'status/last-oauth.json';
 
 async function write(path: string, snapshot: object): Promise<void> {
   if (!isSupabaseConfigured()) return;
@@ -44,4 +46,20 @@ export async function writeStatusSnapshot(snapshot: object): Promise<void> {
 
 export async function writeManualClipImportSnapshot(snapshot: object): Promise<void> {
   await write(MANUAL_PATH, snapshot);
+}
+
+export async function writeOAuthSnapshot(snapshot: object): Promise<void> {
+  await write(OAUTH_PATH, snapshot);
+}
+
+export async function readOAuthSnapshot<T>(): Promise<T | null> {
+  if (!isSupabaseConfigured()) return null;
+  try {
+    const admin = createSupabaseAdmin();
+    const { data, error } = await admin.storage.from(BUCKET).download(OAUTH_PATH);
+    if (error || !data) return null;
+    return JSON.parse(await data.text()) as T;
+  } catch {
+    return null;
+  }
 }

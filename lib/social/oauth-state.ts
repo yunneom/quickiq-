@@ -30,8 +30,14 @@ export function issueState(): string {
   return `${payload}.${sign(payload)}`;
 }
 
-/** `maxAgeMs` bounds how long an authorize link stays valid before it must be re-issued. */
-export function verifyState(state: string | null, maxAgeMs = 10 * 60 * 1000): boolean {
+/**
+ * `maxAgeMs` bounds how long an authorize link stays valid before it must
+ * be re-issued. 30 minutes, not 10: the window has to cover a provider
+ * login from scratch — password, 2FA code, a tester invite accepted on
+ * the side — and an expired state reads to the operator as "logged in,
+ * still not connected".
+ */
+export function verifyState(state: string | null, maxAgeMs = 30 * 60 * 1000): boolean {
   if (!state) return false;
   const parts = state.split('.');
   if (parts.length !== 3) return false;

@@ -4,6 +4,7 @@ import { getStockKeys, readSettings, writeSettings } from '@/lib/social/settings
 import { isTikTokAppConfigured } from '@/lib/social/tiktok';
 import { isYouTubeAppConfigured } from '@/lib/social/youtube';
 import { isThreadsAppConfigured } from '@/lib/social/threads';
+import { readConnectLog } from '@/lib/social/connect-log';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -118,5 +119,8 @@ export const GET = withErrorHandling('admin/settings', async (req: Request) => {
         username: stored.threads?.username,
       },
     },
+    // Last connect attempt per platform — survives the redirect banner
+    // being cleared, which is how a failed connect used to read as nothing.
+    lastConnect: await readConnectLog(),
   });
 });

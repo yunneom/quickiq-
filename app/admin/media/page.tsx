@@ -85,6 +85,18 @@ export default function MediaAdminPage() {
     threads: { appConfigured: false, connected: false },
   });
 
+  const [lastConnect, setLastConnect] = useState<
+    Partial<Record<'tiktok' | 'youtube' | 'threads', { outcome: string; reason?: string; at: string }>>
+  >({});
+
+  /** The stored last attempt, shown only while the platform is still unconnected. */
+  function lastAttemptLine(platform: 'tiktok' | 'youtube' | 'threads'): string | null {
+    const a = lastConnect[platform];
+    if (!a || a.outcome !== 'error') return null;
+    const when = new Date(a.at).toLocaleString('ko-KR', { dateStyle: 'short', timeStyle: 'short' });
+    return `마지막 시도 실패 (${when}): ${a.reason ?? 'unknown'}`;
+  }
+
   useEffect(() => {
     const saved = window.localStorage.getItem(TOKEN_KEY);
     if (saved) {
@@ -163,9 +175,11 @@ export default function MediaAdminPage() {
         const settings = (await settingsRes.json()) as {
           pexelsConfigured?: boolean;
           crosspost?: typeof crosspost;
+          lastConnect?: typeof lastConnect;
         };
         setPexelsConfigured(Boolean(settings.pexelsConfigured));
         if (settings.crosspost) setCrosspost(settings.crosspost);
+        setLastConnect(settings.lastConnect ?? {});
       }
       if (muralsRes.ok) {
         const data = (await muralsRes.json()) as {
@@ -598,6 +612,9 @@ export default function MediaAdminPage() {
                     ? `연결됨${crosspost.tiktok.openId ? ` (${crosspost.tiktok.openId.slice(0, 10)}…)` : ''} — 심사 전이면 비공개로만 올라갑니다`
                     : '연결 안 됨'}
               </p>
+              {!crosspost.tiktok.connected && lastAttemptLine('tiktok') && (
+                <p className="mt-0.5 break-all text-xs text-red-600">{lastAttemptLine('tiktok')}</p>
+              )}
             </div>
             {crosspost.tiktok.connected ? (
               <button
@@ -631,6 +648,9 @@ export default function MediaAdminPage() {
                     ? `연결됨${crosspost.youtube.channelTitle ? ` (${crosspost.youtube.channelTitle})` : ''}`
                     : '연결 안 됨'}
               </p>
+              {!crosspost.youtube.connected && lastAttemptLine('youtube') && (
+                <p className="mt-0.5 break-all text-xs text-red-600">{lastAttemptLine('youtube')}</p>
+              )}
             </div>
             {crosspost.youtube.connected ? (
               <button
@@ -664,6 +684,9 @@ export default function MediaAdminPage() {
                     ? `연결됨${crosspost.threads.username ? ` (@${crosspost.threads.username})` : ''}`
                     : '연결 안 됨'}
               </p>
+              {!crosspost.threads.connected && lastAttemptLine('threads') && (
+                <p className="mt-0.5 break-all text-xs text-red-600">{lastAttemptLine('threads')}</p>
+              )}
             </div>
             {crosspost.threads.connected ? (
               <button

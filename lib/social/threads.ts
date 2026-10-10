@@ -46,6 +46,15 @@ export function buildThreadsAuthorizeUrl(redirectUri: string, state: string): st
   return url.toString();
 }
 
+/** Meta answers either `{ error_message }` or `{ error: { message, code } }`. */
+function tokenErrorReason(raw: RawTokenResponse, status: number): string {
+  if (raw.error_message) return raw.error_message;
+  const err = raw.error as { message?: string; code?: number } | string | undefined;
+  if (typeof err === 'string') return err;
+  if (err?.message) return err.code ? `${err.message} (code ${err.code})` : err.message;
+  return `http_${status}`;
+}
+
 type TokenResult =
   | { ok: true; data: ThreadsTokens }
   | { ok: false; reason: string };
@@ -59,12 +68,27 @@ interface RawTokenResponse {
 }
 
 /**
+ * Threads returns `user_id` as a bare JSON NUMBER, and Threads/Instagram
+ * user ids are 17 digits — past Number.MAX_SAFE_INTEGER (16 digits). Run
+ * through JSON.parse it comes back silently rounded, e.g.
+ * 17841400123456789 → 17841400123456788, and every later POST to
+ * /{user_id}/threads targets an account that does not exist. Read the
+ * digits from the raw body text instead; JSON.parse is only trusted for
+ * the string fields.
+ */
+export function extractUserId(rawBody: string): string | undefined {
+  const match = rawBody.match(/"user_id"\s*:\s*"?(\d+)"?/);
+  return match?.[1];
+}
+
+/**
  * Short-lived code → short-lived token → long-lived token (60d) → user
  * identity, in one shot. Mirrors Instagram's own long-lived-token dance;
  * Threads uses the same pattern under a different host.
  */
 export async function exchangeThreadsCode(code: string, redirectUri: string): Promise<TokenResult> {
   let shortLived: RawTokenResponse;
+  let userId: string | undefined;
   try {
     const res = await fetch(TOKEN_URL, {
       method: 'POST',
@@ -79,9 +103,15 @@ export async function exchangeThreadsCode(code: string, redirectUri: string): Pr
       cache: 'no-store',
       signal: AbortSignal.timeout(20_000),
     });
-    shortLived = (await res.json().catch(() => ({}))) as RawTokenResponse;
-    if (!res.ok || !shortLived.access_token || !shortLived.user_id) {
-      return { ok: false, reason: shortLived.error_message ?? `http_${res.status}` };
+    const text = await res.text().catch(() => '');
+    try {
+      shortLived = JSON.parse(text) as RawTokenResponse;
+    } catch {
+      shortLived = {};
+    }
+    userId = extractUserId(text);
+    if (!res.ok || !shortLived.access_token || !userId) {
+      return { ok: false, reason: tokenErrorReason(shortLived, res.status) };
     }
   } catch (err) {
     return { ok: false, reason: err instanceof Error ? err.message : 'fetch_failed' };
@@ -93,13 +123,16 @@ export async function exchangeThreadsCode(code: string, redirectUri: string): Pr
   let username: string | undefined;
   try {
     const res = await fetch(
-      `${GRAPH}/me?fields=username&access_token=${longLived.token}`,
+      `${GRAPH}/me?fields=id,username&access_token=${longLived.token}`,
       { cache: 'no-store', signal: AbortSignal.timeout(10_000) },
     );
-    const raw = (await res.json().catch(() => ({}))) as { username?: string };
+    // The Graph API returns `id` as a string, so this one is exact; prefer
+    // it over the token response's number when it is there.
+    const raw = (await res.json().catch(() => ({}))) as { id?: string; username?: string };
+    if (typeof raw.id === 'string' && /^\d+$/.test(raw.id)) userId = raw.id;
     username = raw.username;
   } catch {
-    // Identity lookup is cosmetic only — never blocks the connect flow.
+    // Identity lookup is best-effort — the token response's id stands.
   }
 
   return {
@@ -107,7 +140,7 @@ export async function exchangeThreadsCode(code: string, redirectUri: string): Pr
     data: {
       accessToken: longLived.token,
       expiresAt: longLived.expiresAt,
-      userId: shortLived.user_id,
+      userId,
       username,
     },
   };
@@ -124,7 +157,7 @@ async function exchangeForLongLivedToken(
     const res = await fetch(url, { cache: 'no-store', signal: AbortSignal.timeout(15_000) });
     const raw = (await res.json().catch(() => ({}))) as RawTokenResponse;
     if (!res.ok || !raw.access_token) {
-      return { ok: false, reason: raw.error_message ?? `http_${res.status}` };
+      return { ok: false, reason: tokenErrorReason(raw, res.status) };
     }
     return {
       ok: true,
@@ -146,7 +179,7 @@ async function refreshThreadsToken(
     const res = await fetch(url, { cache: 'no-store', signal: AbortSignal.timeout(15_000) });
     const raw = (await res.json().catch(() => ({}))) as RawTokenResponse;
     if (!res.ok || !raw.access_token) {
-      return { ok: false, reason: raw.error_message ?? `http_${res.status}` };
+      return { ok: false, reason: tokenErrorReason(raw, res.status) };
     }
     return {
       ok: true,
