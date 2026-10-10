@@ -74,6 +74,10 @@ export interface IgPostPlan {
   /** Correct option id — used for the next-day answer reply, never posted with the puzzle. */
   answer?: string;
   explain?: string;
+  /** Scroll-stopper line, for platforms that get their own copy (Threads). */
+  hook?: string;
+  /** Full question text — the card may strip an inline sequence, this never does. */
+  prompt?: string;
 }
 
 /** Questions that render correctly as a standalone card. */
@@ -1348,6 +1352,8 @@ function baitPlan(b: BaitPost): IgPostPlan {
     caption: baitCaption(b),
     answer: b.answer,
     explain: b.explain,
+    hook: b.hook,
+    prompt: b.prompt,
   };
 }
 
@@ -1393,6 +1399,8 @@ function questionPlan(q: Question, hook: string): IgPostPlan {
     caption: questionCaption(q, hook),
     answer: q.correct_id,
     explain: q.explanation,
+    hook,
+    prompt: q.question_text,
   };
 }
 

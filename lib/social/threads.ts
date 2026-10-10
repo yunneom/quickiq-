@@ -248,11 +248,29 @@ async function waitForThreadsContainer(
  * Publish a reel already sitting at a public HTTPS URL (our own storage —
  * Threads' servers fetch it directly, same PULL model as Instagram).
  */
-export async function publishVideoToThreads(args: {
+export function publishVideoToThreads(args: {
   videoUrl: string;
   text: string;
   deadlineAt?: number;
 }): Promise<PublishResult> {
+  return publishToThreads({ media_type: 'VIDEO', video_url: args.videoUrl }, args.text, args.deadlineAt);
+}
+
+/** Publish a single image (a quiz card) with text — same container flow. */
+export function publishImageToThreads(args: {
+  imageUrl: string;
+  text: string;
+  deadlineAt?: number;
+}): Promise<PublishResult> {
+  return publishToThreads({ media_type: 'IMAGE', image_url: args.imageUrl }, args.text, args.deadlineAt);
+}
+
+async function publishToThreads(
+  media: Record<string, string>,
+  text: string,
+  deadlineAt?: number,
+): Promise<PublishResult> {
+  const args = { text, deadlineAt };
   const auth = await getValidAccessToken();
   if (!auth.ok) return { ok: false, reason: auth.reason };
 
@@ -262,8 +280,7 @@ export async function publishVideoToThreads(args: {
   let createRes: Response;
   try {
     const body = new URLSearchParams({
-      media_type: 'VIDEO',
-      video_url: args.videoUrl,
+      ...media,
       text: args.text.slice(0, 500),
       access_token: auth.token,
     });
@@ -307,4 +324,9 @@ export async function publishVideoToThreads(args: {
   } catch (err) {
     return { ok: false, reason: `publish:${err instanceof Error ? err.message : 'fetch_failed'}` };
   }
+}
+
+/** Whether the operator has completed the Threads OAuth connect. */
+export async function isThreadsConnected(): Promise<boolean> {
+  return Boolean(await getThreadsTokens().catch(() => undefined));
 }
