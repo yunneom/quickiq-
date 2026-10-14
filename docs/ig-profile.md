@@ -23,11 +23,15 @@ Name 필드는 IG 검색 인덱스에 포함되므로 "IQ Test" 키워드를 반
 ## 링크 (Website 필드)
 
 ```
-https://iq.dailyenterkr.com/en?utm_source=instagram&utm_medium=bio&utm_campaign=quickiq_ig
+https://iq.dailyenterkr.com/en/iq?utm_source=instagram&utm_medium=bio&utm_campaign=quickiq_ig
 ```
 
 - UTM이 붙어 있어 funnel_events에서 IG 유입이 그대로 측정됩니다
   (utm_source=instagram으로 필터).
+- `/en/iq`로 바로 연결: `/en`은 이제 테스트 10종 허브라서, 퍼즐 보고 온
+  사람이 한 번 더 고르게 됩니다. IQ 랜딩은 `utm_source`가 instagram ·
+  threads · tiktok · youtube면 "퍼즐 하나는 풀었죠. 30문제도 될까요?"
+  챌린지 배너를 맨 위에 띄웁니다.
 - `/en` 명시: IG 앱 내 브라우저는 Accept-Language가 기기 언어라서
   글로벌 팔로워는 어차피 /en에 떨어지지만, 링크에 박아두면 확실합니다.
 

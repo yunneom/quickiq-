@@ -1283,6 +1283,13 @@ const PROMO_LINES = [
   'No sign-up · 7 minutes · instant score',
 ];
 
+/**
+ * Sends (DM shares) are one of the three signals Instagram says it ranks
+ * reels on, and the one that reaches people who don't follow us yet. A
+ * puzzle is something people want to put in front of a friend, so ask.
+ */
+const SHARE_LINE = 'Send this to the friend who always says "that\'s easy" 😏';
+
 function tagsFor(extra: string[]): string {
   return [...HASHTAGS, ...extra, '#quickiq'].join(' ');
 }
@@ -1298,6 +1305,7 @@ function baitCaption(b: BaitPost): string {
     ...b.options.map((o) => `${o.id}. ${o.text}`),
     '',
     'Drop your answer in the comments 👇 No cheating.',
+    SHARE_LINE,
     '',
     ...PROMO_LINES,
     '',
@@ -1314,6 +1322,7 @@ function questionCaption(q: Question, hook: string): string {
     ...q.options.map((o) => `${o.id}. ${o.text ?? ''}`),
     '',
     'This is a REAL question from our IQ test. Comment your answer 👇',
+    SHARE_LINE,
     '',
     ...PROMO_LINES,
     '',

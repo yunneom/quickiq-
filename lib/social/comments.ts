@@ -26,6 +26,8 @@ const CTA_COMMENTS = [
   'Comment A, B, C or D — let’s see the split',
   'No skipping — comment your answer first, then scroll for more',
   'Answer drops in the comments in 24h ⏳ — or find out now, link in bio',
+  'Send this to someone and see who solves it first ⏱️',
+  'Only sharp minds get this one. Prove it in the comments 👇',
 ];
 
 /** Second comment: reaction/social-proof flavor, still visibly us. */

@@ -24,9 +24,13 @@ const TOPIC = '#IQTest';
 
 export type ThreadsVariant = 'daily' | 'encore';
 
+/**
+ * Straight to the IQ test landing: `/en` is now the 10-test hub, one
+ * extra choice between a puzzle fan and the test the puzzle advertised.
+ */
 export function threadsLink(siteUrl: string, variant: ThreadsVariant): string {
   const campaign = variant === 'daily' ? 'quickiq_threads_daily' : 'quickiq_threads_encore';
-  return `${siteUrl}/en?utm_source=threads&utm_medium=social&utm_campaign=${campaign}`;
+  return `${siteUrl}/en/iq?utm_source=threads&utm_medium=social&utm_campaign=${campaign}`;
 }
 
 /** Options that only point at a figure ("Shape A") add nothing in text. */

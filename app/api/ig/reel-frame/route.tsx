@@ -1,6 +1,7 @@
 import { ImageResponse } from 'next/og';
 import { REEL, reelFrameKey, REEL_FRAME_COUNT } from '@/lib/social/reel-spec';
 import { renderScene } from '@/lib/social/quiz-scene';
+import { challengeHook } from '@/lib/social/challenge-hook';
 import { BG_ACCENT, type BgScene } from '@/lib/social/reel-bg';
 
 export const runtime = 'edge';
@@ -374,10 +375,26 @@ export async function GET(req: Request) {
 
   // Question — the quiz popup panel over the moving scene.
   // Road-kind mini illustrations are gone: the background IS the road now.
+  // Compact options make the room the first-frame hook needs:
+  // "Shape A".."Shape D" just repeat the letters under the figures, so
+  // one row of letter chips says the same; short answers ("12", "360")
+  // sit two to a row.
+  const figureOptions = card.options.every((o) =>
+    /^shape\s+[a-z]$/i.test(o.text.trim()),
+  );
+  const shortOptions =
+    !figureOptions && card.options.every((o) => o.text.trim().length <= 8);
   const scene =
     card.scene && card.scene.kind !== 'road'
       ? renderScene(card.scene, { width: REEL.width - 144 - 96 })
       : null;
+
+  // First-frame hook: the line that has to win the first 3 seconds. A
+  // panel already carrying a picture or a long prompt gets the compact
+  // size so the options never get pushed into the caption zone.
+  const hook = challengeHook(day);
+  const heavyPanel = Boolean(scene) || card.prompt.length > 90;
+  const hookSize = heavyPanel ? 58 : 88;
 
   return new ImageResponse(
     (
@@ -392,6 +409,46 @@ export async function GET(req: Request) {
         }}
       >
         {topBar}
+
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            marginTop: heavyPanel ? 28 : 56,
+          }}
+        >
+          <span
+            style={{
+              color: accent,
+              fontSize: 30,
+              fontWeight: 800,
+              letterSpacing: 6,
+              background: 'rgba(4,6,10,0.6)',
+              borderRadius: 999,
+              padding: '10px 28px',
+            }}
+          >
+            {hook.kicker}
+          </span>
+          {hook.headline.split('\n').map((line, i) => (
+            <span
+              key={line}
+              style={{
+                color: i === 1 ? accent : '#FFFFFF',
+                fontSize: hookSize,
+                fontWeight: 900,
+                lineHeight: 1.08,
+                letterSpacing: -1,
+                textAlign: 'center',
+                marginTop: 14,
+                textShadow: '0 4px 18px rgba(0,0,0,0.85)',
+              }}
+            >
+              {line}
+            </span>
+          ))}
+        </div>
 
         <div
           style={{
@@ -455,50 +512,83 @@ export async function GET(req: Request) {
               <div style={{ display: 'flex', marginTop: 38 }}>{scene}</div>
             ) : null}
 
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 16,
-                marginTop: 40,
-              }}
-            >
-              {card.options.map((o) => (
-                <div
-                  key={o.id}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 22,
-                    background: 'rgba(255,255,255,0.10)',
-                    borderRadius: 18,
-                    padding: '20px 26px',
-                  }}
-                >
+            {figureOptions ? (
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  gap: 16,
+                  marginTop: 30,
+                }}
+              >
+                {card.options.map((o) => (
                   <span
+                    key={o.id}
                     style={{
                       display: 'flex',
+                      flex: 1,
                       alignItems: 'center',
                       justifyContent: 'center',
-                      width: 54,
-                      height: 54,
-                      borderRadius: 14,
-                      background: accent,
-                      color: ink,
-                      fontSize: 30,
+                      height: 84,
+                      borderRadius: 18,
+                      background: 'rgba(255,255,255,0.10)',
+                      color: '#FFFFFF',
+                      fontSize: 40,
                       fontWeight: 800,
                     }}
                   >
                     {o.id}
                   </span>
-                  <span
-                    style={{ color: '#FFFFFF', fontSize: 38, fontWeight: 600 }}
+                ))}
+              </div>
+            ) : (
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: shortOptions ? 'row' : 'column',
+                  flexWrap: 'wrap',
+                  gap: 16,
+                  marginTop: 40,
+                }}
+              >
+                {card.options.map((o) => (
+                  <div
+                    key={o.id}
+                    style={{
+                      display: 'flex',
+                      width: shortOptions ? '48.5%' : '100%',
+                      alignItems: 'center',
+                      gap: 22,
+                      background: 'rgba(255,255,255,0.10)',
+                      borderRadius: 18,
+                      padding: '20px 26px',
+                    }}
                   >
-                    {o.text}
-                  </span>
-                </div>
-              ))}
-            </div>
+                    <span
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        width: 54,
+                        height: 54,
+                        borderRadius: 14,
+                        background: accent,
+                        color: ink,
+                        fontSize: 30,
+                        fontWeight: 800,
+                      }}
+                    >
+                      {o.id}
+                    </span>
+                    <span
+                      style={{ color: '#FFFFFF', fontSize: 38, fontWeight: 600 }}
+                    >
+                      {o.text}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
 
             <div
               style={{
