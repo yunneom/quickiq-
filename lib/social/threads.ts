@@ -9,10 +9,13 @@
  *      operator's own Threads account as a tester (Threads API apps stay
  *      in development mode — same "no review needed for our own
  *      account" situation as Instagram — until public reach is wanted).
- *   3. Copy the app's App ID / App Secret into Vercel as
- *      THREADS_APP_ID / THREADS_APP_SECRET. These are the Meta APP's
- *      credentials, not a per-post secret — same app can also run the
- *      existing Instagram integration.
+ *   3. Copy the THREADS app ID / THREADS app secret shown on the Threads
+ *      use case's Settings page into Vercel as THREADS_APP_ID /
+ *      THREADS_APP_SECRET. Not the App ID from App settings → Basic:
+ *      Threads carries its own id inside the same Meta app, and the
+ *      redirect-URI allowlist from step 2 belongs to that id. With the
+ *      main id, consent fails after login with error_code 1349168
+ *      ("redirect URI is not in the whitelist").
  *   4. In /admin/media, click "Connect Threads" — one-time OAuth consent
  *      as the operator's own Threads account. Tokens are stored via
  *      lib/social/settings.ts, not env vars (per-account, refreshed
@@ -245,11 +248,29 @@ async function waitForThreadsContainer(
  * Publish a reel already sitting at a public HTTPS URL (our own storage —
  * Threads' servers fetch it directly, same PULL model as Instagram).
  */
-export async function publishVideoToThreads(args: {
+export function publishVideoToThreads(args: {
   videoUrl: string;
   text: string;
   deadlineAt?: number;
 }): Promise<PublishResult> {
+  return publishToThreads({ media_type: 'VIDEO', video_url: args.videoUrl }, args.text, args.deadlineAt);
+}
+
+/** Publish a single image (a quiz card) with text — same container flow. */
+export function publishImageToThreads(args: {
+  imageUrl: string;
+  text: string;
+  deadlineAt?: number;
+}): Promise<PublishResult> {
+  return publishToThreads({ media_type: 'IMAGE', image_url: args.imageUrl }, args.text, args.deadlineAt);
+}
+
+async function publishToThreads(
+  media: Record<string, string>,
+  text: string,
+  deadlineAt?: number,
+): Promise<PublishResult> {
+  const args = { text, deadlineAt };
   const auth = await getValidAccessToken();
   if (!auth.ok) return { ok: false, reason: auth.reason };
 
@@ -259,8 +280,7 @@ export async function publishVideoToThreads(args: {
   let createRes: Response;
   try {
     const body = new URLSearchParams({
-      media_type: 'VIDEO',
-      video_url: args.videoUrl,
+      ...media,
       text: args.text.slice(0, 500),
       access_token: auth.token,
     });
@@ -304,4 +324,9 @@ export async function publishVideoToThreads(args: {
   } catch (err) {
     return { ok: false, reason: `publish:${err instanceof Error ? err.message : 'fetch_failed'}` };
   }
+}
+
+/** Whether the operator has completed the Threads OAuth connect. */
+export async function isThreadsConnected(): Promise<boolean> {
+  return Boolean(await getThreadsTokens().catch(() => undefined));
 }

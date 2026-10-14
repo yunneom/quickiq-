@@ -10,7 +10,13 @@ import {
 import { pickComments } from '@/lib/social/comments';
 import { publishVideoToTikTok } from '@/lib/social/tiktok';
 import { uploadYouTubeShort } from '@/lib/social/youtube';
-import { publishVideoToThreads } from '@/lib/social/threads';
+import {
+  isThreadsConnected,
+  publishImageToThreads,
+  publishVideoToThreads,
+} from '@/lib/social/threads';
+import { threadsPostText } from '@/lib/social/threads-text';
+import { alreadyCrossPosted, markCrossPosted } from '@/lib/social/crosspost-ledger';
 import { importSeedTracks, readAudioManifest } from '@/lib/social/audio';
 import { importClips } from '@/lib/social/clip-sources';
 import { readClipManifest } from '@/lib/social/clips';
@@ -24,7 +30,12 @@ import {
   MIN_REEL_PUBLISH_MS,
   TOTAL_BUDGET_MS,
 } from '@/lib/social/post-budget';
-import { plansForDay, utcDayIndex, type IgPostPlan } from '@/lib/social/ig-content';
+import {
+  planForSlot,
+  plansForDay,
+  utcDayIndex,
+  type IgPostPlan,
+} from '@/lib/social/ig-content';
 import { buildReelVideo } from '@/lib/social/reel';
 import { uploadPublicMedia, uploadPublicVideo } from '@/lib/social/storage';
 import sharp from 'sharp';
@@ -258,6 +269,20 @@ export async function GET(req: Request) {
         }),
       );
 
+  // Evening encore — Threads only. The daily reel lands ~00:30 UTC,
+  // which is evening in the Americas but morning across India / the
+  // Philippines / Indonesia, Threads' biggest English-reading audiences.
+  // The second (retry) run lands ~12:30 UTC — 8:30pm in Manila/Jakarta-ish
+  // and 6pm in India — so it posts a puzzle from four weeks back to
+  // Threads. Threads rewards posting more often than Instagram does, and
+  // its audience has not seen the Instagram archive. Scheduled runs only.
+  const threadsEncore =
+    !testLabel && dRaw === null && onlySlot === null && new Date().getUTCHours() >= 6
+      ? await postThreadsEncore({ today, siteUrl, deadlineAt: hardDeadline - 5_000 }).catch(
+          (err: unknown) => ({ ok: false as const, reason: err instanceof Error ? err.message : 'encore_crashed' }),
+        )
+      : null;
+
   const anyFailure = outcomes.some((o) => o.status === 'failed');
   const summary = {
     ok: !anyFailure,
@@ -272,6 +297,7 @@ export async function GET(req: Request) {
     elapsedMs: Date.now() - startedAt,
     outcomes,
     answerReveals,
+    ...(threadsEncore ? { threadsEncore } : {}),
   };
 
   // Flight recorder: park the run summary + pool/ledger state at a
@@ -403,6 +429,9 @@ async function publishSlot(args: {
   let kind: 'reel' | 'image' = 'reel';
   let fallbackReason: string | undefined;
   let mediaUrl = '';
+  // The uploaded reel, kept even when Instagram then falls back to the
+  // card — the other platforms still get the video.
+  let reelUrl = '';
   let published: Awaited<ReturnType<typeof publishReelPost>>;
 
   const reel = await buildReelVideo({
@@ -425,6 +454,7 @@ async function publishSlot(args: {
       published = { ok: false, reason: `upload:${upload.reason}` };
     } else {
       mediaUrl = upload.url;
+      reelUrl = upload.url;
       published = await publishReelPost({
         videoUrl: upload.url,
         // CC BY footage carries its credit into the caption — that IS
@@ -473,13 +503,37 @@ async function publishSlot(args: {
       .eq('post_key', postKey);
   }
 
+  // Cross-post the SAME reel to TikTok/YouTube/Threads whenever a reel
+  // was built and uploaded — whatever Instagram said. Instagram failing
+  // (an expired token took it down for two weeks) must not silence the
+  // other channels. Best-effort and deduped per platform, because a
+  // failed Instagram slot is retried by the next run.
+  const { crossPosted, crossPostNotes } =
+    reel.ok && reelUrl
+      ? await crossPostReel({
+          postKey,
+          plan,
+          siteUrl,
+          videoUrl: reelUrl,
+          video: reel.buffer,
+          deadlineAt,
+        })
+      : { crossPosted: [] as string[], crossPostNotes: [] as string[] };
+
   if (!published.ok) {
     Sentry.captureMessage('ig cron publish failed', {
       level: 'error',
       tags: { area: 'instagram', step: 'publish' },
       extra: { postKey, reason: published.reason },
     });
-    return { slot, postKey, status: 'failed', reason: published.reason };
+    return {
+      slot,
+      postKey,
+      status: 'failed',
+      reason: published.reason,
+      ...(crossPosted.length ? { crossPosted } : {}),
+      ...(crossPostNotes.length ? { crossPostNotes } : {}),
+    };
   }
 
   // Seed engagement — best-effort, must never fail the post itself.
@@ -491,38 +545,6 @@ async function publishSlot(args: {
     );
     if (result.ok) commentsPosted += 1;
     else commentNotes.push(result.reason);
-  }
-
-  // Cross-post the SAME reel to TikTok/YouTube Shorts — only when we
-  // actually have a video (not the image fallback) and only best-effort,
-  // exactly like comments: a cross-post failure never fails the post.
-  const crossPosted: string[] = [];
-  const crossPostNotes: string[] = [];
-  if (kind === 'reel' && reel.ok) {
-    const tiktokResult = await publishVideoToTikTok({
-      videoUrl: mediaUrl,
-      title: plan.caption,
-      deadlineAt,
-    }).catch((err) => ({ ok: false as const, reason: String(err) }));
-    if (tiktokResult.ok) crossPosted.push('tiktok');
-    else crossPostNotes.push(`tiktok: ${tiktokResult.reason}`);
-
-    const youtubeResult = await uploadYouTubeShort({
-      video: reel.buffer,
-      title: plan.caption.split('\n')[0].slice(0, 100),
-      description: `${plan.caption}\n\n#Shorts`,
-      deadlineAt,
-    }).catch((err) => ({ ok: false as const, reason: String(err) }));
-    if (youtubeResult.ok) crossPosted.push('youtube');
-    else crossPostNotes.push(`youtube: ${youtubeResult.reason}`);
-
-    const threadsResult = await publishVideoToThreads({
-      videoUrl: mediaUrl,
-      text: plan.caption,
-      deadlineAt,
-    }).catch((err) => ({ ok: false as const, reason: String(err) }));
-    if (threadsResult.ok) crossPosted.push('threads');
-    else crossPostNotes.push(`threads: ${threadsResult.reason}`);
   }
 
   return {
@@ -537,6 +559,108 @@ async function publishSlot(args: {
     ...(crossPosted.length ? { crossPosted } : {}),
     ...(crossPostNotes.length ? { crossPostNotes } : {}),
   };
+}
+
+/** Days back the Threads encore reaches — a multiple of the 4-day cycle. */
+const ENCORE_LOOKBACK_DAYS = 28;
+
+async function postThreadsEncore(args: {
+  today: number;
+  siteUrl: string;
+  deadlineAt: number;
+}): Promise<{ ok: true; postKey: string; skipped?: string } | { ok: false; reason: string }> {
+  const { today, siteUrl, deadlineAt } = args;
+  const encoreDay = today - ENCORE_LOOKBACK_DAYS;
+  const plan = planForSlot(encoreDay, 0);
+  const key = `encore:${today}:${encoreDay}`;
+  if (!plan) return { ok: false, reason: 'no_plan' };
+  if (deadlineAt - Date.now() < 40_000) return { ok: false, reason: 'no_time_left' };
+  if (!(await isThreadsConnected())) return { ok: true, postKey: key, skipped: 'threads_not_connected' };
+
+  const result = await crossPostOnce('threads', key, async () => {
+    const cardUrl = `${siteUrl}/api/ig/card?d=${encoreDay}&s=0`;
+    const imageUrl = (await cardAsJpeg(cardUrl, `threads-encore-${today}`)) ?? cardUrl;
+    const r = await publishImageToThreads({
+      imageUrl,
+      text: threadsPostText(plan, siteUrl, 'encore'),
+      deadlineAt,
+    });
+    return r.ok ? { ok: true, id: r.postId } : r;
+  });
+  if (!result.ok) return result;
+  return result.skipped ? { ok: true, postKey: key, skipped: 'earlier_run' } : { ok: true, postKey: key };
+}
+
+/** Send one platform's copy unless an earlier run already did. */
+async function crossPostOnce(
+  platform: string,
+  key: string,
+  send: () => Promise<{ ok: true; id: string } | { ok: false; reason: string }>,
+): Promise<{ ok: true; skipped?: boolean } | { ok: false; reason: string }> {
+  if (await alreadyCrossPosted(platform, key)) return { ok: true, skipped: true };
+  const result = await send().catch((err: unknown) => ({
+    ok: false as const,
+    reason: err instanceof Error ? err.message : String(err),
+  }));
+  if (!result.ok) return result;
+  await markCrossPosted(platform, key, result.id);
+  return { ok: true };
+}
+
+async function crossPostReel(args: {
+  postKey: string;
+  plan: IgPostPlan;
+  siteUrl: string;
+  videoUrl: string;
+  video: Buffer;
+  deadlineAt: number;
+}): Promise<{ crossPosted: string[]; crossPostNotes: string[] }> {
+  const { postKey, plan, siteUrl, videoUrl, video, deadlineAt } = args;
+  const crossPosted: string[] = [];
+  const crossPostNotes: string[] = [];
+  const record = (
+    platform: string,
+    r: { ok: true; skipped?: boolean } | { ok: false; reason: string },
+  ) => {
+    if (r.ok) crossPosted.push(r.skipped ? `${platform}(earlier run)` : platform);
+    else crossPostNotes.push(`${platform}: ${r.reason}`);
+  };
+
+  // Threads first: it is the connected one, and the copy is its own.
+  record(
+    'threads',
+    await crossPostOnce('threads', postKey, async () => {
+      const r = await publishVideoToThreads({
+        videoUrl,
+        text: threadsPostText(plan, siteUrl, 'daily'),
+        deadlineAt,
+      });
+      return r.ok ? { ok: true, id: r.postId } : r;
+    }),
+  );
+
+  record(
+    'tiktok',
+    await crossPostOnce('tiktok', postKey, async () => {
+      const r = await publishVideoToTikTok({ videoUrl, title: plan.caption, deadlineAt });
+      return r.ok ? { ok: true, id: r.publishId } : r;
+    }),
+  );
+
+  record(
+    'youtube',
+    await crossPostOnce('youtube', postKey, async () => {
+      const r = await uploadYouTubeShort({
+        video,
+        title: plan.caption.split('\n')[0].slice(0, 100),
+        description: `${plan.caption}\n\n#Shorts`,
+        deadlineAt,
+      });
+      return r.ok ? { ok: true, id: r.videoId } : r;
+    }),
+  );
+
+  return { crossPosted, crossPostNotes };
 }
 
 /**

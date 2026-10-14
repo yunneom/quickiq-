@@ -7,6 +7,7 @@ import {
 } from 'next-intl/server';
 import { Button } from '@/components/ui/button';
 import { SocialProof } from '@/components/landing/social-proof';
+import { SocialArrival } from '@/components/landing/social-arrival';
 import { ReportPreview } from '@/components/landing/report-preview';
 import {
   FaqLD,
@@ -64,6 +65,7 @@ export default async function IqLandingPage({
         </header>
 
         <div className="mt-10 flex-1">
+          <SocialArrival />
           <h1 className="whitespace-pre-line text-4xl font-extrabold leading-tight text-gray-900">
             {headline}
           </h1>

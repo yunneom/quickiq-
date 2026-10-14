@@ -23,11 +23,15 @@ Name 필드는 IG 검색 인덱스에 포함되므로 "IQ Test" 키워드를 반
 ## 링크 (Website 필드)
 
 ```
-https://iq.dailyenterkr.com/en?utm_source=instagram&utm_medium=bio&utm_campaign=quickiq_ig
+https://iq.dailyenterkr.com/en/iq?utm_source=instagram&utm_medium=bio&utm_campaign=quickiq_ig
 ```
 
 - UTM이 붙어 있어 funnel_events에서 IG 유입이 그대로 측정됩니다
   (utm_source=instagram으로 필터).
+- `/en/iq`로 바로 연결: `/en`은 이제 테스트 10종 허브라서, 퍼즐 보고 온
+  사람이 한 번 더 고르게 됩니다. IQ 랜딩은 `utm_source`가 instagram ·
+  threads · tiktok · youtube면 "퍼즐 하나는 풀었죠. 30문제도 될까요?"
+  챌린지 배너를 맨 위에 띄웁니다.
 - `/en` 명시: IG 앱 내 브라우저는 Accept-Language가 기기 언어라서
   글로벌 팔로워는 어차피 /en에 떨어지지만, 링크에 박아두면 확실합니다.
 
@@ -214,6 +218,17 @@ Invoke-RestMethod -Method Post -Headers $h -Body $body "https://iq.dailyenterkr.
 자동으로 올라갑니다. 앱 등록(1회, 개발자 계정 필요) + 계정 연결(1회,
 버튼 클릭)만 하면 그 다음부터는 완전 자동입니다.
 
+- 인스타 게시가 실패해도(토큰 만료 등) 릴스가 만들어졌으면 다른 플랫폼은
+  그대로 올라갑니다. 재시도 실행에서 같은 영상이 두 번 올라가지 않도록
+  플랫폼별로 `ig-media/crosspost/<플랫폼>/…` 표식을 남깁니다.
+- **쓰레드는 전용 문구**로 올라갑니다: 첫 줄 후킹 → 문제 → "답 남겨주세요" →
+  클릭 가능한 테스트 링크(`utm_source=threads`) → 토픽 태그 `#IQTest` 1개.
+  인스타 캡션("link in bio", 해시태그 5개)은 쓰지 않습니다.
+- **쓰레드 저녁 앙코르**: 하루 두 번째 크론(≈12:30 UTC = 마닐라·자카르타
+  저녁, 인도 18시)이 4주 전 퍼즐 카드를 쓰레드에만 1개 더 올립니다
+  (`utm_campaign=quickiq_threads_encore`). 첫 크론(≈00:30 UTC)은 미국 저녁
+  시간대라 메인 릴스는 그대로 둡니다.
+
 ### 틱톡 설정 (단계별 상세)
 
 틱톡은 유튜브보다 등록 단계가 많고, 한 단계라도 빠지면 "연결" 버튼을
@@ -320,9 +335,15 @@ Environment Variables에 `TIKTOK_CLIENT_KEY` / `TIKTOK_CLIENT_SECRET`로
    **테스터(Tester)**로 추가 — 앱이 심사 전(Development 모드)이면
    테스터로 등록된 계정만 연결이 가능합니다(틱톡의 6번 단계와 동일한
    함정).
-4. 앱 대시보드 **App settings → Basic**에서 **App ID / App Secret**
-   복사 → Vercel 환경변수 `THREADS_APP_ID` / `THREADS_APP_SECRET`에
-   등록 → 재배포.
+4. **사용 사례 → Access the Threads API → 맞춤 설정 → Settings** 화면에
+   따로 표시되는 **Threads 앱 ID / Threads 앱 시크릿**을 복사 →
+   Vercel 환경변수 `THREADS_APP_ID` / `THREADS_APP_SECRET`에 등록 →
+   재배포.
+   ⚠️ **App settings → Basic의 App ID가 아닙니다.** 쓰레드는 같은 메타 앱
+   안에 별도의 앱 ID를 따로 갖고 있고, 리디렉션 URI 허용 목록도 그
+   Threads 앱 ID에 묶여 있습니다. 기본 App ID를 넣으면 로그인 후
+   "차단된 URL입니다: 리디렉션 URI가 … 화이트리스트에 없으므로"
+   (error_code 1349168)가 뜹니다 — URI를 정확히 등록해 두었어도요.
 5. `/admin/media`에서 **"쓰레드 연결"** 클릭 → 본인 쓰레드 계정으로
    로그인·승인. 본인 계정에 올리는 것이라 별도 앱 심사 없이 바로
    공개로 올라갑니다(유튜브와 동일, 틱톡만 심사 대기가 있음).
