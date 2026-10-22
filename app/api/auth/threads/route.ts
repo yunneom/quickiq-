@@ -17,7 +17,7 @@ export async function GET(req: Request) {
     return NextResponse.json(
       {
         error: 'threads_app_not_configured',
-        hint: 'Set THREADS_APP_ID and THREADS_APP_SECRET in Vercel first (from developers.facebook.com → Threads API product).',
+        hint: 'Set THREADS_APP_ID and THREADS_APP_SECRET in Vercel first — the Threads app id/secret from Use cases → Threads API → Settings, not App settings → Basic.',
       },
       { status: 503 },
     );

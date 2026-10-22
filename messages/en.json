@@ -67,7 +67,11 @@
         "q": "Why can't I go back to previous questions?",
         "a": "We measure response time per question; allowing review would dilute the signal. A strict 60s-per-question flow matches the standard IQ assessment conditions."
       }
-    ]
+    ],
+    "socialArrival": {
+      "title": "You cracked one puzzle. Can you handle 30?",
+      "body": "Today's challenge was 1 question. The full test is 30 — and ends with your estimated IQ and percentile. Free, 7 minutes."
+    }
   },
   "test": {
     "loading": "Preparing your test...",
