@@ -63,6 +63,10 @@ https://iq.dailyenterkr.com/en/iq?utm_source=instagram&utm_medium=bio&utm_campai
   공개 안 된 게시물에 "✅ Answer: B — …" + 한 줄 해설 댓글을 답니다. 시드
   댓글의 "answer in 24h" 약속을 코드가 지키는 것이고, 원장에 시각이 찍혀
   한 게시물에 한 번만 달립니다. 테스트 게시물(`?test=`)은 공개하지 않음
+- **실제 정답률 도발**: 공개 직전에 댓글을 읽어 A/B/C/D 답을 집계하고
+  (계정당 1표, 우리 계정 댓글 제외), 답이 5개 이상이면 "📊 Only 23% of you
+  got this right (31 answers). Most went with C (48%)." 한 줄을 붙입니다.
+  숫자는 전부 실제 댓글에서 나온 것 — 지어낸 "상위 X%"는 쓰지 않습니다.
 
 수동 (하루 5분, 효과 큼):
 1. **당일에는 정답 댓글 금지** — 발행 당일 정답을 직접 달지 말 것. 댓글창이

@@ -78,7 +78,91 @@ export function planForLedgerKey(parsed: ParsedPostKey): IgPostPlan | null {
  * "Shape B"-style figure references), gives the one-line explanation, and
  * closes with the bio CTA every other piece of copy uses.
  */
-export function revealComment(plan: IgPostPlan): string | null {
+/** Below this many answers a percentage is noise, so none is shown. */
+export const MIN_VOTES = 5;
+
+export interface VoteTally {
+  total: number;
+  counts: Record<string, number>;
+}
+
+/**
+ * Count audience answers in a post's comments — a real figure for the
+ * "only X% got this right" line, measured instead of invented.
+ *
+ * A comment counts only when it unambiguously names one option: just the
+ * letter ("B", "b!", "B 🤔"), a short lead-in ("answer: B", "it's B",
+ * "option b"), or the exact option text ("10"). Sentences that happen to
+ * start with "A" are not votes. One vote per account; the first one seen
+ * wins.
+ */
+export function tallyVotes(
+  comments: ReadonlyArray<{ author?: string; text: string }>,
+  options: ReadonlyArray<{ id: string; text: string }>,
+): VoteTally {
+  const ids = new Set(options.map((o) => o.id.toUpperCase()));
+  const byText = new Map(
+    options
+      .filter((o) => o.text.trim() && !/^shape\s+[a-z]$/i.test(o.text.trim()))
+      .map((o) => [o.text.trim().toLowerCase(), o.id.toUpperCase()] as const),
+  );
+  const counts: Record<string, number> = {};
+  const seen = new Set<string>();
+  let total = 0;
+  for (const c of comments) {
+    const vote = voteOf(c.text, ids, byText);
+    if (!vote) continue;
+    const who = c.author?.toLowerCase();
+    if (who) {
+      if (seen.has(who)) continue;
+      seen.add(who);
+    }
+    counts[vote] = (counts[vote] ?? 0) + 1;
+    total += 1;
+  }
+  return { total, counts };
+}
+
+function voteOf(
+  raw: string,
+  ids: ReadonlySet<string>,
+  byText: ReadonlyMap<string, string>,
+): string | null {
+  // Keep letters, digits, spaces and the few characters option texts use.
+  const text = raw
+    .toLowerCase()
+    .replace(/[^a-z0-9 .,:'%/$-]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(/[.!,:]+$/, '');
+  const exact = byText.get(text);
+  if (exact) return exact;
+  const m = text.match(/^(?:(?:my )?answer is |answer:? |ans:? |it'?s |its |option |i think (?:it'?s )?|i say )?\(?([a-z])\)?$/);
+  if (m && ids.has(m[1].toUpperCase())) return m[1].toUpperCase();
+  return null;
+}
+
+/**
+ * The line that turns the answer reveal into the next challenge: a real
+ * share of correct answers, framed to provoke. Null under MIN_VOTES.
+ */
+export function voteLine(answer: string, tally: VoteTally | undefined): string | null {
+  if (!tally || tally.total < MIN_VOTES) return null;
+  const right = tally.counts[answer] ?? 0;
+  const pct = Math.round((right / tally.total) * 100);
+  const answers = `${tally.total} answers`;
+  if (pct >= 50) return `📊 ${pct}% of you got it right (${answers}). Too easy? Try the full test 😏`;
+  const [topWrong, topWrongCount] = Object.entries(tally.counts)
+    .filter(([id]) => id !== answer)
+    .sort((a, b) => b[1] - a[1])[0] ?? ['', 0];
+  const trap =
+    topWrongCount > right
+      ? ` Most went with ${topWrong} (${Math.round((topWrongCount / tally.total) * 100)}%).`
+      : '';
+  return `📊 Only ${pct}% of you got this right (${answers}).${trap}`;
+}
+
+export function revealComment(plan: IgPostPlan, tally?: VoteTally): string | null {
   const answer = plan.answer?.trim();
   if (!answer) return null;
   const option = plan.card.options.find((o) => o.id === answer);
@@ -88,6 +172,8 @@ export function revealComment(plan: IgPostPlan): string | null {
     optionText !== answer &&
     !optionsAreFigureRefs(plan.card.options);
   const lines = [showText ? `✅ Answer: ${answer} — ${optionText}` : `✅ Answer: ${answer}`];
+  const votes = voteLine(answer, tally);
+  if (votes) lines.push(votes);
   const explain = plan.explain?.trim();
   if (explain) lines.push(explain);
   lines.push('', 'Got it? The full 30-question IQ test is free — link in bio.');
