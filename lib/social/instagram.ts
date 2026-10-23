@@ -350,3 +350,49 @@ export async function postComment(
     };
   }
 }
+
+export interface IgComment {
+  /** Commenter's account id — used to leave our own seed comments out. */
+  fromId?: string;
+  username?: string;
+  text: string;
+}
+
+/**
+ * Read a post's top-level comments (newest first, up to `maxPages` pages).
+ * Same instagram_business_manage_comments permission postComment already
+ * uses. Our own account's comments are dropped here so no caller can
+ * count the seed comments as audience answers.
+ */
+export async function listComments(
+  mediaId: string,
+  maxPages = 3,
+): Promise<IgResult<IgComment[]>> {
+  if (!IG_ACCESS_TOKEN) return { ok: false, reason: 'instagram_not_configured' };
+  const out: IgComment[] = [];
+  let url: string | undefined =
+    `${GRAPH}/${mediaId}/comments?fields=text,username,from&limit=50&access_token=${IG_ACCESS_TOKEN}`;
+  try {
+    for (let page = 0; url && page < maxPages; page++) {
+      const res: Response = await fetch(url, {
+        cache: 'no-store',
+        signal: AbortSignal.timeout(15_000),
+      });
+      const raw = (await res.json().catch(() => ({}))) as {
+        data?: Array<{ text?: string; username?: string; from?: { id?: string; username?: string } }>;
+        paging?: { next?: string };
+        error?: { message?: string };
+      };
+      if (!res.ok) return { ok: false, reason: raw.error?.message ?? `http_${res.status}`, raw };
+      for (const c of raw.data ?? []) {
+        if (!c.text) continue;
+        if (c.from?.id && c.from.id === IG_USER_ID) continue;
+        out.push({ fromId: c.from?.id, username: c.username ?? c.from?.username, text: c.text });
+      }
+      url = raw.paging?.next;
+    }
+    return { ok: true, data: out };
+  } catch (err) {
+    return { ok: false, reason: err instanceof Error ? err.message : 'fetch_failed' };
+  }
+}
