@@ -611,132 +611,205 @@ function shapeOptions(): IgCardOption[] {
   return ['A', 'B', 'C', 'D'].map((l) => ({ id: l, text: `Shape ${l}` }));
 }
 
+function squaresPost(n: number, distractors: number[]): ShapePost {
+  const answer = squaresInGrid(n);
+  const values = [...distractors, answer].sort((a, b) => a - b);
+  const { options, answerId } = numberOptions(values, answer);
+  return {
+    id: `squares-${n}`,
+    hook: 'Almost everyone forgets the big ones 👀',
+    badge: 'COUNT CAREFULLY',
+    prompt: 'How many squares do you see?',
+    options,
+    ...squaresFigure(n),
+    answer: answerId,
+    explain: `Count every size, not just the small cells: 1×1 through ${n}×${n} give ${Array.from(
+      { length: n },
+      (_, i) => (n - i) ** 2,
+    ).join(' + ')} = ${answer}.`,
+  };
+}
+
+function trianglesPost(n: number, distractors: number[]): ShapePost {
+  const answer = trianglesInTriangle(n);
+  const values = [...distractors, answer].sort((a, b) => a - b);
+  const { options, answerId } = numberOptions(values, answer);
+  return {
+    id: `triangles-${n}`,
+    hook: 'This one breaks brains 🧠',
+    badge: 'COUNT EVERY ONE',
+    prompt: 'How many triangles are hiding in this figure?',
+    options,
+    ...trianglesFigure(n),
+    answer: answerId,
+    explain: `Count upward AND downward triangles of every size — the total is ${answer}.`,
+  };
+}
+
+function rotationPost(spec: RotationSpec): ShapePost {
+  return {
+    id: spec.id,
+    hook: 'Only fast rotators get this in 20s 🔄',
+    badge: 'PATTERN TEST',
+    prompt: 'The shape turns the same way each step. Which one comes next?',
+    options: shapeOptions(),
+    ...rotationFigure(spec),
+    answer: spec.answer,
+    explain: `It rotates ${spec.step}° clockwise every step, so the next frame is ${spec.step * 3}° — option ${spec.answer}. One option is a mirror image: close, but wrong.`,
+  };
+}
+
+function mirrorPost(spec: MirrorSpec): ShapePost {
+  return {
+    id: spec.id,
+    hook: 'One of these is not like the others 🔍',
+    badge: 'SPOT THE FAKE',
+    prompt: 'Three are the same shape rotated. One is MIRRORED. Which one?',
+    options: shapeOptions(),
+    ...mirrorFigure(spec),
+    answer: spec.answer,
+    explain: `Rotate the tiles in your head: three line up, but ${spec.answer} is flipped left-to-right — a mirror image can never be rotated back onto the original.`,
+  };
+}
+
+function linesPost(spec: LineSpec, distractors: number[]): ShapePost {
+  const answer = segmentIntersections(spec.lines).length;
+  const values = [...distractors, answer].sort((a, b) => a - b);
+  const { options, answerId } = numberOptions(values, answer);
+  const n = spec.lines.length;
+  const allPairs = (n * (n - 1)) / 2;
+  return {
+    id: spec.id,
+    hook: 'Your eyes will skip one, guaranteed 👁️',
+    badge: 'COUNT THE CROSSINGS',
+    prompt: 'How many intersection points do these lines make?',
+    options,
+    ...linesFigure(spec),
+    answer: answerId,
+    explain:
+      answer === allPairs
+        ? `Every pair of lines crosses exactly once here — ${n} lines make ${answer} crossings.`
+        : `Not every pair meets: ${n} lines could make up to ${allPairs} crossings, but only ${answer} actually cross inside the figure.`,
+  };
+}
+
+function cubesPost(spec: CubeSpec, distractors: number[]): ShapePost {
+  const answer = totalCubes(spec.heights);
+  const values = [...distractors, answer].sort((a, b) => a - b);
+  const { options, answerId } = numberOptions(values, answer);
+  return {
+    id: spec.id,
+    hook: 'Don’t forget the cubes you can’t see 🧊',
+    badge: 'HIDDEN CUBES INSIDE',
+    prompt: 'The stack is solid — how many cubes in total, hidden ones included?',
+    options,
+    ...cubesFigure(spec),
+    answer: answerId,
+    explain: `Add the columns: every stack needs cubes underneath, so the total is ${answer}.`,
+  };
+}
+
+/**
+ * The original 24. Their order and count are part of the rotation
+ * arithmetic for every day already posted — append new puzzles to
+ * EXTRA_SHAPE_POSTS, never here.
+ */
 function buildPool(): ShapePost[] {
-  const posts: ShapePost[] = [];
-
-  const squareCfg: Array<{ n: number; distractors: number[] }> = [
-    { n: 3, distractors: [9, 13, 15] },
-    { n: 4, distractors: [16, 24, 28] },
-    { n: 5, distractors: [40, 50, 62] },
-  ];
-  for (const { n, distractors } of squareCfg) {
-    const answer = squaresInGrid(n);
-    const values = [...distractors, answer].sort((a, b) => a - b);
-    const { options, answerId } = numberOptions(values, answer);
-    const fig = squaresFigure(n);
-    posts.push({
-      id: `squares-${n}`,
-      hook: 'Almost everyone forgets the big ones 👀',
-      badge: 'COUNT CAREFULLY',
-      prompt: 'How many squares do you see?',
-      options,
-      ...fig,
-      answer: answerId,
-      explain: `Count every size, not just the small cells: 1×1 through ${n}×${n} give ${Array.from(
-        { length: n },
-        (_, i) => (n - i) ** 2,
-      ).join(' + ')} = ${answer}.`,
-    });
-  }
-
-  const triCfg: Array<{ n: number; distractors: number[] }> = [
-    { n: 3, distractors: [9, 11, 15] },
-    { n: 4, distractors: [16, 24, 31] },
-    { n: 5, distractors: [35, 44, 52] },
-  ];
-  for (const { n, distractors } of triCfg) {
-    const answer = trianglesInTriangle(n);
-    const values = [...distractors, answer].sort((a, b) => a - b);
-    const { options, answerId } = numberOptions(values, answer);
-    const fig = trianglesFigure(n);
-    posts.push({
-      id: `triangles-${n}`,
-      hook: 'This one breaks brains 🧠',
-      badge: '99% COUNT WRONG',
-      prompt: 'How many triangles are hiding in this figure?',
-      options,
-      ...fig,
-      answer: answerId,
-      explain: `Count upward AND downward triangles of every size — the total is ${answer}.`,
-    });
-  }
-
-  for (const spec of ROTATION_SPECS) {
-    const fig = rotationFigure(spec);
-    posts.push({
-      id: spec.id,
-      hook: 'Only fast rotators get this in 20s 🔄',
-      badge: 'PATTERN TEST',
-      prompt: 'The shape turns the same way each step. Which one comes next?',
-      options: shapeOptions(),
-      ...fig,
-      answer: spec.answer,
-      explain: `It rotates ${spec.step}° clockwise every step, so the next frame is ${spec.step * 3}° — option ${spec.answer}. One option is a mirror image: close, but wrong.`,
-    });
-  }
-
-  for (const spec of MIRROR_SPECS) {
-    const fig = mirrorFigure(spec);
-    posts.push({
-      id: spec.id,
-      hook: 'One of these is not like the others 🔍',
-      badge: 'SPOT THE FAKE',
-      prompt: 'Three are the same shape rotated. One is MIRRORED. Which one?',
-      options: shapeOptions(),
-      ...fig,
-      answer: spec.answer,
-      explain: `Rotate the tiles in your head: three line up, but ${spec.answer} is flipped left-to-right — a mirror image can never be rotated back onto the original.`,
-    });
-  }
-
-  const lineCfg: Record<string, number[]> = {
+  const lineDistractors: Record<string, number[]> = {
     'lines-4': [4, 5, 7],
     'lines-5': [8, 9, 11],
   };
-  for (const spec of LINE_SPECS) {
-    const answer = segmentIntersections(spec.lines).length;
-    const values = [...lineCfg[spec.id], answer].sort((a, b) => a - b);
-    const { options, answerId } = numberOptions(values, answer);
-    const fig = linesFigure(spec);
-    posts.push({
-      id: spec.id,
-      hook: 'Your eyes will skip one, guaranteed 👁️',
-      badge: 'COUNT THE CROSSINGS',
-      prompt: 'How many intersection points do these lines make?',
-      options,
-      ...fig,
-      answer: answerId,
-      explain: `Every pair of lines crosses exactly once here — ${spec.lines.length} lines make ${answer} crossings.`,
-    });
-  }
-
   const cubeDistractors: Record<string, number[]> = {
     'cubes-8': [6, 7, 10],
     'cubes-9': [7, 8, 11],
     'cubes-10': [8, 9, 12],
     'cubes-11': [9, 10, 13],
   };
-  for (const spec of CUBE_SPECS) {
-    const answer = totalCubes(spec.heights);
-    const values = [...cubeDistractors[spec.id], answer].sort((a, b) => a - b);
-    const { options, answerId } = numberOptions(values, answer);
-    const fig = cubesFigure(spec);
-    posts.push({
-      id: spec.id,
-      hook: 'Don’t forget the cubes you can’t see 🧊',
-      badge: 'HIDDEN CUBES INSIDE',
-      prompt: 'The stack is solid — how many cubes in total, hidden ones included?',
-      options,
-      ...fig,
-      answer: answerId,
-      explain: `Add the columns: every stack needs cubes underneath, so the total is ${answer}.`,
-    });
-  }
+  return [
+    squaresPost(3, [9, 13, 15]),
+    squaresPost(4, [16, 24, 28]),
+    squaresPost(5, [40, 50, 62]),
+    trianglesPost(3, [9, 11, 15]),
+    trianglesPost(4, [16, 24, 31]),
+    trianglesPost(5, [35, 44, 52]),
+    ...ROTATION_SPECS.map(rotationPost),
+    ...MIRROR_SPECS.map(mirrorPost),
+    ...LINE_SPECS.map((spec) => linesPost(spec, lineDistractors[spec.id])),
+    ...CUBE_SPECS.map((spec) => cubesPost(spec, cubeDistractors[spec.id])),
+  ];
+}
 
-  return posts;
+/**
+ * Line puzzles where NOT every pair crosses — the trap is assuming
+ * "n lines → n(n−1)/2". Coordinates were chosen so every crossing sits
+ * ≥ 95 px from the next and no endpoint grazes another line, so the
+ * count is unambiguous on screen; the answer is computed, never typed.
+ */
+export const EXTRA_LINE_SPECS: LineSpec[] = [
+  {
+    id: 'lines-5-grid',
+    lines: [
+      [60, 120, 790, 120],
+      [60, 380, 790, 380],
+      [200, 30, 200, 480],
+      [620, 30, 620, 480],
+      [300, 470, 520, 30],
+    ],
+  },
+  {
+    id: 'lines-5-seven',
+    lines: [
+      [408, 55, 732, 457],
+      [299, 45, 189, 475],
+      [92, 370, 782, 349],
+      [111, 141, 738, 132],
+      [732, 46, 284, 466],
+    ],
+  },
+  {
+    id: 'lines-6-nine',
+    lines: [
+      [41, 153, 769, 78],
+      [449, 26, 333, 476],
+      [117, 32, 271, 481],
+      [637, 26, 643, 466],
+      [47, 475, 755, 337],
+      [104, 296, 756, 230],
+    ],
+  },
+];
+
+/** Staircase stacks (heights never rise toward the viewer) so no column hides behind another. */
+export const EXTRA_CUBE_SPECS: CubeSpec[] = [
+  { id: 'cubes-12', heights: [[3, 3, 2], [2, 1, 1]] },
+  { id: 'cubes-13', heights: [[3, 2, 2], [3, 2, 1]] },
+  { id: 'cubes-14', heights: [[4, 3], [3, 2], [1, 1]] },
+  { id: 'cubes-15', heights: [[3, 3, 3], [2, 2, 1], [1, 0, 0]] },
+];
+
+/** Puzzles added after the original 24 — used by the variety cadence only. */
+function buildExtraPool(): ShapePost[] {
+  const lineDistractors: Record<string, number[]> = {
+    'lines-5-grid': [8, 9, 10],
+    'lines-5-seven': [6, 9, 10],
+    'lines-6-nine': [7, 12, 15],
+  };
+  const cubeDistractors: Record<string, number[]> = {
+    'cubes-12': [9, 10, 11],
+    'cubes-13': [11, 14, 16],
+    'cubes-14': [10, 12, 16],
+    'cubes-15': [11, 16, 18],
+  };
+  return [
+    squaresPost(6, [36, 64, 78]),
+    trianglesPost(6, [48, 64, 96]),
+    ...EXTRA_LINE_SPECS.map((spec) => linesPost(spec, lineDistractors[spec.id])),
+    ...EXTRA_CUBE_SPECS.map((spec) => cubesPost(spec, cubeDistractors[spec.id])),
+  ];
 }
 
 export const SHAPE_POSTS: ShapePost[] = buildPool();
+export const EXTRA_SHAPE_POSTS: ShapePost[] = buildExtraPool();
 
 // ---------------------------------------------------------------------------
 // Recolouring for the mural renderer

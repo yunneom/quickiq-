@@ -198,7 +198,12 @@ describe('current cadence (from the epoch): one a day, 3 shape days then 1 regul
     for (let d = E; keys.length < baitPoolSize(); d++) {
       const plan = plansForDay(d)[0];
       assert.ok(plan);
-      if (!plan.key.startsWith('bait-shape-') && !plan.key.startsWith('q-')) keys.push(plan.key);
+      if (
+        !plan.key.startsWith('bait-shape-') &&
+        !plan.key.startsWith('bait-riddle-') &&
+        !plan.key.startsWith('q-')
+      )
+        keys.push(plan.key);
       assert.ok(d - E < baitPoolSize() * 20, 'text baits stopped appearing');
     }
     assert.equal(new Set(keys).size, baitPoolSize());
