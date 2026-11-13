@@ -37,7 +37,7 @@ export function ExplanationsAccordion({ sessionId }: Props) {
   const t = useTranslations('result');
   const [rows, setRows] = useState<Row[] | null>(null);
   const [openIdx, setOpenIdx] = useState<number | null>(null);
-  const [err, setErr] = useState<string | null>(null);
+  const [err, setErr] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -48,13 +48,14 @@ export function ExplanationsAccordion({ sessionId }: Props) {
           { cache: 'no-store' },
         );
         if (!res.ok) {
-          setErr(`HTTP ${res.status}`);
+          if (!cancelled) setErr(true);
           return;
         }
         const data = (await res.json()) as { rows: Row[] };
         if (!cancelled) setRows(data.rows);
       } catch (e) {
-        if (!cancelled) setErr(String(e));
+        console.error(e);
+        if (!cancelled) setErr(true);
       }
     })();
     return () => {
@@ -75,7 +76,7 @@ export function ExplanationsAccordion({ sessionId }: Props) {
         </p>
       )}
       {err && (
-        <p className="mt-3 text-center text-xs text-red-500">{err}</p>
+        <p className="mt-3 text-center text-sm text-gray-500">{t('explanationsError')}</p>
       )}
 
       {rows && (

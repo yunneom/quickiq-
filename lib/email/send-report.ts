@@ -1,7 +1,8 @@
+import { getSiteUrl } from '@/lib/site-url';
 import { Resend } from 'resend';
 import * as Sentry from '@sentry/nextjs';
 import { renderReportPdf } from '@/lib/pdf/render';
-import { getQuestions } from '@/lib/questions';
+import { questionsForAnswers } from '@/lib/questions';
 import { getSession } from '@/lib/session-store';
 import type { ScoreResult, AnswerInput } from '@/lib/scoring';
 import {
@@ -19,7 +20,9 @@ interface SendInput {
   result?: ScoreResult;
 }
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://7iq.vercel.app';
+// Same resolution as sitemap/canonicals — the old hardcoded fallback
+// pointed report links at a retired preview domain.
+const APP_URL = getSiteUrl();
 
 const subject = (locale: 'ko' | 'en') =>
   locale === 'ko'
@@ -181,7 +184,13 @@ export async function sendReport(input: SendInput): Promise<void> {
   // Resolve result + answers (memory in dev, Supabase in prod).
   const resolved = await resolveReportData(input.sessionId, input.result);
   if (!resolved.result) {
+    // A paid buyer with no result gets no report — that needs a human.
     console.warn('[email] no result for session', input.sessionId, '— skipping');
+    Sentry.captureMessage('report email skipped: no result for paid session', {
+      level: 'error',
+      tags: { area: 'email', step: 'resolve' },
+      extra: { sessionId: input.sessionId },
+    });
     return;
   }
   // Narrowed non-optional result (guard above guarantees it's present).
@@ -190,7 +199,7 @@ export async function sendReport(input: SendInput): Promise<void> {
   // Pull the original questions + the buyer's answers so we can embed a
   // per-question breakdown in the PDF. Falls back to the summary-only PDF
   // if answers are unavailable.
-  const questions = getQuestions(input.locale);
+  const questions = questionsForAnswers(input.locale, resolved.answers ?? []);
   const answers: AnswerInput[] | undefined = resolved.answers;
 
   let pdfBuffer: Buffer | null = null;
@@ -209,7 +218,7 @@ export async function sendReport(input: SendInput): Promise<void> {
 
   if (!RESEND_KEY) {
     console.log(
-      `[email] dev-mode (no RESEND_API_KEY). Would send to ${input.email} — PDF ${pdfBuffer ? `${pdfBuffer.length} bytes` : 'unavailable'}`,
+      `[email] dev-mode (no RESEND_API_KEY). Would send report for ${input.sessionId} — PDF ${pdfBuffer ? `${pdfBuffer.length} bytes` : 'unavailable'}`,
     );
     return;
   }
@@ -245,6 +254,10 @@ export async function sendReport(input: SendInput): Promise<void> {
     }
     try {
       const sent = await send();
+      // Resend v4 reports a rejected send (unverified domain, rate limit,
+      // bad address) as { error } instead of throwing — without this the
+      // buyer gets nothing and the log says 'sent'.
+      if (sent?.error) throw new Error(`resend: ${sent.error.name}: ${sent.error.message}`);
       await logEmail(input, 'sent', sent?.data?.id, null);
       if (attempt > 0) {
         console.info(`[email] resend recovered on attempt ${attempt + 1}`);

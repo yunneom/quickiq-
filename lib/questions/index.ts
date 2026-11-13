@@ -64,6 +64,26 @@ export function getQuestions(locale: string): Question[] {
   return picked.map((q, idx) => ({ ...q, order_index: idx + 1 }));
 }
 
+/**
+ * The question set a finished session must be scored and reported
+ * against. In fixed mode that is simply the locale's set. In shuffle
+ * mode getQuestions() draws a NEW random set on every call, so scoring
+ * with it graded users on questions they never saw — use the ids they
+ * actually answered instead.
+ */
+export function questionsForAnswers(
+  locale: string,
+  answers: ReadonlyArray<{ question_id: string }>,
+): Question[] {
+  if (POOL_MODE !== 'shuffle') return getQuestions(locale);
+  return answers
+    .map((a, idx) => {
+      const q = getQuestionById(a.question_id);
+      return q ? { ...q, order_index: idx + 1 } : null;
+    })
+    .filter((q): q is Question => q !== null);
+}
+
 export function getQuestionById(id: string): Question | undefined {
   return [
     ...dummyKoQuestions,

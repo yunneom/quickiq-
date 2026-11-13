@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/nextjs';
 import { NextResponse } from 'next/server';
 import { getQuestions } from '@/lib/questions';
 import { createSession, updateSession } from '@/lib/session-store';
@@ -61,7 +62,16 @@ export const POST = withErrorHandling('test/start', async (req: Request) => {
         questions: getQuestions(locale),
       });
     } catch (err) {
-      console.error('[test/start] Supabase insert failed, falling back to memory:', err);
+      // No memory fallback in production: submit/result read Supabase, so
+      // a memory-only session fails 30 questions later as
+      // "session_not_found". A 503 now lets the client retry or show an
+      // honest error before the user invests any time.
+      Sentry.captureException(err, { tags: { area: 'test', step: 'start' } });
+      console.error('[test/start] Supabase insert failed:', err);
+      return NextResponse.json(
+        { error: 'temporarily_unavailable' },
+        { status: 503, headers: { 'Retry-After': '5' } },
+      );
     }
   }
 

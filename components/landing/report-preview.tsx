@@ -26,8 +26,8 @@ export function ReportPreview() {
         <p className="text-[10px] uppercase tracking-widest opacity-80">
           {tr('title')}
         </p>
-        <p className="mt-1 text-3xl font-extrabold">상위 15.9%</p>
-        <p className="text-xs opacity-80">추정 IQ 115</p>
+        <p className="mt-1 text-3xl font-extrabold">{t('previewTop', { pct: '15.9' })}</p>
+        <p className="text-xs opacity-80">{t('previewIq', { iq: 115 })}</p>
       </div>
       <div className="mt-3 space-y-2">
         {rows.map((r) => (

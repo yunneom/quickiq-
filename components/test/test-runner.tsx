@@ -89,6 +89,9 @@ export function TestRunner({ locale }: Props) {
   const [answers, setAnswers] = useState<AnswerInput[]>([]);
   const [secondsLeft, setSecondsLeft] = useState(PER_QUESTION_SECONDS);
   const [transitioning, setTransitioning] = useState(false);
+  const [submitFailed, setSubmitFailed] = useState(false);
+  const [startFailed, setStartFailed] = useState(false);
+  const [startAttempt, setStartAttempt] = useState(0);
 
   const questionStartedAtRef = useRef<number>(Date.now());
   const advancingRef = useRef(false);
@@ -113,12 +116,25 @@ export function TestRunner({ locale }: Props) {
           return;
         }
 
-        const res = await fetch('/api/test/start', {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ locale, utm: readUtm() }),
-        });
-        if (!res.ok) throw new Error('start_failed');
+        // Retry a transient failure a couple of times before showing the
+        // error card — router.refresh() never re-ran this effect, so the
+        // old fallback left the skeleton spinning forever.
+        let res: Response | null = null;
+        for (let attempt = 0; attempt < 3 && !cancelled; attempt++) {
+          if (attempt > 0) await new Promise((r) => setTimeout(r, 1500 * attempt));
+          try {
+            res = await fetch('/api/test/start', {
+              method: 'POST',
+              headers: { 'content-type': 'application/json' },
+              body: JSON.stringify({ locale, utm: readUtm() }),
+            });
+            if (res.ok || res.status < 500) break;
+          } catch (e) {
+            console.error(e);
+            res = null;
+          }
+        }
+        if (!res?.ok) throw new Error('start_failed');
         const data: StartResponse = await res.json();
         if (cancelled) return;
         setSessionId(data.sessionId);
@@ -129,13 +145,13 @@ export function TestRunner({ locale }: Props) {
         questionStartedAtRef.current = Date.now();
       } catch (e) {
         console.error(e);
-        setTimeout(() => router.refresh(), 1000);
+        if (!cancelled) setStartFailed(true);
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [locale, router]);
+  }, [locale, router, startAttempt]);
 
   // ─── Dynamic document.title so a backgrounded tab shows progress ───
   // Tabs like "12/30 · IQ Test" make it easy to find the right tab in a
@@ -281,25 +297,35 @@ export function TestRunner({ locale }: Props) {
   async function submit(finalAnswers: AnswerInput[]) {
     if (!sessionId) return;
     setPhase('submitting');
+    setSubmitFailed(false);
     trackEvent('CompleteTest');
     trackFunnel('IQ_TestSubmitted');
-    // Resume blob no longer needed once we're submitting.
-    clearResume(locale);
-    try {
-      const res = await fetch('/api/test/submit', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ sessionId, answers: finalAnswers }),
-      });
-      if (!res.ok) throw new Error('submit_failed');
-      // The phase change to 'submitting' already tore down the beforeunload
-      // listener via the useEffect cleanup; navigation can proceed cleanly.
-      router.replace(`/${locale}/result/${sessionId}`);
-    } catch (e) {
-      console.error(e);
-      setPhase('running');
-      advancingRef.current = false;
+    // A transient 5xx or a dropped connection must not cost the user 30
+    // answers: retry with backoff, keep the resume blob until the server
+    // has the answers, and treat "already completed" (an earlier attempt
+    // whose response was lost) as success.
+    for (let attempt = 0; attempt < 3; attempt++) {
+      if (attempt > 0) await new Promise((r) => setTimeout(r, 1500 * attempt));
+      try {
+        const res = await fetch('/api/test/submit', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ sessionId, answers: finalAnswers }),
+        });
+        if (res.ok || res.status === 409) {
+          clearResume(locale);
+          // The phase change to 'submitting' already tore down the beforeunload
+          // listener via the useEffect cleanup; navigation can proceed cleanly.
+          router.replace(`/${locale}/result/${sessionId}`);
+          return;
+        }
+        // 4xx other than 409 will not get better by retrying.
+        if (res.status < 500) break;
+      } catch (e) {
+        console.error(e);
+      }
     }
+    setSubmitFailed(true);
   }
 
   const progress = useMemo(
@@ -310,6 +336,25 @@ export function TestRunner({ locale }: Props) {
     [index, selected, questions.length],
   );
 
+  if (phase === 'loading' && startFailed) {
+    return (
+      <div className="grid min-h-[60vh] place-items-center px-5 text-center">
+        <div className="flex flex-col items-center gap-4">
+          <p className="text-base text-gray-700">{t('startError')}</p>
+          <button
+            type="button"
+            className="rounded-xl bg-brand-600 px-6 py-3 text-base font-semibold text-white"
+            onClick={() => {
+              setStartFailed(false);
+              setStartAttempt((n) => n + 1);
+            }}
+          >
+            {t('submitRetry')}
+          </button>
+        </div>
+      </div>
+    );
+  }
   if (phase === 'loading') {
     // Skeleton screen mirroring the test runner layout so the first paint
     // doesn't look "broken" while the start API call is in flight.
@@ -334,6 +379,22 @@ export function TestRunner({ locale }: Props) {
           ))}
         </ul>
         <p className="mt-6 text-center text-xs text-gray-400">{t('loading')}</p>
+      </div>
+    );
+  }
+  if (phase === 'submitting' && submitFailed) {
+    return (
+      <div className="grid min-h-[60vh] place-items-center px-5 text-center">
+        <div className="flex flex-col items-center gap-4">
+          <p className="text-base text-gray-700">{t('submitError')}</p>
+          <button
+            type="button"
+            className="rounded-xl bg-brand-600 px-6 py-3 text-base font-semibold text-white"
+            onClick={() => submit(answers)}
+          >
+            {t('submitRetry')}
+          </button>
+        </div>
       </div>
     );
   }

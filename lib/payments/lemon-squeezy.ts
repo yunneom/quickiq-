@@ -94,10 +94,15 @@ export function verifyWebhookSignature(
   // Operational kill switch: WEBHOOK_VERIFY_DISABLED=1 lets webhook calls
   // through unchecked. Only intended for diagnosing live signature
   // mismatches — remove the env immediately after debugging.
-  if (process.env.WEBHOOK_VERIFY_DISABLED === '1') {
+  // Neither escape hatch exists in production: an unsigned "order_created"
+  // marks a session paid and emails the report, so accepting one there
+  // hands out the paid product to anyone who can POST JSON.
+  const production = process.env.VERCEL_ENV === 'production';
+  if (process.env.WEBHOOK_VERIFY_DISABLED === '1' && !production) {
     return { ok: true, reason: 'disabled_via_env' };
   }
   if (!WEBHOOK_SECRET) {
+    if (production) return { ok: false, reason: 'no_secret_configured' };
     // Dev-mode: accept anything so the mock checkout path can complete.
     return { ok: true, reason: 'no_secret_configured' };
   }

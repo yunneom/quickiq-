@@ -11,7 +11,7 @@
     "cta": "Start free · 7 minutes",
     "trustOne": "30 psychometric questions · 4-domain analysis",
     "trustTwo": "Instant result on submission",
-    "trustThree": "$3.70 PDF report — includes all 30 explanations",
+    "trustThree": "$3.70 one-time PDF report with all 30 explanations — no subscription, ever",
     "trustFour": "No sign-up — anonymous session",
     "inlineDisclaimer": "Estimated score · Not a clinical diagnosis",
     "disclaimer": "Estimated score, not a clinical diagnosis.",
@@ -29,7 +29,7 @@
     "faqs": [
       {
         "q": "Is it really free?",
-        "a": "Yes. Taking the 30 questions, getting your estimated IQ and top percentile — all free. Only the detailed PDF report (per-category scores, age-group comparison, all 30 explanations) is paid at $3.70."
+        "a": "Yes. Taking the 30 questions, getting your estimated IQ and top percentile — all free. Only the detailed PDF report (per-category scores, response-time analysis, all 30 explanations) is paid at $3.70."
       },
       {
         "q": "How accurate is the score?",
@@ -71,7 +71,9 @@
     "socialArrival": {
       "title": "You cracked one puzzle. Can you handle 30?",
       "body": "Today's challenge was 1 question. The full test is 30 — and ends with your estimated IQ and percentile. Free, 7 minutes."
-    }
+    },
+    "previewTop": "Top {pct}%",
+    "previewIq": "Estimated IQ {iq}"
   },
   "test": {
     "loading": "Preparing your test...",
@@ -95,7 +97,10 @@
     "noBack": "You cannot return to previous questions.",
     "completing": "Scoring...",
     "cheerHalf": "Halfway there! Your domain breakdown is right around the corner.",
-    "cheerFinal": "Final stretch — only 5 left. Stay sharp!"
+    "cheerFinal": "Final stretch — only 5 left. Stay sharp!",
+    "submitError": "We couldn't submit your answers. They're saved — tap to try again.",
+    "submitRetry": "Try again",
+    "startError": "We couldn't start the test just now. Please try again in a moment."
   },
   "result": {
     "title": "Your Estimated IQ",
@@ -104,7 +109,7 @@
     "estimatedIqLabel": "Estimated IQ",
     "estimatedNotice": "Estimated score · Not a medical diagnosis",
     "categoryTitle": "Score by category",
-    "lockNotice": "Per-category scores, age-group comparison, and 30-question explanations — all in your PDF report.",
+    "lockNotice": "Per-category scores, response-time analysis, and 30-question explanations — all in your PDF report.",
     "buyCta": "$3.70 · Get the full report (PDF · all 30 explained)",
     "buyCtaUrgent": "$3.70 now · 30 explanations + domain scores",
     "shareTitle": "Share your result",
@@ -192,7 +197,8 @@
     "explanationsCorrect": "Correct",
     "explanationsWrong": "Wrong",
     "explanationsChose": "Chose",
-    "explanationsAnswer": "Answer"
+    "explanationsAnswer": "Answer",
+    "explanationsError": "Couldn't load the explanations right now. They're also in your PDF report."
   },
   "checkout": {
     "title": "Get your full report",

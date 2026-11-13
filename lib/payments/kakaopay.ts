@@ -47,6 +47,10 @@ function authHeaders(): Record<string, string> {
 }
 
 export function isKakaopayConfigured(): boolean {
+  // In production a missing KAKAOPAY_CID would silently fall back to the
+  // official TEST cid: checkouts "succeed", no money arrives, and the
+  // report goes out anyway. Treat that as not configured.
+  if (process.env.VERCEL_ENV === 'production' && !process.env.KAKAOPAY_CID?.trim()) return false;
   return Boolean(SECRET_KEY);
 }
 
