@@ -202,6 +202,28 @@ export async function GET(req: Request) {
     return NextResponse.json({ skipped: 'quota_exhausted', ...quota.data });
   }
 
+  // Preflight: one cheap ledger read. If Supabase is down or restricted
+  // (HTTP 402 "exceed_storage_size_quota"), skip the whole run — the
+  // asset imports and the reel encode are the expensive parts and none
+  // of their output could be stored.
+  if (isSupabaseConfigured()) {
+    const { error: preflight } = await createSupabaseAdmin()
+      .from('ig_posts')
+      .select('id')
+      .limit(1);
+    if (preflight) {
+      Sentry.captureMessage('ig cron skipped: supabase unavailable', {
+        level: 'error',
+        tags: { area: 'instagram', step: 'preflight' },
+        extra: { message: preflight.message },
+      });
+      return NextResponse.json(
+        { skipped: 'supabase_unavailable', reason: preflight.message },
+        { status: 503 },
+      );
+    }
+  }
+
   const siteUrl = getSiteUrl();
   const hardDeadline = startedAt + TOTAL_BUDGET_MS;
   const budget = Math.min(MAX_POSTS_PER_RUN, quotaRemaining);
@@ -429,11 +451,17 @@ async function publishSlot(args: {
           return { slot, postKey, status: 'skipped', reason: 'already_posted' };
         }
       } else {
+        // Without a claim there is no idempotency and, in practice, no
+        // storage either (a restricted Supabase fails both). Building the
+        // reel anyway burned ~200 s of CPU per run for an upload that
+        // could not happen — twice a day — which is what exhausted the
+        // Vercel Hobby CPU quota and took the whole site down. Stop here.
         Sentry.captureMessage('ig cron ledger insert failed', {
-          level: 'warning',
+          level: 'error',
           tags: { area: 'instagram', step: 'ledger' },
           extra: { postKey, message: error.message },
         });
+        return { slot, postKey, status: 'failed', reason: `ledger: ${error.message}` };
       }
     }
   }

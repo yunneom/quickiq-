@@ -232,6 +232,10 @@ Invoke-RestMethod -Method Post -Headers $h -Body $body "https://iq.dailyenterkr.
 프로젝트 전체가 HTTP 402로 제한됨(테스트 저장·결제 처리 포함).
 - 이제 4000kbps(약 15MB)로 인코딩하고, 매 크론 실행마다 3일 지난
   `reels/`·`cards/`를 자동 삭제합니다(IG·Threads는 게시 시 사본을 가져감).
+- 2차 피해: Supabase가 막힌 동안에도 크론이 매번 릴스를 끝까지 인코딩(실행당
+  CPU 약 200초, 하루 2회)하고 업로드에서 실패 → Vercel Hobby의 월 4 CPU-시간을
+  소진 → 사이트 전체가 `DEPLOYMENT_DISABLED`(402)로 정지. 이제 크론은 시작 시
+  Supabase를 한 번 확인하고, 안 되면 아무 작업도 하지 않고 끝냅니다.
 - 이미 제한된 상태라면 코드만으로는 못 풉니다: Supabase 대시보드 → Storage →
   `ig-media` → `reels` 폴더 삭제(또는 Usage에서 제한 사유 확인) 후 정상화.
 
