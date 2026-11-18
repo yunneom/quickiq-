@@ -4,6 +4,7 @@ import { isSupabaseConfigured, createSupabaseAdmin } from '@/lib/supabase/server
 import { withErrorHandling } from '@/lib/api/with-error-handling';
 
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 export const GET = withErrorHandling('test/result', async (req: Request) => {
   const sessionId = new URL(req.url).searchParams.get('sessionId');

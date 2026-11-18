@@ -26,7 +26,7 @@ export function SocialArrival() {
   if (!show) return null;
   return (
     <div
-      className="mb-6 rounded-2xl bg-gray-900 px-4 py-4 text-white"
+      className="mt-6 rounded-2xl bg-gray-900 px-4 py-4 text-white"
       data-testid="social-arrival"
     >
       <p className="text-base font-bold leading-snug">🧠 {t('title')}</p>

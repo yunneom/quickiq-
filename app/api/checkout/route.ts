@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/nextjs';
 import { NextResponse } from 'next/server';
 import { createCheckoutUrl } from '@/lib/payments/lemon-squeezy';
 import { isTossConfigured, tossClientKey } from '@/lib/payments/toss';
@@ -109,14 +110,17 @@ export const POST = withErrorHandling('checkout', async (req: Request) => {
       return NextResponse.json({ error: 'kakaopay_ready_failed', reason: ready.reason }, { status: 502 });
     }
     if (isSupabaseConfigured()) {
-      try {
-        const admin = createSupabaseAdmin();
-        await admin
-          .from('test_sessions')
-          .update({ kakao_tid: ready.tid })
-          .eq('id', body.sessionId);
-      } catch (err) {
-        console.error('[checkout] failed to persist kakao_tid:', err);
+      // approve needs this tid; if it isn't stored the buyer pays and then
+      // lands on "session_lost". Fail now, before any money moves.
+      const admin = createSupabaseAdmin();
+      const { error: tidErr } = await admin
+        .from('test_sessions')
+        .update({ kakao_tid: ready.tid })
+        .eq('id', body.sessionId);
+      if (tidErr) {
+        console.error('[checkout] failed to persist kakao_tid:', tidErr);
+        Sentry.captureException(tidErr, { tags: { area: 'checkout', step: 'kakao_tid' } });
+        return NextResponse.json({ error: 'temporarily_unavailable' }, { status: 503 });
       }
     }
     updateSession(body.sessionId, { kakao_tid: ready.tid });

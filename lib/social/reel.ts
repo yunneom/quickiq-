@@ -63,6 +63,16 @@ import { loadMural, pickMuralForSlot, readMuralManifest } from './murals';
  */
 const BG_FPS = 6;
 
+/**
+ * Video bitrate. 6500 kbps made every 30s reel ~24 MB, and with every
+ * reel kept in Supabase Storage that filled the free tier's 1 GB many
+ * times over and got the whole project restricted (HTTP 402). Instagram
+ * re-encodes uploads anyway and recommends ~3.5–5 Mbps for 1080×1920;
+ * 4000 kbps is ~15 MB per reel. Old reels are also deleted now
+ * (retention.ts), so this bounds the transient footprint too.
+ */
+const REEL_KBPS = 4000;
+
 export type ReelResult =
   | {
       ok: true;
@@ -172,7 +182,7 @@ async function buildMuralReel(args: {
   encoder.width = REEL.width;
   encoder.height = REEL.height;
   encoder.frameRate = REEL.fps;
-  encoder.kbps = 6500;
+  encoder.kbps = REEL_KBPS;
   encoder.groupOfPictures = REEL.fps;
   encoder.speed = 7;
   encoder.initialize();
@@ -288,7 +298,7 @@ export async function buildReelVideo(args: {
     encoder.width = REEL.width;
     encoder.height = REEL.height;
     encoder.frameRate = REEL.fps;
-    encoder.kbps = 6500;
+    encoder.kbps = REEL_KBPS;
     // Closed 1s GOPs — dense seek points, within Instagram's tolerance.
     encoder.groupOfPictures = REEL.fps;
     encoder.speed = 7;

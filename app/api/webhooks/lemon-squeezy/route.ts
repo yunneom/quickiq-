@@ -113,17 +113,30 @@ export async function POST(req: Request) {
         status: 'paid',
         raw_payload: payload,
       });
+      const markPaid = () =>
+        admin
+          .from('test_sessions')
+          .update({ email, is_paid: true, paid_at: new Date().toISOString() })
+          .eq('id', sessionId)
+          .not('is_paid', 'is', true);
       if (dupErr) {
-        // Code 23505 = unique_violation → already processed
+        // Code 23505 = unique_violation → already processed. Re-apply the
+        // (idempotent) paid flag anyway: if the first attempt recorded the
+        // payment but failed to flag the session, this retry heals it
+        // instead of leaving a paying buyer locked out forever.
         if (String(dupErr.code) === '23505') {
+          await markPaid();
           return NextResponse.json({ ok: true, duplicate: true });
         }
         throw dupErr;
       }
-      await admin
-        .from('test_sessions')
-        .update({ email, is_paid: true, paid_at: new Date().toISOString() })
-        .eq('id', sessionId);
+      const { error: paidErr } = await markPaid();
+      if (paidErr) {
+        // Payment recorded, session not unlocked: 500 makes LS retry, and
+        // the retry lands in the duplicate branch above, which re-flags.
+        Sentry.captureException(paidErr, { tags: { area: 'webhook', step: 'mark_paid' }, extra: { sessionId } });
+        return NextResponse.json({ error: 'mark_paid_failed' }, { status: 500 });
+      }
     } catch (err) {
       console.error('[webhook] supabase write failed:', err);
       Sentry.captureException(err, { tags: { area: 'webhook', step: 'supabase' }, extra: { sessionId } });

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getQuestions } from '@/lib/questions';
+import { questionsForAnswers } from '@/lib/questions';
 import { getSession, updateSession } from '@/lib/session-store';
 import { scoreSession, type AnswerInput } from '@/lib/scoring';
 import { isSupabaseConfigured, createSupabaseAdmin } from '@/lib/supabase/server';
@@ -61,7 +61,7 @@ export const POST = withErrorHandling('test/submit', async (req: Request) => {
       if (session.completed_at) {
         return NextResponse.json({ error: 'already_completed' }, { status: 409 });
       }
-      const questions = getQuestions(session.locale);
+      const questions = questionsForAnswers(session.locale, body.answers);
       const result = scoreSession(questions, body.answers);
 
       const { error: e2 } = await admin
@@ -99,7 +99,7 @@ export const POST = withErrorHandling('test/submit', async (req: Request) => {
   if (session.completed_at) {
     return NextResponse.json({ error: 'already_completed' }, { status: 409 });
   }
-  const questions = getQuestions(session.locale);
+  const questions = questionsForAnswers(session.locale, body.answers);
   const result = scoreSession(questions, body.answers);
   updateSession(session.id, {
     answers: body.answers,

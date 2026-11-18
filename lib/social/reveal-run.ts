@@ -4,8 +4,14 @@
  */
 
 import { createSupabaseAdmin, isSupabaseConfigured } from '@/lib/supabase/server';
-import { postComment } from './instagram';
-import { parsePostKey, planForLedgerKey, revealComment, revealDueDays } from './reveal';
+import { listComments, postComment } from './instagram';
+import {
+  parsePostKey,
+  planForLedgerKey,
+  revealComment,
+  revealDueDays,
+  tallyVotes,
+} from './reveal';
 
 /** Rows examined per run — the ledger holds ≤1 post/day now, 3/day before. */
 const REVEAL_BATCH = 12;
@@ -64,7 +70,19 @@ export async function revealDueAnswers(args: {
       notes.push(`${row.post_key}: plan_mismatch`);
       continue;
     }
-    const text = revealComment(plan);
+    // Real answer split from the comments, for the "only X% got it" line.
+    // Best effort: a failed read just means no percentage.
+    const comments = await listComments(String(row.media_id)).catch(() => null);
+    if (comments && !comments.ok) notes.push(`${row.post_key}: votes: ${comments.reason}`);
+    const tally =
+      comments?.ok
+        ? tallyVotes(
+            comments.data.map((c) => ({ author: c.username ?? c.fromId, text: c.text })),
+            plan.card.options,
+          )
+        : undefined;
+    const text = revealComment(plan, tally);
+    if (tally) notes.push(`${row.post_key}: ${tally.total} answer votes`);
     if (!text) {
       notes.push(`${row.post_key}: no_answer`);
       continue;

@@ -29,6 +29,12 @@ const HEADLINES = [
   "DON'T SCROLL.\nPROVE IT FIRST.",
   'YOUR BRAIN VS\nTHIS PUZZLE',
   'LOOKS EASY.\nIT ISN\'T.',
+  // Taunts — dare the viewer directly. Still no numbers about others.
+  "BET YOU CAN'T\nSOLVE THIS",
+  'TOO HARD\nFOR YOU?',
+  'PROVE ME WRONG.\nSOLVE IT.',
+  'NOT FOR\nAVERAGE BRAINS',
+  "YOU'LL MISS IT.\nWANNA BET?",
 ] as const;
 
 /** Deterministic per day, so every frame of one reel agrees. */

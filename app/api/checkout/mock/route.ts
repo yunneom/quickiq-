@@ -14,6 +14,11 @@ export const maxDuration = 60;
  * (waitUntil + immediate response) so e2e timing stays predictable.
  */
 export async function GET(req: Request) {
+  // Dev/e2e only. In production it would mark any in-memory session paid
+  // without a payment.
+  if (process.env.VERCEL_ENV === 'production') {
+    return NextResponse.json({ error: 'not_found' }, { status: 404 });
+  }
   const u = new URL(req.url);
   const sessionId = u.searchParams.get('sessionId');
   const email = u.searchParams.get('email');

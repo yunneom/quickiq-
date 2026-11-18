@@ -1,11 +1,29 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Script from 'next/script';
+import { readConsent } from '@/lib/consent';
 
 const PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID;
 
 export function MetaPixel() {
-  if (!PIXEL_ID) return null;
+  // Same rule as GatedAnalytics: a visitor who declined cookies never
+  // loads the Pixel. Decided after mount (localStorage), re-checked when
+  // the banner choice changes in another tab.
+  const [allow, setAllow] = useState(false);
+  useEffect(() => {
+    const evaluate = () => {
+      try {
+        setAllow(readConsent() !== 'declined');
+      } catch {
+        setAllow(false);
+      }
+    };
+    evaluate();
+    window.addEventListener('storage', evaluate);
+    return () => window.removeEventListener('storage', evaluate);
+  }, []);
+  if (!PIXEL_ID || !allow) return null;
   return (
     <>
       <Script

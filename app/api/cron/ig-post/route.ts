@@ -23,6 +23,7 @@ import { readClipManifest } from '@/lib/social/clips';
 import { readMuralManifest } from '@/lib/social/murals';
 import { writeStatusSnapshot } from '@/lib/social/status';
 import { revealDueAnswers } from '@/lib/social/reveal-run';
+import { pruneOldMedia } from '@/lib/social/retention';
 import {
   FALLBACK_RESERVE_MS,
   MAX_POST_WINDOW_MS,
@@ -201,6 +202,28 @@ export async function GET(req: Request) {
     return NextResponse.json({ skipped: 'quota_exhausted', ...quota.data });
   }
 
+  // Preflight: one cheap ledger read. If Supabase is down or restricted
+  // (HTTP 402 "exceed_storage_size_quota"), skip the whole run — the
+  // asset imports and the reel encode are the expensive parts and none
+  // of their output could be stored.
+  if (isSupabaseConfigured()) {
+    const { error: preflight } = await createSupabaseAdmin()
+      .from('ig_posts')
+      .select('id')
+      .limit(1);
+    if (preflight) {
+      Sentry.captureMessage('ig cron skipped: supabase unavailable', {
+        level: 'error',
+        tags: { area: 'instagram', step: 'preflight' },
+        extra: { message: preflight.message },
+      });
+      return NextResponse.json(
+        { skipped: 'supabase_unavailable', reason: preflight.message },
+        { status: 503 },
+      );
+    }
+  }
+
   const siteUrl = getSiteUrl();
   const hardDeadline = startedAt + TOTAL_BUDGET_MS;
   const budget = Math.min(MAX_POSTS_PER_RUN, quotaRemaining);
@@ -283,6 +306,16 @@ export async function GET(req: Request) {
         )
       : null;
 
+  // Storage retention: published reels/cards are never read again, and
+  // keeping them all is what pushed Supabase past the free tier. Last,
+  // on whatever time is left.
+  const retention = testLabel
+    ? null
+    : await pruneOldMedia(hardDeadline - 3_000).catch((err: unknown) => ({
+        deleted: 0,
+        notes: [err instanceof Error ? err.message : 'retention_crashed'],
+      }));
+
   const anyFailure = outcomes.some((o) => o.status === 'failed');
   const summary = {
     ok: !anyFailure,
@@ -298,6 +331,7 @@ export async function GET(req: Request) {
     outcomes,
     answerReveals,
     ...(threadsEncore ? { threadsEncore } : {}),
+    ...(retention ? { retention } : {}),
   };
 
   // Flight recorder: park the run summary + pool/ledger state at a
@@ -406,19 +440,28 @@ async function publishSlot(args: {
             created_at: new Date().toISOString(),
           })
           .eq('post_key', postKey)
+          // A failure recorded as `ambiguous:` (IG may have committed the
+          // post before the response was lost) is never retried: missing
+          // a day beats publishing the same reel twice.
           .or(
-            `status.eq.failed,and(status.eq.publishing,created_at.lt.${staleCutoff})`,
+            `and(status.eq.failed,error.not.like.ambiguous*),and(status.eq.publishing,created_at.lt.${staleCutoff})`,
           )
           .select('id');
         if (!reclaimed || reclaimed.length === 0) {
           return { slot, postKey, status: 'skipped', reason: 'already_posted' };
         }
       } else {
+        // Without a claim there is no idempotency and, in practice, no
+        // storage either (a restricted Supabase fails both). Building the
+        // reel anyway burned ~200 s of CPU per run for an upload that
+        // could not happen — twice a day — which is what exhausted the
+        // Vercel Hobby CPU quota and took the whole site down. Stop here.
         Sentry.captureMessage('ig cron ledger insert failed', {
-          level: 'warning',
+          level: 'error',
           tags: { area: 'instagram', step: 'ledger' },
           extra: { postKey, message: error.message },
         });
+        return { slot, postKey, status: 'failed', reason: `ledger: ${error.message}` };
       }
     }
   }
@@ -497,7 +540,11 @@ async function publishSlot(args: {
       .update({
         status: published.ok ? 'published' : 'failed',
         media_id: published.ok ? published.data.id : null,
-        error: published.ok ? null : published.reason,
+        error: published.ok
+          ? null
+          : published.reason.startsWith('publish:')
+            ? `ambiguous:${published.reason}`
+            : published.reason,
         image_url: mediaUrl,
       })
       .eq('post_key', postKey);

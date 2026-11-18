@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server';
 import * as Sentry from '@sentry/nextjs';
 import { renderReportPdf } from '@/lib/pdf/render';
-import { getQuestions } from '@/lib/questions';
+import { questionsForAnswers } from '@/lib/questions';
 import { fetchPaidSessionData } from '@/lib/paid-session';
 import { withErrorHandling } from '@/lib/api/with-error-handling';
 
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 export const maxDuration = 30;
 
 /**
@@ -34,7 +35,7 @@ export const GET = withErrorHandling('test/pdf', async (req: Request) => {
     return NextResponse.json({ error: 'payment_required' }, { status: 402 });
   }
 
-  const questions = getQuestions(session.locale);
+  const questions = questionsForAnswers(session.locale, session.answers ?? []);
   let pdf: Buffer;
   try {
     pdf = await renderReportPdf({

@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { headers } from 'next/headers';
@@ -23,6 +24,12 @@ async function fetchOne(sessionId: string): Promise<ApiResponse | null> {
 }
 
 export const dynamic = 'force-dynamic';
+
+// Per-pair private page — never index it (it inherited the locale home's
+// canonical before).
+export const metadata: Metadata = {
+  robots: { index: false, follow: true },
+};
 
 export default async function ComparePage({
   params: { locale, sessionId, friendId },

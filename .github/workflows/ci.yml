@@ -32,6 +32,18 @@ jobs:
             curl -sS --max-time 20 "$BASE/$p" || echo "(unreachable)"
             echo ""
           done
+      - name: Site reachability (status line + body head)
+        # A paused Vercel project or a restricted Supabase answers 402 with
+        # the reason in the body — print it so a PR push is enough to see why.
+        run: |
+          for u in "https://iq.dailyenterkr.com/robots.txt" \
+                   "https://iq.dailyenterkr.com/en/iq" \
+                   "https://iq.dailyenterkr.com/api/stats/public"; do
+            echo "===== $u ====="
+            curl -sS --max-time 20 -o body.txt -D headers.txt -w "HTTP %{http_code}\n" "$u" || echo "(unreachable)"
+            grep -iE "^(x-vercel-error|x-vercel-id|server|content-type):" headers.txt || true
+            head -c 600 body.txt | tr -s '\n' ' '; echo ""
+          done
 
   verify:
     name: Lint · Typecheck · Build
@@ -71,7 +83,10 @@ jobs:
 
   e2e:
     name: E2E (Playwright)
-    runs-on: ubuntu-latest
+    # Pinned: ubuntu-latest moved to 26.04, where Playwright 1.60 cannot
+    # install Chromium's system deps ("does not support chromium on
+    # ubuntu26.04-x64"). Unpin once Playwright supports it.
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     needs: verify
 

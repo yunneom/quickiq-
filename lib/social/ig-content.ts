@@ -3,7 +3,7 @@ import { extraEnQuestions } from '@/lib/questions/extra-en';
 import type { Question } from '@/lib/questions/types';
 import type { Scene } from './quiz-scene';
 import type { BgScene } from './reel-bg';
-import { SHAPE_POSTS, type ShapePost } from './shape-quizzes';
+import { EXTRA_SHAPE_POSTS, SHAPE_POSTS, type ShapePost } from './shape-quizzes';
 import {
   SLOTS_PER_DAY,
   LEGACY_SLOTS_PER_DAY,
@@ -103,7 +103,8 @@ type BaitKind =
   | 'sequence'
   | 'trick'
   | 'spelling'
-  | 'shape';
+  | 'shape'
+  | 'riddle';
 
 interface BaitPost {
   /** Stable id — part of the ledger key, never reuse or rename. */
@@ -174,7 +175,7 @@ const BAIT_POSTS: BaitPost[] = [
     id: 'speed-average',
     kind: 'speed',
     hook: 'The answer is NOT 45. Prove me wrong 👇',
-    badge: '90% SAY 45',
+    badge: 'IS IT REALLY 45?',
     prompt:
       'You drive 60 km at 30 km/h, then another 60 km at 60 km/h. What is your average speed?',
     options: [
@@ -357,7 +358,7 @@ const BAIT_POSTS: BaitPost[] = [
     id: 'trick-snail',
     kind: 'speed',
     hook: 'The snail question that ruins friendships 🐌',
-    badge: '99% SAY DAY 10',
+    badge: 'IS IT REALLY DAY 10?',
     prompt:
       'A snail climbs 3 m up a 10 m well each day and slips 2 m back each night. On which day does it get out?',
     options: [
@@ -633,7 +634,7 @@ const BAIT_POSTS: BaitPost[] = [
     id: 'pct-average',
     kind: 'percent',
     hook: 'Averages hide things. Find the missing number 🔍',
-    badge: 'TOP 10% ONLY',
+    badge: 'SHARP MINDS ONLY',
     prompt:
       'Five numbers average 10. Remove one and the remaining four average 12. Which number was removed?',
     options: [
@@ -704,7 +705,7 @@ const BAIT_POSTS: BaitPost[] = [
     id: 'seq-double-plus',
     kind: 'sequence',
     hook: 'Spot the pattern in 10 seconds ⏱️',
-    badge: 'TOP 10% ONLY',
+    badge: 'SHARP MINDS ONLY',
     prompt: 'What comes next? 2, 3, 5, 9, 17, ?',
     options: [
       { id: 'A', text: '26' },
@@ -816,7 +817,7 @@ const BAIT_POSTS: BaitPost[] = [
     id: 'seq-factorial',
     kind: 'sequence',
     hook: 'This one explodes fast 💥',
-    badge: 'ONLY 1% SEE IT',
+    badge: 'CAN YOU SEE IT?',
     prompt: 'What comes next? 1, 2, 6, 24, 120, ?',
     options: [
       { id: 'A', text: '600' },
@@ -847,8 +848,8 @@ const BAIT_POSTS: BaitPost[] = [
   {
     id: 'seq-look-say',
     kind: 'sequence',
-    hook: 'Only 1% see the pattern 🔍',
-    badge: 'ONLY 1% SEE IT',
+    hook: 'Can you spot the pattern? 🔍',
+    badge: 'CAN YOU SEE IT?',
     prompt: 'What comes next? 1, 11, 21, 1211, 111221, ?',
     options: [
       { id: 'A', text: '312211' },
@@ -880,8 +881,8 @@ const BAIT_POSTS: BaitPost[] = [
   {
     id: 'math-pattern-sum',
     kind: 'trick',
-    hook: '99% of people failed this test 😳',
-    badge: '99% FAIL THIS',
+    hook: 'Prove you can solve this 😳',
+    badge: 'PROVE IT',
     prompt: 'If 2 + 3 = 10, 7 + 2 = 63, and 6 + 5 = 66, then 8 + 4 = ?',
     options: [
       { id: 'A', text: '96' },
@@ -960,6 +961,8 @@ const BAIT_POSTS: BaitPost[] = [
     id: 'trick-batball',
     kind: 'trick',
     hook: 'The most failed question in psychology 🧠',
+    // Real figure: Frederick (2005), "Cognitive Reflection and Decision
+    // Making" — over half of Harvard/MIT/Princeton students answered 10¢.
     badge: '50% OF HARVARD GOT IT WRONG',
     prompt:
       'A bat and a ball cost $1.10 together. The bat costs $1.00 more than the ball. How much is the ball?',
@@ -1021,7 +1024,7 @@ const BAIT_POSTS: BaitPost[] = [
   {
     id: 'trick-race',
     kind: 'trick',
-    hook: '90% fall for this one.',
+    hook: 'Careful — this one is a trap.',
     badge: null,
     prompt: 'In a race, you overtake the runner in 2nd place. What place are you in now?',
     options: [
@@ -1186,6 +1189,246 @@ const BAIT_POSTS: BaitPost[] = [
   },
 ];
 
+// ---------------------------------------------------------------------------
+// Riddles — lateral-thinking and wordplay posts, the format behind the
+// big 2026 riddle accounts (rebus/riddle reels, "Teresa's daughter",
+// "three rooms"). Text-first, readable on mute. Every one has exactly one
+// defensible answer among its options: where a classic riddle is
+// ambiguous (Teresa: the speaker could be a father) the prompt pins it
+// down. Used only by the variety cadence (from VARIETY_EPOCH).
+// ---------------------------------------------------------------------------
+
+const RIDDLE_POSTS: BaitPost[] = [
+  {
+    id: 'riddle-teresa',
+    kind: 'riddle',
+    hook: 'Read it twice. Then answer 👀',
+    badge: 'FAMILY TREE TRAP',
+    prompt: "I'm a woman. If Teresa's daughter is my daughter's mother, who am I to Teresa?",
+    options: [
+      { id: 'A', text: 'Her mother' },
+      { id: 'B', text: 'Her daughter' },
+      { id: 'C', text: 'Her granddaughter' },
+      { id: 'D', text: 'Her sister' },
+    ],
+    answer: 'B',
+    explain: "My daughter's mother is me — so Teresa's daughter is me.",
+  },
+  {
+    id: 'riddle-rooms',
+    kind: 'riddle',
+    hook: 'Pick a room. Your life depends on it 🚪',
+    badge: 'CHOOSE WISELY',
+    prompt:
+      "To go free you must cross one room: a fire that never goes out, assassins with loaded crossbows, or lions that haven't eaten in 3 years. Which room is safest?",
+    options: [
+      { id: 'A', text: 'The fire' },
+      { id: 'B', text: 'The assassins' },
+      { id: 'C', text: 'The lions' },
+      { id: 'D', text: 'None of them' },
+    ],
+    answer: 'C',
+    explain: "Lions that haven't eaten in 3 years are long dead.",
+  },
+  {
+    id: 'riddle-letter-m',
+    kind: 'riddle',
+    hook: "It's right in front of you 🔤",
+    badge: 'WORDPLAY',
+    prompt: 'What appears once in a minute, twice in a moment, but never in a thousand years?',
+    options: [
+      { id: 'A', text: 'The letter M' },
+      { id: 'B', text: 'A second' },
+      { id: 'C', text: 'The letter E' },
+      { id: 'D', text: 'A heartbeat' },
+    ],
+    answer: 'A',
+    explain: 'Spell it out: one M in "minute", two in "moment", none in "a thousand years".',
+  },
+  {
+    id: 'riddle-parking',
+    kind: 'riddle',
+    hook: 'Stop. Look again 🚗',
+    badge: 'LOOK AT IT DIFFERENTLY',
+    prompt: 'A car is parked over one space. What number is under it?',
+    options: [
+      { id: 'A', text: '78' },
+      { id: 'B', text: '87' },
+      { id: 'C', text: '89' },
+      { id: 'D', text: '108' },
+    ],
+    scene: { kind: 'sequence', items: ['16', '06', '68', '88', '?', '98'] },
+    answer: 'B',
+    explain: 'Turn it upside down: 86, 87, 88, 89, 90, 91 — the car is on 87.',
+  },
+  {
+    id: 'riddle-mary',
+    kind: 'riddle',
+    hook: 'The answer is in the question 🤫',
+    badge: 'READ CAREFULLY',
+    prompt: "Mary's father has five daughters: Nana, Nene, Nini and Nono. What is the fifth daughter's name?",
+    options: [
+      { id: 'A', text: 'Nunu' },
+      { id: 'B', text: 'Mary' },
+      { id: 'C', text: 'Nina' },
+      { id: 'D', text: 'Nora' },
+    ],
+    answer: 'B',
+    explain: "They're Mary's father's daughters — Mary is the fifth.",
+  },
+  {
+    id: 'riddle-weekdays',
+    kind: 'riddle',
+    hook: 'Easy… or is it? 📅',
+    badge: 'WHAT COMES NEXT?',
+    prompt: 'Which letter comes next?',
+    options: [
+      { id: 'A', text: 'S' },
+      { id: 'B', text: 'M' },
+      { id: 'C', text: 'T' },
+      { id: 'D', text: 'F' },
+    ],
+    scene: { kind: 'sequence', items: ['M', 'T', 'W', 'T', 'F', '?'] },
+    answer: 'A',
+    explain: 'Monday, Tuesday, Wednesday, Thursday, Friday… Saturday.',
+  },
+  {
+    id: 'riddle-everest',
+    kind: 'riddle',
+    hook: 'Geography teachers hate this one 🏔️',
+    badge: 'TRICK QUESTION',
+    prompt: 'Before Mount Everest was discovered, what was the highest mountain on Earth?',
+    options: [
+      { id: 'A', text: 'K2' },
+      { id: 'B', text: 'Kangchenjunga' },
+      { id: 'C', text: 'Mount Everest' },
+      { id: 'D', text: 'Mont Blanc' },
+    ],
+    answer: 'C',
+    explain: "Still Everest — it was the highest before anyone measured it.",
+  },
+  {
+    id: 'riddle-rooster',
+    kind: 'riddle',
+    hook: "Don't overthink it 🐓",
+    badge: 'TRICK QUESTION',
+    prompt: 'A rooster lays an egg on the very top of a sloped roof. Which way does the egg roll?',
+    options: [
+      { id: 'A', text: 'Left' },
+      { id: 'B', text: 'Right' },
+      { id: 'C', text: 'Down the steeper side' },
+      { id: 'D', text: "Nowhere — roosters don't lay eggs" },
+    ],
+    answer: 'D',
+    explain: "Roosters are male. There's no egg.",
+  },
+  {
+    id: 'riddle-footsteps',
+    kind: 'riddle',
+    hook: 'Classic riddle. Can you get it in 10s? ⏱️',
+    badge: 'RIDDLE ME THIS',
+    prompt: 'The more of these you take, the more you leave behind. What are they?',
+    options: [
+      { id: 'A', text: 'Footsteps' },
+      { id: 'B', text: 'Photos' },
+      { id: 'C', text: 'Breaths' },
+      { id: 'D', text: 'Notes' },
+    ],
+    answer: 'A',
+    explain: 'Every step you take leaves a footprint behind.',
+  },
+  {
+    id: 'riddle-candle',
+    kind: 'riddle',
+    hook: 'Old riddle, still stumps people 🕯️',
+    badge: 'RIDDLE ME THIS',
+    prompt: "I'm tall when I'm young and short when I'm old. What am I?",
+    options: [
+      { id: 'A', text: 'A candle' },
+      { id: 'B', text: 'A tree' },
+      { id: 'C', text: 'A mountain' },
+      { id: 'D', text: 'A river' },
+    ],
+    answer: 'A',
+    explain: 'A candle burns down as it gets older.',
+  },
+  {
+    id: 'riddle-stamp',
+    kind: 'riddle',
+    hook: 'It travels more than you do ✈️',
+    badge: 'RIDDLE ME THIS',
+    prompt: 'What can travel all around the world while staying in a corner?',
+    options: [
+      { id: 'A', text: 'A stamp' },
+      { id: 'B', text: 'A satellite' },
+      { id: 'C', text: 'The Moon' },
+      { id: 'D', text: 'A spider' },
+    ],
+    answer: 'A',
+    explain: 'A stamp sits in the corner of an envelope wherever the letter goes.',
+  },
+  {
+    id: 'riddle-monopoly',
+    kind: 'riddle',
+    hook: 'Lateral thinking test 🏨',
+    badge: 'THINK SIDEWAYS',
+    prompt: "A man pushes his car to a hotel and immediately knows he's bankrupt. Why?",
+    options: [
+      { id: 'A', text: "He's playing Monopoly" },
+      { id: 'B', text: 'His car broke down' },
+      { id: 'C', text: 'The hotel is too expensive' },
+      { id: 'D', text: 'He lost his wallet' },
+    ],
+    answer: 'A',
+    explain: 'He landed his token on a property with a hotel.',
+  },
+  {
+    id: 'riddle-feathers',
+    kind: 'riddle',
+    hook: "Say it out loud before you answer 🪶",
+    badge: 'TRICK QUESTION',
+    prompt: 'Which is heavier: a kilo of feathers or a kilo of steel?',
+    options: [
+      { id: 'A', text: 'The steel' },
+      { id: 'B', text: 'The feathers' },
+      { id: 'C', text: 'They weigh the same' },
+      { id: 'D', text: 'Steel, by far' },
+    ],
+    answer: 'C',
+    explain: 'A kilo is a kilo — both are 1 kg.',
+  },
+  {
+    id: 'riddle-shorter',
+    kind: 'riddle',
+    hook: 'Word nerds only 📚',
+    badge: 'WORDPLAY',
+    prompt: 'Which 5-letter word gets SHORTER when you add two letters to it?',
+    options: [
+      { id: 'A', text: 'Short' },
+      { id: 'B', text: 'Small' },
+      { id: 'C', text: 'Brief' },
+      { id: 'D', text: 'Quick' },
+    ],
+    answer: 'A',
+    explain: 'Add "er" to "short" and you get "shorter".',
+  },
+  {
+    id: 'riddle-clock',
+    kind: 'riddle',
+    hook: 'Precise answers only 🕒',
+    badge: 'CLOCK TRAP',
+    prompt: 'A clock shows 3:15. What is the angle between the hour and minute hands?',
+    options: [
+      { id: 'A', text: '0°' },
+      { id: 'B', text: '7.5°' },
+      { id: 'C', text: '15°' },
+      { id: 'D', text: '30°' },
+    ],
+    answer: 'B',
+    explain: 'At 3:15 the hour hand has moved a quarter of the way to 4: 30° ÷ 4 = 7.5°.',
+  },
+];
+
 const BAIT_LABEL: Record<BaitKind, string> = {
   speed: 'SPEED & DISTANCE',
   rate: 'WORK RATE',
@@ -1194,6 +1437,7 @@ const BAIT_LABEL: Record<BaitKind, string> = {
   trick: 'LOGIC CHECK',
   spelling: 'SPELLING TEST',
   shape: 'VISUAL PUZZLE',
+  riddle: 'RIDDLE',
 };
 
 const BAIT_THEME: Record<BaitKind, CardTheme> = {
@@ -1204,6 +1448,7 @@ const BAIT_THEME: Record<BaitKind, CardTheme> = {
   trick: 'orange',
   spelling: 'green',
   shape: 'purple',
+  riddle: 'green',
 };
 
 /**
@@ -1233,6 +1478,7 @@ const KIND_KEYWORD: Record<BaitKind, string> = {
   trick: 'Trick question',
   spelling: 'Spelling test',
   shape: 'Visual IQ puzzle',
+  riddle: 'Riddle',
 };
 
 const KIND_TAG: Record<BaitKind, string> = {
@@ -1243,6 +1489,7 @@ const KIND_TAG: Record<BaitKind, string> = {
   trick: '#trickquestion',
   spelling: '#spellingtest',
   shape: '#visualpuzzle',
+  riddle: '#riddle',
 };
 
 // ---------------------------------------------------------------------------
@@ -1251,12 +1498,12 @@ const KIND_TAG: Record<BaitKind, string> = {
 // ---------------------------------------------------------------------------
 
 const HOOKS = [
-  'Only 1 in 10 gets this on the first try 👀',
+  'Get it on the first try? 👀',
   'Solve it in 5 seconds. Go.',
-  '90% pick the wrong one here.',
+  'Think before you tap.',
   'If you got this instantly, your logic is above average.',
   'Comment your answer before you scroll 👇',
-  'This one separates the top 10% fast.',
+  'This one separates sharp minds fast.',
   'Easy… until you look twice.',
 ];
 
@@ -1531,6 +1778,7 @@ const QUESTION_ORDINAL_BASE = legacyQuestionOrdinalAt(ONE_A_DAY_EPOCH);
  */
 export function planForSlot(dayIndex: number, slot = 0): IgPostPlan | null {
   if (dayIndex < ONE_A_DAY_EPOCH) return legacyPlanForSlot(dayIndex, slot);
+  if (dayIndex >= VARIETY_EPOCH) return varietyPlanForDay(dayIndex);
 
   const n = dayIndex - ONE_A_DAY_EPOCH;
   const r = n % CYCLE_LEN;
@@ -1555,6 +1803,83 @@ export function planForSlot(dayIndex: number, slot = 0): IgPostPlan | null {
   const ordinal = SHAPE_ORDINAL_BASE + block * REGULAR_DAY + r;
   const stride = coprimeStride(SHAPE_POSTS.length);
   return shapePlan(SHAPE_POSTS[(ordinal * stride) % SHAPE_POSTS.length]);
+}
+
+/**
+ * VARIETY cadence (from VARIETY_EPOCH, 2026-11-16) — one post a day on a
+ * 6-day cycle: shape · real question · shape · text bait · shape · riddle.
+ *
+ * Why: with 24 shape puzzles filling 3 of every 4 days the shape pool
+ * lapped itself every 32 days — the same puzzles have been re-running
+ * since 2026-10-11. Half the days stay visual (the reel's strongest
+ * format), and the shape pool grew to 33 (EXTRA_SHAPE_POSTS), so a
+ * shape repeats after ~66 days, a question after ~270, a text bait after
+ * ~330 and a riddle after ~90.
+ *
+ * Days before the epoch keep their old arithmetic (ledger keys, the
+ * next-day reveal and ?d= replays recompute them); question and text
+ * cursors continue exactly where the previous cadence stopped, so
+ * nothing recent comes straight back.
+ */
+export const VARIETY_EPOCH = 20773;
+const VARIETY_CYCLE: ReadonlyArray<'shape' | 'question' | 'text' | 'riddle'> = [
+  'shape',
+  'question',
+  'shape',
+  'text',
+  'shape',
+  'riddle',
+];
+/** Extras first so the new puzzles lead; the coprime stride interleaves old and new. */
+const VARIETY_SHAPES: ShapePost[] = [...EXTRA_SHAPE_POSTS, ...SHAPE_POSTS];
+
+/** Text-bait / question posts the one-a-day cadence used in [ONE_A_DAY_EPOCH, day). */
+function oneADayRegularCounts(day: number): { text: number; question: number } {
+  let text = 0;
+  let question = 0;
+  for (let n = 0; n < day - ONE_A_DAY_EPOCH; n++) {
+    if (n % CYCLE_LEN !== REGULAR_DAY) continue;
+    if (Math.floor(n / CYCLE_LEN) % 3 === 2) text += 1;
+    else question += 1;
+  }
+  return { text, question };
+}
+const VARIETY_BASE = oneADayRegularCounts(VARIETY_EPOCH);
+
+function varietyPlanForDay(dayIndex: number): IgPostPlan | null {
+  const n = dayIndex - VARIETY_EPOCH;
+  const len = VARIETY_CYCLE.length;
+  const block = Math.floor(n / len);
+  const kind = VARIETY_CYCLE[n % len];
+
+  if (kind === 'shape') {
+    if (VARIETY_SHAPES.length === 0) return null;
+    const perCycle = VARIETY_CYCLE.filter((k) => k === 'shape').length;
+    const within = VARIETY_CYCLE.slice(0, n % len).filter((k) => k === 'shape').length;
+    const ordinal = block * perCycle + within;
+    const stride = coprimeStride(VARIETY_SHAPES.length);
+    return shapePlan(VARIETY_SHAPES[(ordinal * stride) % VARIETY_SHAPES.length]);
+  }
+  if (kind === 'question') {
+    const pool = eligibleQuestions();
+    if (pool.length === 0) return null;
+    const ordinal = QUESTION_ORDINAL_BASE + VARIETY_BASE.question + block;
+    return questionPlan(pool[ordinal % pool.length], HOOKS[dayIndex % HOOKS.length]);
+  }
+  if (kind === 'text') {
+    if (BAIT_POSTS.length === 0) return null;
+    const ordinal = TEXT_ORDINAL_BASE + VARIETY_BASE.text + block;
+    const stride = coprimeStride(BAIT_POSTS.length);
+    return baitPlan(BAIT_POSTS[(ordinal * stride) % BAIT_POSTS.length]);
+  }
+  if (RIDDLE_POSTS.length === 0) return null;
+  const stride = coprimeStride(RIDDLE_POSTS.length);
+  return baitPlan(RIDDLE_POSTS[(block * stride) % RIDDLE_POSTS.length]);
+}
+
+/** Exposed for tests: the riddle pool. */
+export function riddlePostsForTest(): ReadonlyArray<BaitPost> {
+  return RIDDLE_POSTS;
 }
 
 /** Largest of a few candidate strides that is coprime with `len`. */

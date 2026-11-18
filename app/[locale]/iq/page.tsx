@@ -65,7 +65,6 @@ export default async function IqLandingPage({
         </header>
 
         <div className="mt-10 flex-1">
-          <SocialArrival />
           <h1 className="whitespace-pre-line text-4xl font-extrabold leading-tight text-gray-900">
             {headline}
           </h1>
@@ -86,6 +85,10 @@ export default async function IqLandingPage({
           >
             ⚠ {t('inlineDisclaimer')}
           </p>
+
+          {/* Client-decided (utm_source), so it mounts after hydration —
+              placed below the headline so it can't shift the LCP element. */}
+          <SocialArrival />
 
           <SocialProof />
 

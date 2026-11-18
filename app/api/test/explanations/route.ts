@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { withErrorHandling } from '@/lib/api/with-error-handling';
 import { getQuestionById } from '@/lib/questions';
-import { getSession } from '@/lib/session-store';
+import { fetchPaidSessionData } from '@/lib/paid-session';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -23,7 +23,9 @@ export const GET = withErrorHandling('test/explanations', async (req: Request) =
   if (!sessionId) {
     return NextResponse.json({ error: 'missing_session_id' }, { status: 400 });
   }
-  const session = getSession(sessionId);
+  // Supabase first-class, like /api/test/pdf: the in-memory store is
+  // empty on a fresh serverless instance, which 404'd every buyer.
+  const session = await fetchPaidSessionData(sessionId);
   if (!session?.result || !session.answers) {
     return NextResponse.json({ error: 'not_found' }, { status: 404 });
   }
